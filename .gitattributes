@@ -1,0 +1,21 @@
+# Normalise line endings: LF inside the repository and in the working tree.
+* text=auto eol=lf
+
+# Binary assets (never converted, never diffed as text)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary
+
+# Explicit text types
+*.md text
+*.json text
+*.yml text
+*.yaml text
+*.ps1 text

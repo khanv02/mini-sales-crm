@@ -1,0 +1,75 @@
+# ---------------------------------------------------------------------------
+# Pulse CRM — files that must never be committed
+# Rule: secrets, build output, caches, local runtime data and editor/OS files.
+# Anything the SDD lists as evidence (docs/perf, evals/reports, migrations)
+# stays tracked.
+# ---------------------------------------------------------------------------
+
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+out/
+.next/
+.vite/
+*.tsbuildinfo
+*.tgz
+
+# Tests, coverage and reports
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+junit*.xml
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+.npmrc
+.sentryclirc
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Local runtime data (Docker volumes, uploads, scratch files)
+.data/
+uploads/
+tmp/
+temp/
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+
+# Editor and OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tooling caches
+.eslintcache
+.stylelintcache
+.cache/
+.turbo/

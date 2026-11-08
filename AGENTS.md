@@ -71,3 +71,6 @@ Where to look:
    requests are never blocked by it.
 9. **Small, traceable changes.** One feature slice or task group per change, the FR/AC ID in the description,
    and `docs/traceability.md` updated in the same change.
+10. **Separate apps.** Frontend and backend live in separate folders: `apps/api` (backend, NestJS) and `apps/web`
+    (frontend, React + Vite); shared types/zod live in `packages/shared`. Never mix server and client code in one
+    folder, and never import across the two apps (go through `packages/shared`).

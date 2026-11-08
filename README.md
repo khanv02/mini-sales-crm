@@ -47,6 +47,9 @@ audit, ai`.
 
 ## 4. Cấu trúc thư mục (mục tiêu của M0)
 
+Backend và frontend tách thành hai app riêng: `apps/api` (backend NestJS) và `apps/web` (frontend React + Vite);
+type/zod dùng chung đặt ở `packages/shared`. Không trộn code server và client trong cùng một thư mục.
+
 ```text
 apps/
   api/            # NestJS: src/common (config, errors, logging, health, prisma, queue, auth, audit, cache, rate-limit)
