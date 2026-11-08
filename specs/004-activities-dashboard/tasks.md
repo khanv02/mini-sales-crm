@@ -11,7 +11,7 @@
 - [ ] **T301** [P] Shared schemas: activity create/update, task filter, report query/filters.
 - [ ] **T302** [P] Factories activity/task; fake clock helper; audit helper.
 
-## Phase 2 — US1 Activities (P1) 🎯
+## Phase 2 — US1 Activities (P1)
 
 ### Tests first
 

@@ -12,7 +12,7 @@
 - [ ] **T402** [P] `packages/shared/src/events.ts`: envelope/payload zod; export types.
 - [ ] **T403** Redis adapter (optional, cấu hình sẵn) + graceful shutdown; health socket.
 
-## Phase 2 — US1/2 Deal realtime (P1) 🎯
+## Phase 2 — US1/2 Deal realtime (P1)
 
 ### Tests first
 

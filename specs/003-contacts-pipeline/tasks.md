@@ -12,7 +12,7 @@
 - [ ] **T202** [P] Factories `test/factories/{contact,pipeline,deal}.ts`; seed default pipeline.
 - [ ] **T203** [P] `common/events/domain-event-bus.ts`; `AuditService` helpers cho 3 entity; unit test.
 
-## Phase 2 — US1 Contacts (P1) 🎯
+## Phase 2 — US1 Contacts (P1)
 
 ### Tests first
 

@@ -17,7 +17,7 @@
       unit test expiry/reuse.
 - [ ] **T105** `common/rate-limit/login-rate-limit.service.ts`: Redis 5/15m email+IP; fail-closed; unit test.
 
-## Phase 2 — US1 Register (P1) 🎯
+## Phase 2 — US1 Register (P1)
 
 ### Tests first
 

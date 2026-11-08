@@ -50,46 +50,46 @@ extra ACs are annotated.
 
 | Endpoint | Happy | Error/permission | Tenant | Extra |
 | --- | --- | --- | --- | --- |
-| `POST /auth/register` | ✓ | duplicate/weak password | — | creates org+admin+audit |
-| `POST /auth/login` | ✓ | wrong password, 429 | — | lockout, no email-existence leak |
-| `POST /auth/refresh` | ✓ | expired, reuse, inactive user | — | rotate family |
-| `POST /auth/logout` | ✓ | invalid token | — | revoke current family |
-| `GET /auth/me` | ✓ | 401 | — | returns role/org |
-| `GET/POST /users` | ✓ | Sales 403 | ✓ | audit |
-| `PATCH /users/:id` | ✓ | last admin 409 | ✓ | role/active/audit |
-| `GET/POST /contacts` | ✓ | validation | ✓ | Sales owner filter |
-| `GET/PATCH/DELETE /contacts/:id` | ✓ | other Sales owner 404 | ✓ | soft delete |
-| `GET/POST /pipelines` | ✓ | Sales 403 | ✓ | — |
-| `PATCH/DELETE /pipelines/:id` | ✓ | deals remain 409 | ✓ | won/lost invariant |
-| `POST /pipelines/:id/stages` | ✓ | missing won/lost, role 403 | ✓ | reorder/position |
-| `POST/PATCH/DELETE /stages` | ✓ | deals remain 409, last stage 409 | ✓ | reorder |
-| `GET/POST /deals` | ✓ | validation | ✓ | — |
-| `GET/PATCH /deals/:id` | ✓ | other Sales owner 404 | ✓ | version |
-| `PATCH /deals/:id/move` | ✓ | stale version 409 | ✓ | audit + realtime |
-| `PATCH /deals/:id/assign` | ✓ | owner inactive/other org 400 | ✓ | Manager/Admin, audit/event |
-| `GET/POST /deals/:id/activities` | ✓ | other Sales owner 404 | ✓ | task validation |
-| `PATCH /activities/:id` | ✓ | 404 when the deal is not visible; 403 when visible but not creator/assignee | ✓ | audit before/after |
-| `GET /tasks` | ✓ | — | ✓ | overdue |
-| `PATCH /tasks/:id` | ✓ | not assignee 403 | ✓ | done_at |
-| `GET /reports/summary` | ✓ | bad filter 400 | ✓ | Sales own scope |
-| `GET /notifications` | ✓ | 401 | ✓ | unread filter |
-| `PATCH /notifications/:id/read` | ✓ | another user's notification 404 | ✓ | idempotent |
-| `POST /notifications/read-all` | ✓ | 401 | ✓ | own notifications only |
-| `POST /imports/contacts` | ✓ | role 403, bad file | ✓ | 202, job id |
-| `GET /imports/:id` | ✓ | job of another org 404 | ✓ | progress |
-| `GET /imports/:id/errors` | ✓ | not finished 409 | ✓ | signed URL |
-| `POST /webhooks/leads/:publicKey` | ✓ | bad HMAC 401 | — | idempotency, replay |
-| `GET/POST/PATCH/DELETE /webhook-sources` | ✓ | non-Admin 403 | ✓ | — |
-| `POST /webhook-sources/:id/rotate-secret` | ✓ | non-Admin 403 | ✓ | 24h grace, one-time secret |
-| `GET /audit-logs` | ✓ | non-Admin 403 | ✓ | filter/pagination |
-| `GET /exports/contacts` | ✓ | Sales 403 | ✓ | CSV injection |
-| `GET /exports/deals` | ✓ | Sales 403 | ✓ | CSV injection |
-| `POST /ai/deals/:id/summary` | ✓ | LLM error, timeout | ✓ | SSE, first token |
-| `POST /ai/deals/:id/follow-up-email` | ✓ | other org 404 | ✓ | never auto-sends |
-| `POST /ai/contacts/:id/score` | ✓ | quota 429 | ✓ | history |
-| `GET /ai/runs/:id` | ✓ | run of another org 404 | ✓ | — |
-| `GET /ai/usage` | ✓ | Sales sees own only | ✓ | cost |
-| `GET /health/live`, `/health/ready` | ✓ | DB/Redis down | — | — |
+| `POST /auth/register` | Yes | duplicate/weak password | n/a | creates org+admin+audit |
+| `POST /auth/login` | Yes | wrong password, 429 | n/a | lockout, no email-existence leak |
+| `POST /auth/refresh` | Yes | expired, reuse, inactive user | n/a | rotate family |
+| `POST /auth/logout` | Yes | invalid token | n/a | revoke current family |
+| `GET /auth/me` | Yes | 401 | n/a | returns role/org |
+| `GET/POST /users` | Yes | Sales 403 | Yes | audit |
+| `PATCH /users/:id` | Yes | last admin 409 | Yes | role/active/audit |
+| `GET/POST /contacts` | Yes | validation | Yes | Sales owner filter |
+| `GET/PATCH/DELETE /contacts/:id` | Yes | other Sales owner 404 | Yes | soft delete |
+| `GET/POST /pipelines` | Yes | Sales 403 | Yes | n/a |
+| `PATCH/DELETE /pipelines/:id` | Yes | deals remain 409 | Yes | won/lost invariant |
+| `POST /pipelines/:id/stages` | Yes | missing won/lost, role 403 | Yes | reorder/position |
+| `POST/PATCH/DELETE /stages` | Yes | deals remain 409, last stage 409 | Yes | reorder |
+| `GET/POST /deals` | Yes | validation | Yes | n/a |
+| `GET/PATCH /deals/:id` | Yes | other Sales owner 404 | Yes | version |
+| `PATCH /deals/:id/move` | Yes | stale version 409 | Yes | audit + realtime |
+| `PATCH /deals/:id/assign` | Yes | owner inactive/other org 400 | Yes | Manager/Admin, audit/event |
+| `GET/POST /deals/:id/activities` | Yes | other Sales owner 404 | Yes | task validation |
+| `PATCH /activities/:id` | Yes | 404 when the deal is not visible; 403 when visible but not creator/assignee | Yes | audit before/after |
+| `GET /tasks` | Yes | n/a | Yes | overdue |
+| `PATCH /tasks/:id` | Yes | not assignee 403 | Yes | done_at |
+| `GET /reports/summary` | Yes | bad filter 400 | Yes | Sales own scope |
+| `GET /notifications` | Yes | 401 | Yes | unread filter |
+| `PATCH /notifications/:id/read` | Yes | another user's notification 404 | Yes | idempotent |
+| `POST /notifications/read-all` | Yes | 401 | Yes | own notifications only |
+| `POST /imports/contacts` | Yes | role 403, bad file | Yes | 202, job id |
+| `GET /imports/:id` | Yes | job of another org 404 | Yes | progress |
+| `GET /imports/:id/errors` | Yes | not finished 409 | Yes | signed URL |
+| `POST /webhooks/leads/:publicKey` | Yes | bad HMAC 401 | n/a | idempotency, replay |
+| `GET/POST/PATCH/DELETE /webhook-sources` | Yes | non-Admin 403 | Yes | n/a |
+| `POST /webhook-sources/:id/rotate-secret` | Yes | non-Admin 403 | Yes | 24h grace, one-time secret |
+| `GET /audit-logs` | Yes | non-Admin 403 | Yes | filter/pagination |
+| `GET /exports/contacts` | Yes | Sales 403 | Yes | CSV injection |
+| `GET /exports/deals` | Yes | Sales 403 | Yes | CSV injection |
+| `POST /ai/deals/:id/summary` | Yes | LLM error, timeout | Yes | SSE, first token |
+| `POST /ai/deals/:id/follow-up-email` | Yes | other org 404 | Yes | never auto-sends |
+| `POST /ai/contacts/:id/score` | Yes | quota 429 | Yes | history |
+| `GET /ai/runs/:id` | Yes | run of another org 404 | Yes | n/a |
+| `GET /ai/usage` | Yes | Sales sees own only | Yes | cost |
+| `GET /health/live`, `/health/ready` | Yes | DB/Redis down | n/a | n/a |
 
 ## 4. ACs that require cross-cutting tests
 

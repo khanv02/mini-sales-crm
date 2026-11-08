@@ -13,7 +13,7 @@
 - [ ] **T502** [P] `common/storage`: ObjectStorage interface, local adapter, signed URL; test put/get/ttl.
 - [ ] **T503** [P] Shared schemas: import row, webhook payload, email template data; CSV escape helper + test.
 
-## Phase 2 — US1 Import CSV (P1) 🎯
+## Phase 2 — US1 Import CSV (P1)
 
 ### Tests first
 

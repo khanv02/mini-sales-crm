@@ -21,60 +21,60 @@ Notes:
 
 ## 2. Endpoint matrix
 
-Legend: ✅ allowed; ❌ 403; 🔒 own data only; 🧑‍💼 Manager/Admin; 👑 Admin.
+Legend: `Yes` allowed; `No` 403; `Own` own data only; `public` no authentication.
 
 | Endpoint / action | Admin | Manager | Sales | Note |
 | --- | --- | --- | --- | --- |
 | `POST /auth/register` | public | public | public | creates a new org |
-| `POST /auth/login`, `/refresh`, `/logout` | ✅ | ✅ | ✅ | token-based |
-| `GET /auth/me` | ✅ | ✅ | ✅ | returns role/org |
-| `GET /users` | ✅ | ❌ | ❌ | Admin |
-| `POST /users` | ✅ | ❌ | ❌ | Admin |
-| `PATCH /users/:id` | ✅ | ❌ | ❌ | role/active; last-admin guard |
-| `GET /contacts` | ✅ | ✅ | 🔒 | Sales see only owned contacts |
-| `POST /contacts` | ✅ | ✅ | ✅ | Sales owner = self |
-| `GET /contacts/:id` | ✅ | ✅ | 🔒 | 404 when not owned |
-| `PATCH /contacts/:id` | ✅ | ✅ | 🔒 | ownership cannot be moved to someone else |
-| `DELETE /contacts/:id` | ✅ | ✅ | 🔒 | soft delete |
-| `GET /pipelines` | ✅ | ✅ | ✅ | read-only for Sales |
-| `POST /pipelines` | ✅ | ❌ | ❌ | Admin |
-| `PATCH /pipelines/:id` | ✅ | ❌ | ❌ | Admin |
-| `DELETE /pipelines/:id` | ✅ | ❌ | ❌ | Admin; 409 when deals remain |
-| `POST /pipelines/:id/stages` | ✅ | ❌ | ❌ | Admin |
-| `PATCH /stages/:id` | ✅ | ❌ | ❌ | Admin; reorder/name/won/lost |
-| `DELETE /stages/:id` | ✅ | ❌ | ❌ | Admin; 409 when deals remain |
-| `GET /deals` (board/list) | ✅ | ✅ | 🔒 | Sales own |
-| `POST /deals` | ✅ | ✅ | ✅ | owner defaults to self; Sales cannot assign others |
-| `GET /deals/:id` | ✅ | ✅ | 🔒 | 404 when not owned |
-| `PATCH /deals/:id` | ✅ | ✅ | 🔒 | title/value/expectedClose; never owner |
-| `PATCH /deals/:id/move` | ✅ | ✅ | 🔒 | `version` required |
-| `PATCH /deals/:id/assign` | ✅ | ✅ | ❌ | Manager/Admin |
-| `GET /deals/:id/activities` | ✅ | ✅ | 🔒 | Sales only their own deals |
-| `POST /deals/:id/activities` | ✅ | ✅ | 🔒 | note/call/task |
-| `PATCH /activities/:id` | ✅ | ✅ | 🔒 | creator/assignee; 404 when the deal is not visible |
-| `GET /tasks` | ✅ | ✅ | 🔒 | assignee defaults to self; Manager may pass `assigneeId` |
-| `PATCH /tasks/:id` | ✅ | ✅ | 🔒 | assignee/creator |
-| `GET /reports/summary` | ✅ | ✅ | 🔒 | Sales see their own numbers only |
-| `GET /notifications` | ✅ | ✅ | 🔒 | own notifications |
-| `PATCH /notifications/:id/read` | ✅ | ✅ | 🔒 | own notifications |
-| `POST /notifications/read-all` | ✅ | ✅ | 🔒 | own notifications only |
-| `POST /imports/contacts` | ✅ | ✅ | ❌ | Manager/Admin |
-| `GET /imports/:id` | ✅ | ✅ | ❌ | job inside the org |
-| `GET /imports/:id/errors` | ✅ | ✅ | ❌ | job inside the org |
+| `POST /auth/login`, `/refresh`, `/logout` | Yes | Yes | Yes | token-based |
+| `GET /auth/me` | Yes | Yes | Yes | returns role/org |
+| `GET /users` | Yes | No | No | Admin |
+| `POST /users` | Yes | No | No | Admin |
+| `PATCH /users/:id` | Yes | No | No | role/active; last-admin guard |
+| `GET /contacts` | Yes | Yes | Own | Sales see only owned contacts |
+| `POST /contacts` | Yes | Yes | Yes | Sales owner = self |
+| `GET /contacts/:id` | Yes | Yes | Own | 404 when not owned |
+| `PATCH /contacts/:id` | Yes | Yes | Own | ownership cannot be moved to someone else |
+| `DELETE /contacts/:id` | Yes | Yes | Own | soft delete |
+| `GET /pipelines` | Yes | Yes | Yes | read-only for Sales |
+| `POST /pipelines` | Yes | No | No | Admin |
+| `PATCH /pipelines/:id` | Yes | No | No | Admin |
+| `DELETE /pipelines/:id` | Yes | No | No | Admin; 409 when deals remain |
+| `POST /pipelines/:id/stages` | Yes | No | No | Admin |
+| `PATCH /stages/:id` | Yes | No | No | Admin; reorder/name/won/lost |
+| `DELETE /stages/:id` | Yes | No | No | Admin; 409 when deals remain |
+| `GET /deals` (board/list) | Yes | Yes | Own | Sales own |
+| `POST /deals` | Yes | Yes | Yes | owner defaults to self; Sales cannot assign others |
+| `GET /deals/:id` | Yes | Yes | Own | 404 when not owned |
+| `PATCH /deals/:id` | Yes | Yes | Own | title/value/expectedClose; never owner |
+| `PATCH /deals/:id/move` | Yes | Yes | Own | `version` required |
+| `PATCH /deals/:id/assign` | Yes | Yes | No | Manager/Admin |
+| `GET /deals/:id/activities` | Yes | Yes | Own | Sales only their own deals |
+| `POST /deals/:id/activities` | Yes | Yes | Own | note/call/task |
+| `PATCH /activities/:id` | Yes | Yes | Own | creator/assignee; 404 when the deal is not visible |
+| `GET /tasks` | Yes | Yes | Own | assignee defaults to self; Manager may pass `assigneeId` |
+| `PATCH /tasks/:id` | Yes | Yes | Own | assignee/creator |
+| `GET /reports/summary` | Yes | Yes | Own | Sales see their own numbers only |
+| `GET /notifications` | Yes | Yes | Own | own notifications |
+| `PATCH /notifications/:id/read` | Yes | Yes | Own | own notifications |
+| `POST /notifications/read-all` | Yes | Yes | Own | own notifications only |
+| `POST /imports/contacts` | Yes | Yes | No | Manager/Admin |
+| `GET /imports/:id` | Yes | Yes | No | job inside the org |
+| `GET /imports/:id/errors` | Yes | Yes | No | job inside the org |
 | `POST /webhooks/leads/:publicKey` | public | public | public | HMAC + idempotency |
-| `GET /webhook-sources` | ✅ | ❌ | ❌ | Admin |
-| `POST /webhook-sources` | ✅ | ❌ | ❌ | Admin |
-| `PATCH /webhook-sources/:id` | ✅ | ❌ | ❌ | Admin |
-| `POST /webhook-sources/:id/rotate-secret` | ✅ | ❌ | ❌ | Admin; the secret is returned once |
-| `DELETE /webhook-sources/:id` | ✅ | ❌ | ❌ | Admin |
-| `GET /audit-logs` | ✅ | ❌ | ❌ | Admin |
-| `GET /exports/contacts` | ✅ | ✅ | ❌ | Manager/Admin |
-| `GET /exports/deals` | ✅ | ✅ | ❌ | Manager/Admin |
-| `POST /ai/deals/:id/summary` | ✅ | ✅ | 🔒 | Sales own deals |
-| `POST /ai/deals/:id/follow-up-email` | ✅ | ✅ | 🔒 | never auto-sends |
-| `POST /ai/contacts/:id/score` | ✅ | ✅ | 🔒 | Sales own contacts |
-| `GET /ai/runs/:id` | ✅ | ✅ | 🔒 | own run / within the org |
-| `GET /ai/usage` | ✅ | ✅ | 🔒 | Sales see their own usage only |
+| `GET /webhook-sources` | Yes | No | No | Admin |
+| `POST /webhook-sources` | Yes | No | No | Admin |
+| `PATCH /webhook-sources/:id` | Yes | No | No | Admin |
+| `POST /webhook-sources/:id/rotate-secret` | Yes | No | No | Admin; the secret is returned once |
+| `DELETE /webhook-sources/:id` | Yes | No | No | Admin |
+| `GET /audit-logs` | Yes | No | No | Admin |
+| `GET /exports/contacts` | Yes | Yes | No | Manager/Admin |
+| `GET /exports/deals` | Yes | Yes | No | Manager/Admin |
+| `POST /ai/deals/:id/summary` | Yes | Yes | Own | Sales own deals |
+| `POST /ai/deals/:id/follow-up-email` | Yes | Yes | Own | never auto-sends |
+| `POST /ai/contacts/:id/score` | Yes | Yes | Own | Sales own contacts |
+| `GET /ai/runs/:id` | Yes | Yes | Own | own run / within the org |
+| `GET /ai/usage` | Yes | Yes | Own | Sales see their own usage only |
 | `GET /health/*` | public | public | public | no auth |
 
 ## 3. Special rules

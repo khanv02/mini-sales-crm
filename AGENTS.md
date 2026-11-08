@@ -43,6 +43,8 @@ Where to look:
 - The language rule covers **repository artifacts**. User-facing copy (UI strings, error messages, email
   templates) is product content, not documentation: it stays Vietnamese by default and is selected through
   `Accept-Language` (see `docs/api-conventions.md` section 2).
+- No emoji or decorative icons in repository artifacts (or in status reports). Mark state with plain markdown:
+  tables using `Yes`/`No`/`Own`/`n/a`/`public`, task checkboxes (`- [x]`), bold text and code spans.
 - Exception: the root `README.md` is the human-facing introduction and is maintained in **Vietnamese**. Every
   other repository artifact stays English.
 - Reply to the user in the language they used, but keep every repository artifact in English.

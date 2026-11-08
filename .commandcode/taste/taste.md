@@ -11,6 +11,8 @@
   tools over shell redirection.
 - **Identifiers**: preserve `FR-*`, `NFR-*`, `AC-*`, `T###`, `ADR-###`, `SCR-###` exactly; keep traceability
   and task/AC tables in sync when anything changes.
+- **Style**: no emoji or decorative icons in files or in replies; mark state with markdown (tables using
+  `Yes`/`No`/`Own`/`n/a`, task checkboxes `- [x]`, bold text, code spans).
 - **Conflicts**: never resolve a document disagreement silently — fix the deviating document toward the
   governing artifact (constitution → source spec → feature spec → plan → tasks → supporting docs) or record an
   ADR/SCR, then report it.

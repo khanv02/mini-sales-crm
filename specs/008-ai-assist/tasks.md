@@ -15,7 +15,7 @@
       hash cache 24h, single-flight; unit test.
 - [ ] **T704** [P] SSE helper: headers, event writer, abort signal, timeout; unit test.
 
-## Phase 2 — US1 Summary (P1) 🎯
+## Phase 2 — US1 Summary (P1)
 
 ### Tests first
 
