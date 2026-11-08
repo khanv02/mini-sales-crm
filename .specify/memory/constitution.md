@@ -190,6 +190,7 @@ stream.
   identifiers/code/API are English as well (see `AGENTS.md` section 2). User-facing copy (UI strings, error
   messages, email templates) is product content rather than documentation: it stays Vietnamese by default and is
   selected through `Accept-Language`. The root `README.md` is the single documented exception: it is the
-  human-facing introduction and stays Vietnamese.
+  client-facing product introduction, stays Vietnamese, and must not contain internal artifacts (ADR/SCR/task IDs,
+  the SDD file index, environment variables, ports or limits).
 
 **Version**: 1.0.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-08

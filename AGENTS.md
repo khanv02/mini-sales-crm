@@ -45,8 +45,9 @@ Where to look:
   `Accept-Language` (see `docs/api-conventions.md` section 2).
 - No emoji or decorative icons in repository artifacts (or in status reports). Mark state with plain markdown:
   tables using `Yes`/`No`/`Own`/`n/a`/`public`, task checkboxes (`- [x]`), bold text and code spans.
-- Exception: the root `README.md` is the human-facing introduction and is maintained in **Vietnamese**. Every
-  other repository artifact stays English.
+- Exception: the root `README.md` is the **client-facing** introduction (Vietnamese) and is maintained in
+  Vietnamese. It must not expose internal artifacts: no ADR/SCR/task IDs, no SDD file index, no env vars, ports,
+  rate limits or other internals. Every other repository artifact stays English.
 - Reply to the user in the language they used, but keep every repository artifact in English.
 
 ## 3. Binding rules (condensed; the constitution is authoritative)

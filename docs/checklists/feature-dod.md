@@ -47,7 +47,8 @@ Use for every feature/PR before merging. If it is not fully ticked, it is not do
 ## Documentation & demo
 
 - [ ] API/event/data model match `docs/`.
-- [ ] README/quickstart updated when commands or env vars change.
+- [ ] `docs/quickstart.md` updated when commands or env vars change; the root `README.md` updated when the
+      product scope or features change (client-facing only: no ADR/SCR/task IDs, no SDD index, no internals).
 - [ ] New ADR (for architectural decisions) + index entry.
 - [ ] The feature can be demoed from seed data in ≤ 5 minutes.
 - [ ] The PR is small and describes FR/AC, impact and rollback.
