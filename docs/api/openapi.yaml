@@ -3,9 +3,9 @@ info:
   title: Pulse CRM API
   version: 0.1.0
   description: |
-    Mini Sales CRM cho startup. Contract này là nguồn kỹ thuật cho `/api/v1`.
-    Quy ước lỗi, phân trang, auth và RBAC nằm trong `docs/api-conventions.md`,
-    `docs/error-codes.md`, `docs/permissions-matrix.md`.
+    Mini Sales CRM for small teams. This contract is the technical source for `/api/v1`.
+    Error, pagination, auth and RBAC conventions live in `docs/api-conventions.md`,
+    `docs/error-codes.md` and `docs/permissions-matrix.md`.
 servers:
   - url: http://localhost:3000/api/v1
     description: Local dev
