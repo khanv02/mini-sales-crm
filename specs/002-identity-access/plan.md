@@ -4,51 +4,51 @@
 
 ## Summary
 
-Triển khai đăng ký org + Admin, đăng nhập/refresh rotate/reuse detection, logout, quản lý user và nền tảng
-RBAC/tenant guard. Dùng JWT access ngắn hạn + refresh cookie HttpOnly, Argon2id, rate limit Redis.
+Implement org + Admin registration, login/refresh rotation with reuse detection, logout, user management and the
+RBAC/tenant guard foundation. Short-lived JWT access token + HttpOnly refresh cookie, Argon2id, Redis rate limiting.
 
 ## Technical Context
 
-- **Backend**: NestJS module `auth`, `users`; Prisma; `@nestjs/jwt`; `argon2`; `rate-limiter-flexible`.
-- **Auth**: access JWT 15m; refresh opaque 7d, HMAC hash, family; cookie HttpOnly.
+- **Backend**: NestJS modules `auth`, `users`; Prisma; `@nestjs/jwt`; `argon2`; `rate-limiter-flexible`.
+- **Auth**: 15m access JWT; 7d opaque refresh, HMAC hash, family; HttpOnly cookie.
 - **Storage**: `users`, `refresh_tokens`, `organizations`.
-- **Testing**: Jest + Supertest; Redis thật cho lockout; fake clock cho expiry.
-- **Security**: helmet, CORS whitelist + credentials, validation, timing-safe compare.
+- **Testing**: Jest + Supertest; real Redis for lockout; fake clock for expiry.
+- **Security**: helmet, CORS whitelist + credentials, validation, timing-safe comparison.
 
 ## Constitution Check
 
-| Gate | Cách đáp ứng | Trạng thái |
+| Gate | How it is met | Status |
 | --- | --- | --- |
-| C1 strict | DTO/zod, không `any`; token service typed | Pass |
-| C2 phân lớp | AuthController → AuthService → UserRepository/TokenRepository | Pass |
-| C3 org_id | UserRepository luôn `orgId`; login lấy org từ user | Pass |
-| C4 audit | Register + user mutations audit trong transaction | Pass |
-| C5 validate/error | zod DTO, error codes auth/user | Pass |
-| C6 secret | JWT/pepper env; cookie Secure; không log token | Pass |
-| C7 async | Không có việc nặng; email mời để sau | Pass |
-| C8 test | Mỗi endpoint happy/lỗi/role/tenant | Pass |
-| C9 PR nhỏ | T100–T119 theo nhóm | Pass |
+| C1 strict | DTO/zod, no `any`; typed token service | Pass |
+| C2 layering | AuthController → AuthService → UserRepository/TokenRepository | Pass |
+| C3 org_id | UserRepository always takes `orgId`; login derives the org from the user | Pass |
+| C4 audit | Register + user mutations audited inside the transaction | Pass |
+| C5 validate/error | zod DTOs, auth/user error codes | Pass |
+| C6 secret | JWT/pepper from env; Secure cookie; tokens never logged | Pass |
+| C7 async | No heavy work; invitation email deferred | Pass |
+| C8 test | Every endpoint has happy/error/role/tenant tests | Pass |
+| C9 small PRs | T100–T119 by group | Pass |
 
 ## Data Model
 
 - `organizations`: id, name, currency, timezone, plan.
 - `users`: unique lower(email), password_hash, role, active; index (org, role, active).
-- `refresh_tokens`: token_hash unique, family_id, expires, revoked, replaced_by; index user/family.
-- Chi tiết `docs/data-model.md` 4.1–4.3.
+- `refresh_tokens`: token_hash unique, family_id, expires, revoked, replaced_by; user/family indexes.
+- Details in `docs/data-model.md` 4.1–4.3.
 
 ## API
 
-| Method | Path | Ghi chú |
+| Method | Path | Note |
 | --- | --- | --- |
-| POST | `/auth/register` | public; org+admin; trả access + cookie |
+| POST | `/auth/register` | public; org+admin; returns access + cookie |
 | POST | `/auth/login` | public; lockout 5/15m |
-| POST | `/auth/refresh` | cookie hoặc body; rotate |
-| POST | `/auth/logout` | revoke family; clear cookie |
-| GET | `/auth/me` | user hiện tại |
+| POST | `/auth/refresh` | cookie or body; rotate |
+| POST | `/auth/logout` | revoke the family; clear the cookie |
+| GET | `/auth/me` | current user |
 | GET/POST | `/users` | Admin |
 | PATCH | `/users/:id` | Admin; role/active |
 
-Chi tiết request/response: `docs/api/openapi.yaml`.
+Request/response details: `docs/api/openapi.yaml`.
 
 ## Auth flow
 
@@ -62,40 +62,40 @@ Register:
 
 Login:
   rate-limit check (email+IP) → find user by lower(email) → verify argon2
-  → issue access + refresh (family mới) → reset fail counter
+  → issue access + refresh (new family) → reset the failure counter
 
 Refresh:
   read cookie/body → hash lookup → check expiry/revoked/user.active
-  → if token already rotated/reused: revoke family → 401 TOKEN_REUSED
-  → else revoke old, insert new same family → set cookie
+  → if the token was already rotated/reused: revoke the family → 401 TOKEN_REUSED
+  → else revoke the old one, insert the new one in the same family → set cookie
 
 Logout:
-  revoke token/family → clear cookie → 204
+  revoke token/family → clear the cookie → 204
 ```
 
 ## RBAC/tenant foundation
 
-- `JwtAuthGuard` verify access; load user (cache 30s) để kiểm tra `active`/role mới.
-- `RolesGuard` + `@Roles(...)`; `@CurrentUser()` trả `{ userId, orgId, role }`.
-- `TenantContext` lấy từ JWT, không từ request body.
-- Repository mẫu: `findById(orgId, id)`, `update(orgId, id, data)`; không `findUnique({id})`.
-- Test: Admin org B đọc user org A → 404; Sales gọi `/users` → 403.
+- `JwtAuthGuard` verifies the access token and loads the user (30s cache) to check `active` and the current role.
+- `RolesGuard` + `@Roles(...)`; `@CurrentUser()` returns `{ userId, orgId, role }`.
+- `TenantContext` comes from the JWT, never from the request body.
+- Reference repository shape: `findById(orgId, id)`, `update(orgId, id, data)`; never `findUnique({id})`.
+- Tests: an Admin of org B reading an org A user → 404; Sales calling `/users` → 403.
 
 ## Security
 
-- Argon2id: memory 64MB, iterations 3, parallelism 1; password 12–128; không trim.
-- JWT secret ≥ 32 byte; access claims tối thiểu; `jti`.
-- Refresh token 32+ byte random; HMAC-SHA256 với pepper; so sánh hash DB (không cần timing-safe vì lookup
-  theo hash, nhưng dùng constant-time khi so).
+- Argon2id: memory 64MB, iterations 3, parallelism 1; password 12–128; never trimmed.
+- JWT secret ≥ 32 bytes; minimal access claims; `jti`.
+- Refresh token 32+ random bytes; HMAC-SHA256 with a pepper; compare the DB hash (a hash lookup does not need
+  timing-safe comparison, but use constant-time comparison anyway).
 - Cookie: `HttpOnly`, `Secure` (prod), `SameSite=Lax`, path `/api/v1/auth`.
-- CORS whitelist + credentials; kiểm tra `Origin` cho refresh/logout.
-- Rate limit: 5 fail/15m email+IP; register 3/giờ/IP; login thành công reset.
-- Không trả email tồn tại ở login; register/duplicate trả 409 (chấp nhận lộ vì cần đăng ký).
-- Redaction log: `authorization`, `cookie`, `password`, `token`, `secret`.
+- CORS whitelist + credentials; validate `Origin` for refresh/logout.
+- Rate limit: 5 failures/15m per email+IP; register 3/hour/IP; a successful login resets the counter.
+- Never reveal email existence at login; register/duplicate returns 409 (accepted because signup needs it).
+- Log redaction: `authorization`, `cookie`, `password`, `token`, `secret`.
 
 ## Phase 2 — Implementation order
 
-1. Schema + shared DTO + token service + guards/audit scaffold (T100–T105).
+1. Schema + shared DTOs + token service + guards/audit scaffold (T100–T105).
 2. Register (T106–T108).
 3. Login/refresh/logout + lockout (T109–T111).
 4. Users admin + last-admin/self guards (T112–T114).
@@ -105,26 +105,26 @@ Logout:
 
 | Case | Test |
 | --- | --- |
-| Register duplicate/concurrent | unique + 409; một org |
-| Login lockout boundary | 5 fail → 6th 429; success resets |
-| Refresh rotate/reuse | old invalid; family revoked |
+| Register duplicate/concurrent | unique + 409; one org |
+| Login lockout boundary | 5 failures → 6th is 429; success resets |
+| Refresh rotate/reuse | old token invalid; family revoked |
 | Expiry | fake clock; 401 |
 | Inactive | refresh 401; access until 15m |
 | Last admin/self | 409; DB unchanged |
 | Tenant | org B → 404 |
 | Role | Manager/Sales → 403 |
-| Redaction | log/response no hash/token |
+| Redaction | log/response carry no hash/token |
 
 ## Risks & Mitigations
 
-| Rủi ro | Giảm thiểu |
+| Risk | Mitigation |
 | --- | --- |
-| Refresh token race khi 2 tab refresh | Cho phép grace ngắn (5s) cho token vừa rotate? MVP: một thắng, một reuse; client retry login. Ghi chú. |
-| Cookie/CORS sai môi trường | Test E2E same-site; env `COOKIE_SECURE`; tài liệu |
-| Argon2 chậm trên CI | Cấu hình test thấp hơn (memory 8MB) nhưng production chuẩn; test riêng config |
-| Last-admin race | Transaction + `SELECT ... FOR UPDATE` hoặc updateMany count; test |
-| Access token cũ sau đổi role | Guard đọc DB/cache 30s; chấp nhận tối đa 30s trễ, ghi rõ |
+| Refresh token race between two tabs | Allow a short grace (5s) for a just-rotated token? MVP: one wins, the other is reuse; the client retries login. Documented. |
+| Cookie/CORS misconfigured per environment | E2E same-site test; `COOKIE_SECURE` env; documentation |
+| Argon2 slow on CI | Lower test parameters (memory 8MB) while production stays standard; separate config test |
+| Last-admin race | Transaction + `SELECT ... FOR UPDATE` or an updateMany count; test |
+| Stale access token after a role change | The guard reads DB/cache for 30s; the delay is documented |
 
 ## Complexity Tracking
 
-Không có vi phạm. Việc kiểm tra `active` mỗi request là chi phí nhỏ (cache 30s) để đáp ứng AC deactivate.
+No violations. Checking `active` on every request is a small cost (30s cache) that satisfies the deactivate AC.

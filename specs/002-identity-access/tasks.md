@@ -2,47 +2,48 @@
 
 **Input**: `specs/002-identity-access/`
 **Prerequisites**: 001 foundation, plan.md, spec.md
-**Tests**: Bắt buộc (C8). Viết test trước mỗi nhóm endpoint; thấy fail rồi implement.
+**Tests**: Mandatory (C8). Write the tests before each endpoint group; watch them fail, then implement.
 
 ## Phase 1 — Setup & schema
 
-- [ ] **T100** Prisma schema/migration: xác nhận `organizations/users/refresh_tokens` từ `0001_init`; bổ sung
-      constraint/index còn thiếu (`unique lower(email)`, index org/role/active); cập nhật `docs/data-model.md` nếu lệch.
+- [ ] **T100** Prisma schema/migration: confirm `organizations/users/refresh_tokens` from `0001_init`; add the
+      missing constraints/indexes (`unique lower(email)`, index org/role/active); update `docs/data-model.md` when
+      it drifts.
 - [ ] **T101** [P] `packages/shared/src/schemas/auth.ts`: register/login/refresh/logout; password 12–128;
       `users.ts`: create/update role/active.
 - [ ] **T102** [P] `common/auth`: `JwtAuthGuard`, `RolesGuard`, `@Roles`, `@CurrentUser`, `TenantContext`;
-      test guard.
+      guard tests.
 - [ ] **T103** [P] `common/audit`: `AuditService.record(tx, ...)`, redaction; unit test.
 - [ ] **T104** `modules/auth/token.service.ts`: sign/verify access; generate/hash refresh; family; rotate;
-      unit test expiry/reuse.
-- [ ] **T105** `common/rate-limit/login-rate-limit.service.ts`: Redis 5/15m email+IP; fail-closed; unit test.
+      unit tests for expiry/reuse.
+- [ ] **T105** `common/rate-limit/login-rate-limit.service.ts`: Redis 5/15m per email+IP; fail-closed; unit test.
 
 ## Phase 2 — US1 Register (P1)
 
 ### Tests first
 
-- [ ] **T106** `apps/api/test/integration/auth.spec.ts`: register happy, duplicate (case), weak password,
-      response no hash, org+admin transaction, audit.
-- [ ] **T107** Test concurrent register same email → 1 org, 1 409.
+- [ ] **T106** `apps/api/test/integration/auth.spec.ts`: register happy path, duplicate (case), weak password,
+      no hash in the response, org+admin transaction, audit.
+- [ ] **T107** Concurrent register with the same email → 1 org, 1 409.
 
 ### Implementation
 
-- [ ] **T108** `modules/auth/auth.repository.ts`, `auth.service.ts`, `auth.controller.ts`: register
-      transaction; argon2id; issue tokens; set cookie; audit.
-- [ ] **T109** `modules/auth/cookie.ts`: HttpOnly/Secure/SameSite/Path; clear; test header.
+- [ ] **T108** `modules/auth/auth.repository.ts`, `auth.service.ts`, `auth.controller.ts`: register transaction;
+      argon2id; issue tokens; set the cookie; audit.
+- [ ] **T109** `modules/auth/cookie.ts`: HttpOnly/Secure/SameSite/Path; clear; header tests.
 
 ## Phase 3 — US2 Login/Refresh/Logout (P1)
 
 ### Tests first
 
 - [ ] **T110** `auth.spec.ts`: login success/wrong, lockout 5/15m (fake clock/Redis), refresh rotate, reuse
-      revoke family, expired, inactive, logout, `/auth/me`.
-- [ ] **T111** Test access token claims/role; refresh cookie vs body; CORS/Origin (nếu cấu hình).
+      revokes the family, expired, inactive, logout, `/auth/me`.
+- [ ] **T111** Access token claims/role tests; refresh cookie vs body; CORS/Origin (when configured).
 
 ### Implementation
 
-- [ ] **T112** `auth.service`: login, reset fail counter, refresh rotation + reuse detection, logout; cookie.
-- [ ] **T113** `auth.controller`: endpoints, status codes; Swagger; error mapping (401 generic).
+- [ ] **T112** `auth.service`: login, reset the failure counter, refresh rotation + reuse detection, logout; cookie.
+- [ ] **T113** `auth.controller`: endpoints, status codes; Swagger; error mapping (generic 401).
 
 ## Phase 4 — US3 Members (P2)
 
@@ -54,7 +55,7 @@
 
 ### Implementation
 
-- [ ] **T116** `modules/users`: repository/service/controller; create user (admin sets password); update
+- [ ] **T116** `modules/users`: repository/service/controller; create user (the admin sets the password); update
       role/active; last-admin/self guards; audit.
 - [ ] **T117** `apps/api/test/unit/token.service.spec.ts`, `auth.guard.spec.ts`; coverage.
 
@@ -67,20 +68,20 @@
 ## Dependencies
 
 - T100 → T101–T105.
-- T106–T109 (register) trước login (T110–T113).
-- T112 cần T104, T105.
-- T114–T116 sau T102/T103.
-- T118 sau T109/T113.
+- T106–T109 (register) before login (T110–T113).
+- T112 needs T104 and T105.
+- T114–T116 after T102/T103.
+- T118 after T109/T113.
 
 ## MVP checkpoint
 
-Sau T113: register → login → refresh → logout chạy; reuse detection pass. Sau T116: admin quản lý user.
+After T113: register → login → refresh → logout works; reuse detection passes. After T116: admin manages users.
 
 ## Notes
 
-- Không làm password reset/verify email.
-- Rate limit dùng Redis thật trong integration; test fail-closed.
-- Access token cũ sau deactivate sống tối đa 15m; guard kiểm tra active cache 30s (ghi rõ test).
+- No password reset or email verification.
+- Rate limiting uses real Redis in integration; test the fail-closed path.
+- A pre-deactivation access token lives at most 15m; the guard checks `active` with a 30s cache (state it in tests).
 
 ## Traceability (task → AC)
 
