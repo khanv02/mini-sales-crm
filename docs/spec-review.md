@@ -1,303 +1,309 @@
-# Phản biện Spec & Decision Log
+# Spec Critique & Decision Log
 
-**Đối tượng review**: `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
-**Ngày**: 2026-11-08
-**Người review**: AI (theo yêu cầu mục 12 của spec)
-**Trạng thái**: Đề xuất — cần người duyệt trước khi code M1
+**Reviewed document**: `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
+**Date**: 2026-11-08
+**Reviewer**: AI (as requested by section 12 of the spec)
+**Status**: Proposal — needs human sign-off before M1 coding starts
 
-Mục đích: chỉ ra chỗ mơ hồ, mâu thuẫn, trường hợp biên và rủi ro bảo mật **trước khi viết code**, đồng thời
-ghi lại quyết định đã áp dụng trong bộ SDD. Các quyết định lớn có ADR riêng; các thay đổi nhỏ nằm trong
-bảng SCR.
+Purpose: surface ambiguities, contradictions, edge cases and security risks **before any code is written**, and
+record the decisions already applied in this SDD. Large decisions have their own ADR; smaller changes live in the
+SCR table.
 
-> Quy tắc: nếu một mục dưới đây chưa được duyệt, phần code liên quan không được bắt đầu. Spec gốc vẫn là
-> nguồn sự thật; các SCR cần được merge vào spec v0.2.
+> Rule: while an item below is unapproved, the related code must not start. The source spec remains the source of
+> truth; the SCRs must be merged into spec v0.2.
 
-## 1. Phát hiện nghiêm trọng (P0 — phải sửa trước khi code)
+## 1. Critical findings (P0 — must be fixed before coding)
 
-### 1.1 `webhook_sources.secret_hash` không thể dùng để xác thực HMAC
+### 1.1 `webhook_sources.secret_hash` cannot verify an HMAC
 
-Spec yêu cầu xác thực chữ ký HMAC (FR-11) nhưng schema chỉ lưu `secret_hash`. HMAC cần **secret gốc** để
-tính lại chữ ký; hash một chiều không dùng được. Nếu lưu hash, server không thể verify.
+The spec requires HMAC signature verification (FR-11) but the schema only stores `secret_hash`. HMAC needs the
+**original secret** to recompute the signature; a one-way hash cannot be used. If only the hash is stored, the
+server can never verify a request.
 
-**Quyết định**: lưu secret đã mã hóa bằng AES-256-GCM với khóa từ biến môi trường
-`WEBHOOK_SECRET_ENC_KEY`; thêm `secret_last4` để hiển thị và `rotated_at` để xoay vòng. Không bao giờ trả
-secret qua API sau khi tạo. Chi tiết: `ADR-011`, `SCR-003`.
+**Decision**: store the secret encrypted with AES-256-GCM using a key from `WEBHOOK_SECRET_ENC_KEY`; add
+`secret_last4` for display and `rotated_at` for rotation. Never return the secret through the API after creation.
+Details: `ADR-011`, `SCR-003`.
 
-### 1.2 Realtime room theo org làm lộ dữ liệu của Sales
+### 1.2 Org-wide realtime rooms leak other Sales users' data
 
-Spec mục 5 nói phát sự kiện tới `room org_id`. Nếu Sales trong cùng org nhận `deal.moved` của deal do người
-khác sở hữu, họ biết được deal tồn tại, stage, giá trị — vi phạm quy tắc “Sales chỉ thấy dữ liệu mình sở
-hữu”. Payload tối giản vẫn lộ ID/hoạt động.
+Section 5 of the spec says events are emitted to `room org_id`. If Sales users in the same org receive
+`deal.moved` for a deal someone else owns, they learn that the deal exists, its stage and its value — violating
+the rule "Sales only see data they own". Even a minimal payload leaks IDs and activity.
 
-**Quyết định**: route theo quyền, không broadcast toàn org:
+**Decision**: route by permission instead of broadcasting to the org:
 
-- `user:{userId}`: owner hiện tại và owner trước đó (deal.moved, deal.assigned).
-- `org:{orgId}:managers`: Manager/Admin nhận mọi deal event trong org.
+- `user:{userId}`: the current owner and the previous owner (deal.moved, deal.assigned).
+- `org:{orgId}:managers`: Manager/Admin receive every deal event in the org.
 - `user:{assigneeId}`: task.due, notification.
-- `org:{orgId}:system`: event không chứa dữ liệu nghiệp vụ (ví dụ maintenance).
+- `org:{orgId}:system`: events carrying no business data (for example maintenance).
 
-Chi tiết: `ADR-012`, `docs/events.md`, `SCR-008`.
+Details: `ADR-012`, `docs/events.md`, `SCR-008`.
 
-### 1.3 `stages` thiếu `org_id`, vi phạm C3
+### 1.3 `stages` has no `org_id`, violating C3
 
-C3 nói mọi bảng nghiệp vụ có `org_id`, nhưng `stages` chỉ có `pipeline_id`. Nếu truy vấn stage theo ID mà
-quên join pipeline, có thể lộ stage của org khác. `activities` thì có `org_id` nhưng `deal_id` không đủ để
-lọc tenant nếu không join.
+C3 says every business table has `org_id`, but `stages` only has `pipeline_id`. Looking up a stage by ID while
+forgetting to join the pipeline can expose a stage from another org. `activities` does have `org_id`, but
+`deal_id` alone is not enough to filter a tenant without a join.
 
-**Quyết định**: thêm `org_id` vào `stages`; dùng composite FK `(org_id, pipeline_id)` và
-`(org_id, id)`; mọi bảng nghiệp vụ đều có `org_id`. Chi tiết: `SCR-001`, `docs/data-model.md`.
+**Decision**: add `org_id` to `stages`; use composite FKs `(org_id, pipeline_id)` and `(org_id, id)`; every
+business table has `org_id`. Details: `SCR-001`, `docs/data-model.md`.
 
-### 1.4 Thiếu `closed_at` trên deal
+### 1.4 `closed_at` is missing on deals
 
-FR-08 cần tỷ lệ thắng và doanh thu theo tháng; FR-06 chốt thắng/thua. Nếu chỉ dựa vào `updated_at` hoặc
-`status`, không thể tính chính xác “thắng trong khoảng thời gian” và không phân biệt deal đóng cũ bị sửa.
+FR-08 needs win rate and revenue by month; FR-06 closes deals as won/lost. Relying on `updated_at` or `status`
+alone cannot answer "won within this period" accurately, nor distinguish an old closed deal that was edited.
 
-**Quyết định**: thêm `closed_at timestamptz null`, set khi chuyển sang WON/LOST, clear khi reopen. Check
-constraint: `closed_at` khác null khi và chỉ khi `status != OPEN`. Chi tiết: `SCR-002`.
+**Decision**: add `closed_at timestamptz null`, set when moving to WON/LOST and cleared on reopen. Check
+constraint: `closed_at` is non-null if and only if `status != OPEN`. Details: `SCR-002`.
 
-### 1.5 Thiếu bảng/history cho kết quả AI
+### 1.5 No table/history for AI results
 
-FR-18 yêu cầu lưu lịch sử chấm điểm; FR-19 yêu cầu cache theo input giống hệt. `ai_usage` chỉ có token/cost,
-không có output, score, reason, input hash.
+FR-18 requires storing scoring history; FR-19 requires caching by identical input. `ai_usage` only has
+token/cost — no output, score, reason or input hash.
 
-**Quyết định**: thêm `ai_results` (mỗi lần chạy lưu output/score/reason/input_hash) bên cạnh `ai_usage`
-(cost ledger). Cache đọc bản ghi gần nhất theo `input_hash`; history vẫn đầy đủ. Chi tiết: `SCR-005`,
-`ADR-009` (RAG deferred).
+**Decision**: add `ai_results` (each run stores output/score/reason/input_hash) next to `ai_usage` (the cost
+ledger). The cache reads the latest row by `input_hash`; history stays complete. Details: `SCR-005`, `ADR-009`
+(RAG deferred).
 
-### 1.6 Task không có bảng riêng nhưng có endpoint `/tasks`
+### 1.6 Tasks have no table of their own but there is a `/tasks` endpoint
 
-Schema chỉ có `activities` với `type=task`, `due_at`, `done_at`, `assignee_id`; API lại có
-`GET /tasks?status=overdue`. Nếu tạo bảng `tasks` mới sẽ trùng lặp timeline; nếu giữ `activities` phải định
-nghĩa rõ task là projection.
+The schema only has `activities` with `type=task`, `due_at`, `done_at`, `assignee_id`, while the API exposes
+`GET /tasks?status=overdue`. Creating a new `tasks` table would duplicate the timeline; keeping `activities`
+requires defining tasks clearly as a projection.
 
-**Quyết định**: giữ **một** bảng `activities`; task là activity `type='task'` với `due_at` bắt buộc và
-`assignee_id` bắt buộc. `/tasks` là projection của `activities`, không phải entity mới. Nếu sau này cần
-task không gắn deal, sẽ mở ADR mới. Chi tiết: `SCR-004`.
+**Decision**: keep **one** table, `activities`; a task is an activity with `type='task'`, a required `due_at` and
+a required `assignee_id`. `/tasks` is a projection of `activities`, not a new entity. Deal-less tasks, if needed
+later, require a new ADR. Details: `SCR-004`.
 
-### 1.7 Thiếu idempotency/file hash cho import; thiếu attempts cho webhook
+### 1.7 Missing idempotency/file hash for import; missing attempts for webhooks
 
-FR-10 yêu cầu chạy lại cùng file không tạo trùng; `import_jobs` không có `file_hash`, `created_by`,
-`started_at`, `finished_at`, `error_report_key`. FR-11 yêu cầu retry/dead-letter; `webhook_events` thiếu
-`attempts`, `last_error`, `processed_at`.
+FR-10 requires re-running the same file to create no duplicates, but `import_jobs` has no `file_hash`,
+`created_by`, `started_at`, `finished_at` or `error_report_key`. FR-11 requires retry/dead-letter, but
+`webhook_events` lacks `attempts`, `last_error` and `processed_at`.
 
-**Quyết định**: bổ sung các cột trên; unique `(org_id, idempotency_key)` cho webhook; import kiểm tra
-`(org_id, file_hash)` trong 24 giờ và trả job cũ nếu đã có. Chi tiết: `SCR-006`.
+**Decision**: add those columns; unique `(org_id, idempotency_key)` for webhooks; import checks
+`(org_id, file_hash)` within 24 hours and returns the existing job. Details: `SCR-006`.
 
-## 2. Phát hiện mức cao (P1)
+## 2. High-severity findings (P1)
 
-### 2.1 `deals.status` và `stage.is_won/is_lost` có thể lệch nhau
+### 2.1 `deals.status` and `stage.is_won/is_lost` can diverge
 
-Spec có cả `status` trên deal và cờ trên stage. Nếu chỉ set một nơi, báo cáo sai.
+The spec has both `status` on the deal and flags on the stage. Setting only one of them makes reports wrong.
 
-**Quyết định**: `status` là trạng thái nghiệp vụ được **service** suy ra từ stage khi move và lưu lại để
-query/report; DB check ràng buộc `lost_reason`/`closed_at`. Không cho client gửi `status` trực tiếp.
+**Decision**: `status` is business state that the **service** derives from the stage on move and persists for
+queries/reports; DB checks constrain `lost_reason`/`closed_at`. Clients never send `status` directly.
 
-### 2.2 Đa tiền tệ nhưng báo cáo không nói tỷ giá
+### 2.2 Multi-currency, but reports say nothing about FX
 
-Deal có `currency`; dashboard “tổng giá trị pipeline” và “doanh thu dự kiến” không nói quy đổi.
+Deals carry `currency`; the "total pipeline value" and "forecast revenue" dashboard figures say nothing about
+conversion.
 
-**Quyết định**: MVP mỗi org một tiền tệ (`organizations.currency`, mặc định `VND`); deal phải dùng đúng
-currency của org. Báo cáo không quy đổi. Đa tiền tệ + tỷ giá là out-of-scope, cần ADR mới.
+**Decision**: in the MVP each org has one currency (`organizations.currency`, default `VND`) and a deal must use
+the org currency. Reports do not convert. Multi-currency + FX rates are out of scope and need a new ADR.
 
-### 2.3 Công thức dashboard chưa định nghĩa
+### 2.3 Dashboard formulas were undefined
 
-“Lead mới”, “tỷ lệ thắng”, “doanh thu dự kiến theo tháng” có thể hiểu nhiều cách.
+"New leads", "win rate" and "forecast revenue by month" can be read in several ways.
 
-**Quyết định** (chi tiết `SCR-011`):
+**Decision** (details in `SCR-011`):
 
-- Lead mới = số `contacts.created_at` trong khoảng lọc.
-- Deal theo stage = snapshot hiện tại của các deal `OPEN`, group theo stage.
-- Tổng pipeline = `sum(deals.value)` của deal `OPEN`.
-- Tỷ lệ thắng = `WON / (WON + LOST)` theo `closed_at` trong khoảng.
-- Doanh thu dự kiến theo tháng = `sum(value)` của deal `OPEN` theo tháng `expected_close`, không trọng số.
-- Bộ lọc thời gian áp dụng theo từng chỉ số như trên; ghi rõ trong tooltip/README.
-- Sales: `owner_id = currentUser`; Manager/Admin: toàn org.
+- New leads = count of `contacts.created_at` inside the filter range.
+- Deals by stage = current snapshot of `OPEN` deals, grouped by stage.
+- Pipeline value = `sum(deals.value)` of `OPEN` deals.
+- Win rate = `WON / (WON + LOST)` by `closed_at` inside the range.
+- Forecast by month = `sum(value)` of `OPEN` deals grouped by the `expected_close` month, unweighted.
+- The date filter applies per metric as above; state it in the tooltip/README.
+- Sales: `owner_id = currentUser`; Manager/Admin: the whole org.
 
-### 2.4 Unique email của contact và soft delete
+### 2.4 Contact email uniqueness and soft delete
 
-Spec ghi unique `(org_id, email)` cho contact chưa xóa. Cần chống case-insensitive và cho phép tạo lại sau
-khi xóa.
+The spec says unique `(org_id, email)` for contacts that are not deleted. This must be case-insensitive and must
+allow re-creating the contact after deletion.
 
-**Quyết định**: chuẩn hóa email lowercase/trim; partial unique index
-`(org_id, lower(email)) WHERE deleted_at IS NULL AND email IS NOT NULL`. Xóa là soft delete; không restore
-trong MVP.
+**Decision**: normalise email to lowercase/trimmed; partial unique index
+`(org_id, lower(email)) WHERE deleted_at IS NULL AND email IS NOT NULL`. Delete is a soft delete; no restore in
+the MVP.
 
-### 2.5 Refresh token trả về body hay cookie?
+### 2.5 Refresh token in the body or in a cookie?
 
-Spec nói trả access/refresh token; SPA lưu refresh token ở localStorage sẽ tăng rủi ro XSS.
+The spec says access/refresh tokens are returned; keeping the refresh token in localStorage increases XSS risk.
 
-**Quyết định**: access token trả trong body, dùng ở `Authorization: Bearer`; refresh token đặt trong
-cookie `HttpOnly; Secure; SameSite=Lax`, path `/api/v1/auth`. API client không phải browser có thể gửi
-refresh token trong body để test/tích hợp. Không lưu refresh token trong localStorage. Chi tiết
+**Decision**: the access token is returned in the body and used via `Authorization: Bearer`; the refresh token
+goes into a cookie `HttpOnly; Secure; SameSite=Lax` with path `/api/v1/auth`. Non-browser API clients may send
+the refresh token in the body for tests/integration. The refresh token is never stored in localStorage. Details:
 `SCR-009`, `ADR-015`.
 
-### 2.6 Thiếu luồng quên/đổi mật khẩu, xác thực email
+### 2.6 No forgot/change-password or email-verification flow
 
-Spec không có. Không được tự thêm UI/endpoint.
+The spec has none. UI/endpoints must not be invented.
 
-**Quyết định**: out-of-scope M1–M3; Admin tạo user với mật khẩu tạm và yêu cầu đổi ngoài hệ thống (hoặc
-bổ sung FR mới trước M1 nếu cần). Ghi vào `docs/spec-review.md` là rủi ro vận hành.
+**Decision**: out of scope for M1–M3; the Admin creates users with a temporary password and asks them to change
+it outside the system (or a new FR is added before M1 if needed). Recorded in `docs/spec-review.md` as an
+operational risk.
 
-### 2.7 Xóa stage/pipeline và ràng buộc “stage cuối”
+### 2.7 Deleting stages/pipelines and the "last stage" constraint
 
-FR-04 chỉ nói stage đang có deal thì 409. Chưa nói xóa stage cuối, xóa pipeline, hay tính duy nhất của
-`is_won`/`is_lost`.
+FR-04 only says a stage with deals returns 409. It says nothing about deleting the last stage, deleting a
+pipeline, or the uniqueness of `is_won`/`is_lost`.
 
-**Quyết định**:
+**Decision**:
 
-- Không xóa stage nếu còn deal (409 `STAGE_HAS_DEALS`).
-- Không xóa stage cuối cùng của pipeline (409 `LAST_STAGE`).
-- Mỗi pipeline phải còn ít nhất một stage `is_won` và một stage `is_lost`; không cho xóa/đổi cờ nếu vi phạm.
-- Xóa pipeline có deal → 409 `PIPELINE_HAS_DEALS`.
-- Admin có thể tạo nhiều pipeline; org mới được seed “Sales Pipeline” với New/Qualified/Proposal/Won/Lost.
+- Do not delete a stage that still has deals (409 `STAGE_HAS_DEALS`).
+- Do not delete the last stage of a pipeline (409 `LAST_STAGE`).
+- Every pipeline must keep at least one `is_won` and one `is_lost` stage; deleting or flipping flags is rejected
+  when it would break that.
+- Deleting a pipeline that has deals → 409 `PIPELINE_HAS_DEALS`.
+- Admin may create several pipelines; a new org is seeded with "Sales Pipeline" (New/Qualified/Proposal/Won/Lost).
 
-### 2.8 Position và kéo thả đồng thời
+### 2.8 Position and concurrent drag-and-drop
 
-Spec có `position` nhưng không nói kiểu dữ liệu hay cách chèn. Integer + reindex toàn stage gây ghi nhiều
-dòng và dễ conflict.
+The spec has `position` but says nothing about its type or insertion strategy. Integers plus a full-stage
+reindex write many rows and conflict easily.
 
-**Quyết định**: `position numeric(20,10)` (fractional index). Khi move, server tính midpoint giữa hai
-neighbor; nếu không đủ khoảng trống thì rebalance stage trong transaction. Sort tie-break `(position, id)`.
-Client gửi `position` là index đích; server trả position thực. Optimistic lock theo `version` bảo vệ từng
-deal; hai deal khác nhau có thể cùng position, sort ổn định.
+**Decision**: `position numeric(20,10)` (fractional index). On move the server computes the midpoint between two
+neighbours; when there is not enough room it rebalances the stage inside the transaction. Sort tie-break is
+`(position, id)`. The client sends the target index as `position`; the server returns the real position.
+Optimistic locking via `version` protects each deal; two different deals may share a position and sort stably.
 
-### 2.9 Audit có thể chứa PII/secret
+### 2.9 Audit can contain PII/secrets
 
-`before/after` JSONB của user/contact/webhook có thể chứa password hash, token, secret.
+The `before/after` JSONB of users/contacts/webhooks can contain password hashes, tokens and secrets.
 
-**Quyết định**: `AuditService` redact các key `password*, token*, secret*, authorization`, giới hạn độ sâu
-và kích thước; không log toàn bộ payload webhook. Audit user chỉ ghi email/name/role/active, không ghi hash.
-Chi tiết: `SCR-013`.
+**Decision**: `AuditService` redacts the keys `password*, token*, secret*, authorization`, caps depth and size,
+and never stores the full webhook payload. User audit only records email/name/role/active, never the hash.
+Details: `SCR-013`.
 
-### 2.10 Rate limit khi Redis lỗi
+### 2.10 Rate limiting when Redis fails
 
-Không nói fail-open hay fail-closed.
+The spec does not say fail-open or fail-closed.
 
-**Quyết định**: auth/login fail-closed (503/429 có kiểm soát) vì bảo mật; đọc thường fail-open (bỏ qua
-limit, log warn) để không sập app; webhook fail-closed vì chống lạm dụng. Ghi trong `docs/error-codes.md`.
+**Decision**: auth/login fail-closed (controlled 503/429) for security; ordinary reads fail-open (skip the limit,
+log a warning) so the app stays up; webhooks fail-closed to stop abuse. Recorded in `docs/error-codes.md`.
 
-### 2.11 Thiếu API notification và webhook source management
+### 2.11 Missing notification and webhook-source management APIs
 
-FR-09 cần đọc/đánh dấu đã đọc; FR-11 cần Admin tạo/xoay public key/secret nhưng bảng API mục 8 không có.
+FR-09 needs reading/marking notifications; FR-11 needs Admin management of public keys/secrets, but the API table
+in section 8 has neither.
 
-**Quyết định**: bổ sung endpoint (coi là phần bắt buộc của FR-09/FR-11, không phải feature mới):
+**Decision**: add the endpoints (treated as a mandatory part of FR-09/FR-11, not a new feature):
 
 - `GET /notifications`, `PATCH /notifications/:id/read`, `POST /notifications/read-all`.
 - `GET/POST /webhook-sources`, `PATCH /webhook-sources/:id`, `POST /webhook-sources/:id/rotate-secret`,
   `DELETE /webhook-sources/:id` (Admin).
 
-### 2.12 Tìm kiếm tiếng Việt và full-text
+### 2.12 Vietnamese search and full-text
 
-PostgreSQL full-text mặc định không xử lý tốt tiếng Việt không dấu/có dấu. Spec yêu cầu tìm theo
-tên/email/công ty, p95 < 300ms với 10k bản ghi.
+PostgreSQL default full-text does not handle Vietnamese with or without diacritics well. The spec requires
+searching name/email/company with p95 < 300ms over 10k rows.
 
-**Quyết định**: dùng `pg_trgm` + `unaccent` (nếu cần) với GIN index trên `lower(name/email/company)`;
-truy vấn `ILIKE '%term%'`. Đây là “full-text search” theo nghĩa sản phẩm; ghi rõ trong ADR-013. Với 10k
-bản ghi, trigram dư sức đạt p95.
+**Decision**: use `pg_trgm` + `unaccent` (when needed) with GIN indexes on `lower(name/email/company)` and
+`ILIKE '%term%'` queries. This is "full-text search" in the product sense; recorded in ADR-013. At 10k rows
+trigram comfortably reaches the p95 target.
 
-### 2.13 Đo “dưới 1 giây” và p95
+### 2.13 Measuring "under 1 second" and p95
 
-AC realtime “người khác thấy trong dưới 1 giây” không đo được bằng unit test; p95 cần phương pháp.
+The realtime AC "other users see it within 1 second" cannot be measured with unit tests; p95 needs a method.
 
-**Quyết định**: E2E Playwright đo từ lúc click move đến khi DOM bên kia cập nhật, p95 của 20 lần chạy
-≤ 1000ms (CI có thể nới 1500ms). NFR-01 đo bằng script seed + autocannon/k6, ghi p50/p95/p99, chạy trên
-Docker local, không tính thời gian khởi động. Chi tiết `docs/testing-strategy.md`.
+**Decision**: Playwright E2E measures from the move click until the other DOM updates; p95 over 20 runs
+≤ 1000ms (CI may relax to 1500ms). NFR-01 is measured with the seed script + autocannon/k6, recording p50/p95/p99,
+on local Docker, excluding start-up time. Details in `docs/testing-strategy.md`.
 
-### 2.14 Phân trang, thời gian, ID
+### 2.14 Pagination, time and IDs
 
-Chưa quy định.
+Previously unspecified.
 
-**Quyết định**: cursor pagination (`cursor`, `limit` mặc định 50, tối đa 100), response
-`{ data, nextCursor, hasMore }`; thời gian ISO-8601 UTC, hiển thị theo timezone org (mặc định
-`Asia/Ho_Chi_Minh`); ID UUID v4; không tuần tự để tránh enumeration. Chi tiết `docs/api-conventions.md`.
+**Decision**: cursor pagination (`cursor`, `limit` default 50, max 100) with the response
+`{ data, nextCursor, hasMore }`; times in ISO-8601 UTC, displayed in the org timezone (default
+`Asia/Ho_Chi_Minh`); UUID v4 IDs, non-sequential to avoid enumeration. Details in `docs/api-conventions.md`.
 
-### 2.15 Chi phí/quotas AI chưa có số
+### 2.15 AI cost/quota had no numbers
 
-FR-19 yêu cầu hạn mức nhưng không nêu ngưỡng.
+FR-19 requires limits but gives no thresholds.
 
-**Quyết định**: cấu hình qua env, mặc định org 200.000 token/ngày, user 50.000 token/ngày; vượt → 429
-`AI_QUOTA_EXCEEDED`. Cache input hash trong 24 giờ. Giá model lấy từ bảng cấu hình, không hard-code.
-Chi tiết `SCR-012`, `docs/error-codes.md`.
+**Decision**: configured through env, defaulting to 200,000 tokens/day per org and 50,000 tokens/day per user;
+exceeding → 429 `AI_QUOTA_EXCEEDED`. Input-hash cache for 24 hours. Model prices come from a configuration table,
+never hard-coded. Details: `SCR-012`, `docs/error-codes.md`.
 
-### 2.16 Webhook secret rotation và replay
+### 2.16 Webhook secret rotation and replay
 
-Chưa nói timestamp/replay.
+Timestamp/replay were unspecified.
 
-**Quyết định**: header `X-Pulse-Signature: t=<unix>,v1=<hex>`; HMAC-SHA256 trên `${t}.${rawBody}`; từ chối
-nếu lệch > 300 giây; so sánh timing-safe; idempotency key bắt buộc; body tối đa 256KB.
+**Decision**: header `X-Pulse-Signature: t=<unix>,v1=<hex>`; HMAC-SHA256 over `${t}.${rawBody}`; reject when the
+skew is > 300 seconds; timing-safe comparison; `Idempotency-Key` required; body limited to 256KB.
 
-### 2.17 Export CSV và CSV injection
+### 2.17 CSV export and CSV injection
 
-**Quyết định**: escape ô bắt đầu bằng `=`, `+`, `-`, `@`, tab, CR; bọc quote; UTF-8 BOM để Excel đọc tiếng
-Việt; giới hạn 100.000 dòng/lần; stream để không giữ toàn bộ trong RAM; audit hành động export.
+**Decision**: escape cells starting with `=`, `+`, `-`, `@`, tab or CR; wrap in quotes; UTF-8 BOM so Excel reads
+Vietnamese correctly; limit 100,000 rows per export; stream so nothing is held fully in RAM; audit the export.
 
-### 2.18 AI gửi PII ra ngoài
+### 2.18 AI sends PII outside
 
-**Quyết định**: mask email/phone trước khi gửi LLM; chỉ gửi dữ liệu org hiện tại; không gửi secret/audit;
-prompt template cố định, nội dung CRM được đặt trong delimiter và coi là untrusted; không cho model gọi
-tool. Ghi rõ trong `ADR-009`/feature 008 plan.
+**Decision**: mask email/phone before calling the LLM; send only the current org's data; never send
+secrets/audit rows; fixed prompt template with CRM content placed inside delimiters and treated as untrusted;
+the model may not call tools. Recorded in `ADR-009`/the feature 008 plan.
 
-## 3. Câu hỏi mở trong spec gốc
+## 3. Open questions in the source spec
 
-| ID | Câu hỏi | Quyết định đề xuất | ADR |
+| ID | Question | Proposed decision | ADR |
 | --- | --- | --- | --- |
-| Q1 | Prisma hay Drizzle? | **Prisma** — type-safe, migration rõ, phổ biến; đánh đổi ít linh hoạt SQL thô nhưng đủ. | ADR-006 |
-| Q2 | Socket.IO hay SSE cho realtime? | **Socket.IO** cho kanban/notification; **SSE** chỉ cho AI streaming (một chiều). | ADR-007 |
-| Q3 | Email thật hay mailer giả? | **Mailpit khi dev/test**; adapter provider; chưa gửi email thật đến khi có quyết định vận hành. | ADR-008 |
-| Q4 | Có làm FR-20 (RAG) không? | **Hoãn** khỏi M3; giữ schema sẵn sàng pgvector, chỉ làm khi có phê duyệt riêng. | ADR-009 |
+| Q1 | Prisma or Drizzle? | **Prisma** — type-safe, clear migrations, widely used; slightly less flexible with raw SQL but sufficient. | ADR-006 |
+| Q2 | Socket.IO or SSE for realtime? | **Socket.IO** for kanban/notifications; **SSE** only for AI streaming (one-way). | ADR-007 |
+| Q3 | Real email or a fake mailer? | **Mailpit in dev/test**; provider adapter; no real email until an operations decision is made. | ADR-008 |
+| Q4 | Do we build FR-20 (RAG)? | **Defer** beyond M3; keep the schema ready for pgvector, implement only with separate approval. | ADR-009 |
 
-## 4. Câu hỏi mới cần chốt
+## 4. New questions to settle
 
-| ID | Câu hỏi | Mặc định trong SDD | Ảnh hưởng nếu đổi |
+| ID | Question | SDD default | Impact if changed |
 | --- | --- | --- | --- |
-| Q5 | Có cần reset mật khẩu/verify email ở M1? | Không; Admin tạo mật khẩu tạm | Thêm FR + bảng token + email |
-| Q6 | Đa tiền tệ? | Không; 1 org = 1 currency | Cần bảng tỷ giá + công thức quy đổi |
-| Q7 | Nhiều pipeline? | Có; seed 1 pipeline mặc định | UI chọn pipeline, báo cáo theo pipeline |
-| Q8 | Xóa cứng deal/contact? | Contact soft delete; deal không có API xóa | Cần soft delete + restore + audit |
-| Q9 | Lưu audit bao lâu? | Không auto-delete trong MVP; đề xuất 12 tháng khi vận hành | Cần job retention + chính sách |
-| Q10 | FR-20 RAG? | Hoãn | Cần pgvector + embedding + eval |
+| Q5 | Do we need password reset/email verification in M1? | No; Admin sets a temporary password | Adds an FR + token table + email |
+| Q6 | Multi-currency? | No; 1 org = 1 currency | Needs an FX table + conversion formulas |
+| Q7 | Multiple pipelines? | Yes; the seed creates one default pipeline | Pipeline selector in the UI, reports per pipeline |
+| Q8 | Hard delete for deal/contact? | Contact soft delete; no delete API for deals | Needs soft delete + restore + audit |
+| Q9 | How long is audit kept? | No auto-delete in the MVP; 12 months proposed for production | Needs a retention job + policy |
+| Q10 | FR-20 RAG? | Deferred | Needs pgvector + embeddings + eval |
 
 ## 5. Spec Change Requests (SCR)
 
-Trạng thái: **Applied in SDD** = đã phản ánh trong spec/plan/tasks; **Pending** = cần sửa file spec gốc.
+Status: **Applied in SDD** = already reflected in spec/plan/tasks; **Pending** = the source spec still needs the
+edit.
 
-| ID | Thay đổi | Lý do | Ảnh hưởng | Trạng thái |
+| ID | Change | Reason | Impact | Status |
 | --- | --- | --- | --- | --- |
-| SCR-001 | Thêm `stages.org_id`; composite FK `(org_id, id)` cho bảng nghiệp vụ | C3, chống lộ tenant | Schema, repository, test | Applied in SDD |
-| SCR-002 | Thêm `deals.closed_at`, `organizations.currency`; check constraint status/lost_reason/closed_at | FR-06/FR-08 chính xác | Schema, report | Applied in SDD |
-| SCR-003 | Đổi `webhook_sources.secret_hash` → `secret_ciphertext`, `secret_last4`, `rotated_at` | HMAC cần secret gốc | Schema, API, bảo mật | Applied in SDD; Pending spec |
-| SCR-004 | Task = activity `type='task'`, không thêm bảng `tasks` | Tránh trùng mô hình | API `/tasks`, query | Applied in SDD |
-| SCR-005 | Thêm `ai_results`; mở rộng `ai_usage` | FR-18 history, FR-19 cache/cost | Schema, AI service | Applied in SDD |
-| SCR-006 | Thêm `import_jobs.file_hash/created_by/started_at/finished_at/error_report_key`; `webhook_events.attempts/last_error/processed_at` | Idempotency/retry | Schema, worker | Applied in SDD |
-| SCR-007 | Thêm `notifications.dedupe_key`; endpoint notifications | FR-09, chống spam | Schema, API | Applied in SDD; Pending spec |
-| SCR-008 | Realtime room theo role/user, không broadcast org | RBAC, Sales privacy | Gateway, events | Applied in SDD; Pending spec |
-| SCR-009 | Refresh token qua HttpOnly cookie; access token body | Giảm XSS | Auth API, web | Applied in SDD |
-| SCR-010 | Search dùng `pg_trgm` + `unaccent` thay full-text mặc định | Tiếng Việt, p95 | Index, query | Applied in SDD |
-| SCR-011 | Định nghĩa công thức dashboard + filter | FR-08 kiểm chứng được | Report service/UI | Applied in SDD |
-| SCR-012 | Chốt quota AI mặc định + endpoint usage/score | FR-18/FR-19 | AI module, env | Applied in SDD |
-| SCR-013 | Audit redaction, append-only, không log secret/PII | C4, bảo mật | Audit service | Applied in SDD |
-| SCR-014 | Cursor pagination, UUID v4, ISO UTC, timezone org | Nhất quán API | Toàn API | Applied in SDD |
-| SCR-015 | Thêm endpoint quản lý webhook source + notification | FR-09/FR-11 thiếu API | API, RBAC | Applied in SDD; Pending spec |
+| SCR-001 | Add `stages.org_id`; composite FK `(org_id, id)` for business tables | C3, tenant-leak prevention | Schema, repositories, tests | Applied in SDD |
+| SCR-002 | Add `deals.closed_at`, `organizations.currency`; check constraint on status/lost_reason/closed_at | Accurate FR-06/FR-08 | Schema, reports | Applied in SDD |
+| SCR-003 | Replace `webhook_sources.secret_hash` with `secret_ciphertext`, `secret_last4`, `rotated_at` | HMAC needs the original secret | Schema, API, security | Applied in SDD; Pending spec |
+| SCR-004 | Task is an activity with `type='task'`, no separate `tasks` table | Avoid a duplicated model | `/tasks` API, queries | Applied in SDD |
+| SCR-005 | Add `ai_results`; extend `ai_usage` | FR-18 history, FR-19 cache/cost | Schema, AI service | Applied in SDD |
+| SCR-006 | Add `import_jobs.file_hash/created_by/started_at/finished_at/error_report_key`; `webhook_events.attempts/last_error/processed_at` | Idempotency/retry | Schema, workers | Applied in SDD |
+| SCR-007 | Add `notifications.dedupe_key`; notification endpoints | FR-09, anti-spam | Schema, API | Applied in SDD; Pending spec |
+| SCR-008 | Realtime rooms by role/user, no org broadcast | RBAC, Sales privacy | Gateway, events | Applied in SDD; Pending spec |
+| SCR-009 | Refresh token via HttpOnly cookie; access token in the body | Reduce XSS | Auth API, web | Applied in SDD |
+| SCR-010 | Search with `pg_trgm` + `unaccent` instead of default full-text | Vietnamese, p95 | Indexes, queries | Applied in SDD |
+| SCR-011 | Define dashboard formulas + filters | FR-08 must be verifiable | Report service/UI | Applied in SDD |
+| SCR-012 | Fix default AI quotas + usage/score endpoints | FR-18/FR-19 | AI module, env | Applied in SDD |
+| SCR-013 | Audit redaction, append-only, no secret/PII in logs | C4, security | Audit service | Applied in SDD |
+| SCR-014 | Cursor pagination, UUID v4, ISO UTC, org timezone | API consistency | Whole API | Applied in SDD |
+| SCR-015 | Add webhook-source management + notification endpoints | FR-09/FR-11 lacked APIs | API, RBAC | Applied in SDD; Pending spec |
 
-## 6. Ngoài phạm vi / hoãn
+## 6. Out of scope / deferred
 
-- Thanh toán thật, marketing automation, mobile app, ERP/kế toán, microservices, Zalo/Messenger.
-- Quên/đổi mật khẩu, verify email, SSO, 2FA (trừ khi bổ sung FR).
-- Đa tiền tệ, tỷ giá, thuế.
+- Real payments, marketing automation, mobile app, ERP/accounting, microservices, Zalo/Messenger.
+- Forgot/change password, email verification, SSO, 2FA (unless a new FR is added).
+- Multi-currency, FX rates, tax.
 - RAG/FR-20 (ADR-009).
-- Gửi email thật tới khách hàng bên ngoài; chỉ email nội bộ qua Mailpit/queue ở M2.
-- Data retention tự động, GDPR delete request, restore soft-delete.
-- Multi-region, HA, horizontal scaling worker (có thể thêm sau).
+- Sending real email to external customers; internal email only via Mailpit/queue in M2.
+- Automatic data retention, GDPR delete requests, restoring soft-deleted records.
+- Multi-region, HA, horizontal worker scaling (can be added later).
 
-## 7. Checklist review spec (dùng lại mỗi lần đổi spec)
+## 7. Spec review checklist (reuse on every spec change)
 
-- [ ] Mỗi FR có AC đo được, có ID, không trùng.
-- [ ] Mỗi AC map được tới ít nhất một test.
-- [ ] Mọi bảng nghiệp vụ có `org_id` và composite FK.
-- [ ] Mọi mutation có audit trong transaction.
-- [ ] Mọi input có schema; lỗi thống nhất.
-- [ ] Mọi việc nặng/ngoài hệ thống đi qua queue/stream.
-- [ ] Không có secret/PII trong log, audit, error.
-- [ ] Có test tenant + role thấp hơn.
-- [ ] Có phương án khi Redis/LLM/provider lỗi.
-- [ ] Có ADR cho quyết định kiến trúc mới.
+- [ ] Every FR has a measurable AC, an ID, and no duplicates.
+- [ ] Every AC maps to at least one test.
+- [ ] Every business table has `org_id` and composite FKs.
+- [ ] Every mutation writes audit in the same transaction.
+- [ ] Every input has a schema; errors are uniform.
+- [ ] Everything heavy or external goes through a queue/stream.
+- [ ] No secret/PII in logs, audit rows or errors.
+- [ ] Tenant + lower-role tests exist.
+- [ ] There is a fallback plan for Redis/LLM/provider failures.
+- [ ] There is an ADR for every new architectural decision.

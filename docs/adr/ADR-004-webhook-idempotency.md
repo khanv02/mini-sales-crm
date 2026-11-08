@@ -1,46 +1,47 @@
 # ADR-004 — Webhook idempotency + queue
 
-- **Trạng thái**: Accepted
-- **Ngày**: 2026-11-08
-- **Nguồn**: spec mục 4, FR-11
-- **Liên quan**: ADR-011, docs/events.md
+- **Status**: Accepted
+- **Date**: 2026-11-08
+- **Source**: spec section 4, FR-11
+- **Related**: ADR-011, docs/events.md
 
-## Bối cảnh
+## Context
 
-Form web bên ngoài có thể gửi lặp, gửi chậm, hoặc retry khi timeout. Ta cần trả lời nhanh, không tạo trùng
-lead, và không mất event khi worker lỗi.
+External web forms may send duplicates, arrive late, or retry on timeout. We must answer quickly, create no
+duplicate leads, and lose no event when a worker fails.
 
-## Quyết định
+## Decision
 
-1. Xác thực HMAC + timestamp trên raw body.
-2. Insert `webhook_events` với unique `(org_id, idempotency_key)` **trước** khi enqueue.
-3. Trả `202` ngay sau khi insert + enqueue; xử lý tạo contact trong queue `webhooks`.
-4. Worker retry 3 lần, backoff; thất bại → `DEAD` + thông báo Admin.
-5. Sweeper enqueue lại event `RECEIVED` quá 60s (outbox pattern tối giản).
-6. Cùng key + cùng payload → trả cùng event; cùng key + payload khác → `409 WEBHOOK_EVENT_CONFLICT`.
+1. Verify HMAC + timestamp over the raw body.
+2. Insert `webhook_events` with unique `(org_id, idempotency_key)` **before** enqueueing.
+3. Return `202` right after insert + enqueue; the contact is created in the `webhooks` queue.
+4. The worker retries 3 times with backoff; on failure → `DEAD` + Admin notification.
+5. A sweeper re-enqueues `RECEIVED` events older than 60s (minimal outbox pattern).
+6. Same key + same payload → the same event is returned; same key + different payload →
+   `409 WEBHOOK_EVENT_CONFLICT`.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Chống trùng ở tầng DB, an toàn khi đua.
-- Request nhanh, không phụ thuộc việc tạo contact.
-- Không mất event khi enqueue lỗi (sweeper).
+- Duplicate protection in the database, safe under races.
+- Fast responses, independent of contact creation.
+- No event loss when enqueueing fails (sweeper).
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Cần bảng event + sweeper + DLQ.
-- Không đảm bảo exactly-once end-to-end; worker phải idempotent.
-- Event `DEAD` cần quy trình xử lý thủ công.
+- Needs an event table + sweeper + DLQ.
+- No end-to-end exactly-once guarantee; workers must be idempotent.
+- `DEAD` events need a manual handling process.
 
-## Kiểm chứng
+## Verification
 
-- Test gửi 2 lần cùng key → 1 contact, 1 event.
-- Test HMAC sai/replay → 401.
-- Test worker fail 3 lần → `DEAD`, không tạo contact trùng.
-- Test enqueue lỗi → event vẫn `RECEIVED`, sweeper xử lý.
+- Send the same key twice → 1 contact, 1 event.
+- Wrong HMAC/replay → 401.
+- Worker fails 3 times → `DEAD`, no duplicate contact.
+- Enqueue fails → the event stays `RECEIVED` and the sweeper handles it.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Tạo contact ngay trong request**: chậm, dễ timeout, khó retry.
-- **Chỉ dựa vào unique email**: không đủ vì payload có thể không có email hoặc email đổi.
+- **Create the contact inside the request**: slow, prone to timeouts, hard to retry.
+- **Rely on a unique email only**: insufficient because payloads may have no email or change it.

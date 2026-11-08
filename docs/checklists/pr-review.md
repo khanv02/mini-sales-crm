@@ -1,53 +1,53 @@
 # Checklist — PR Review
 
-## Phạm vi
+## Scope
 
-- [ ] PR nhỏ, một feature/task group; không trộn refactor lớn.
-- [ ] Tiêu đề/commit có `FR-xx`/`Txxx`.
-- [ ] Mô tả: AC nào, cách test, ảnh hưởng schema/API, rollback.
-- [ ] Không có code chết/TODO không lý do.
+- [ ] The PR is small and covers one feature/task group; no large refactor mixed in.
+- [ ] Title/commits carry `FR-xx`/`Txxx`.
+- [ ] Description states which ACs are covered, how they are tested, schema/API impact and rollback.
+- [ ] No dead code and no TODO without a reason.
 
-## Kiến trúc
+## Architecture
 
-- [ ] Controller không gọi Prisma/DB trực tiếp.
-- [ ] Service chứa nghiệp vụ/transaction/audit; repository chứa query.
-- [ ] Không import chéo repository giữa module.
-- [ ] Không thêm dependency lớn không lý do.
-- [ ] TypeScript strict; không `any` không comment.
+- [ ] Controllers never call Prisma/DB directly.
+- [ ] Services hold business rules/transactions/audit; repositories hold queries.
+- [ ] No cross-module repository imports.
+- [ ] No large dependency added without a reason.
+- [ ] TypeScript strict; no `any` without a comment.
 
-## Dữ liệu
+## Data
 
-- [ ] `org_id` trong query mới; composite FK.
-- [ ] Migration có version; không sửa migration đã merge.
-- [ ] Index cho query mới; không N+1.
-- [ ] Audit trong transaction; redaction.
-- [ ] Idempotency/version nếu có.
+- [ ] New queries filter `org_id`; composite FK present.
+- [ ] Migrations are versioned; merged migrations are never edited.
+- [ ] New queries have indexes; no N+1.
+- [ ] Audit inside the transaction; redaction applied.
+- [ ] Idempotency/version where applicable.
 
-## Test
+## Tests
 
-- [ ] Test happy + lỗi + role + tenant.
-- [ ] Test đỏ trước (hoặc giải thích).
-- [ ] Không mock DB ở integration.
-- [ ] Coverage không giảm dưới ngưỡng.
-- [ ] E2E cập nhật nếu UI.
+- [ ] Happy + error + role + tenant tests.
+- [ ] Tests were red first (or the PR explains why not).
+- [ ] No DB mocks in integration tests.
+- [ ] Coverage did not drop below the threshold.
+- [ ] E2E updated when there is UI.
 
-## Bảo mật
+## Security
 
-- [ ] Input validate; output không lộ secret/PII.
-- [ ] Log redaction; không token/password.
-- [ ] Rate limit/cache/queue đúng.
-- [ ] Checklist security đã chạy nếu feature nhạy cảm.
+- [ ] Input validated; output leaks no secret/PII.
+- [ ] Log redaction; no token/password.
+- [ ] Rate limit/cache/queue configured correctly.
+- [ ] The security checklist has been run for sensitive features.
 
-## Tài liệu
+## Documentation
 
-- [ ] Spec/plan/tasks/traceability cập nhật.
-- [ ] OpenAPI/events/data-model khớp.
-- [ ] ADR nếu quyết định mới.
-- [ ] README/quickstart nếu lệnh/env đổi.
+- [ ] Spec/plan/tasks/traceability updated.
+- [ ] OpenAPI/events/data model match.
+- [ ] ADR added for a new decision.
+- [ ] README/quickstart updated when commands or env vars changed.
 
-## Trước khi merge
+## Before merging
 
-- [ ] CI xanh.
-- [ ] Ít nhất 1 reviewer (hoặc self-review có ghi chú nếu solo).
-- [ ] Không conflict; rebase sạch.
-- [ ] Demo/seed chạy.
+- [ ] CI is green.
+- [ ] At least one reviewer (or a self-review note when solo).
+- [ ] No conflicts; clean rebase.
+- [ ] The demo/seed runs.

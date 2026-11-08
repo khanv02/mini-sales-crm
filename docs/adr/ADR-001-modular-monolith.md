@@ -1,43 +1,43 @@
 # ADR-001 — Modular monolith
 
-- **Trạng thái**: Accepted
-- **Ngày**: 2026-11-08
-- **Nguồn**: spec mục 4
-- **Liên quan**: C2, C7, NFR-03
+- **Status**: Accepted
+- **Date**: 2026-11-08
+- **Source**: spec section 4
+- **Related**: C2, C7, NFR-03
 
-## Bối cảnh
+## Context
 
-Dự án một người làm, cần chạy/deploy đơn giản, nhưng vẫn muốn ranh giới module rõ để có thể tách sau.
-Microservices tăng chi phí vận hành, tracing, deploy, và không cần cho quy mô 3–20 sales/org.
+A one-person project that needs simple run/deploy, while still wanting clear module boundaries so it can be split
+later. Microservices add operations, tracing and deployment cost, and are unnecessary at 3–20 sales per org.
 
-## Quyết định
+## Decision
 
-Xây một NestJS app duy nhất, chia module theo bounded context: auth, users, contacts, pipeline, deals,
-activities, notifications, imports, webhooks, reports, audit, ai. Mỗi module có controller/service/
-repository riêng; giao tiếp qua service công khai hoặc domain event nội bộ. Worker BullMQ chạy trong cùng
-process ở MVP, có thể tách process sau mà không đổi contract.
+Build a single NestJS app, split into modules by bounded context: auth, users, contacts, pipeline, deals,
+activities, notifications, imports, webhooks, reports, audit, ai. Each module has its own controller/service/
+repository; modules communicate through public services or an internal domain event bus. BullMQ workers run in the
+same process in the MVP and can be split into a separate process later without changing contracts.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Một repo, một pipeline CI, một Docker image; deploy đơn giản.
-- Transaction xuyên module dễ (audit + nghiệp vụ).
-- Debug một process; phù hợp portfolio và thời gian.
+- One repo, one CI pipeline, one Docker image; simple deployment.
+- Cross-module transactions are easy (audit + business change).
+- Debugging a single process; fits the portfolio scope and timeline.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Scale từng phần kém; một module lỗi có thể ảnh hưởng toàn app.
-- Ranh giới module dễ bị phá nếu import chéo repository.
-- Worker nặng có thể tranh CPU với API nếu chạy chung.
+- Poor per-part scaling; one failing module can affect the whole app.
+- Module boundaries are easy to break through cross-module repository imports.
+- Heavy workers can compete for CPU with the API when they share the process.
 
-## Đối sách
+## Mitigations
 
-- Cấm import chéo repository; chỉ dùng service/event.
-- Tách worker thành process riêng khi tải tăng (cùng codebase, khác entrypoint).
-- Giữ module không phụ thuộc vòng; review dependency graph ở M4.
+- Cross-module repository imports are forbidden; use services/events only.
+- Split workers into a separate process as load grows (same codebase, different entrypoint).
+- Keep modules free of dependency cycles; review the dependency graph at M4.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Microservices**: quá nhiều hạ tầng cho một người, không có nhu cầu scale độc lập.
-- **Express thuần**: phải tự dựng DI, guard, validation, module; Nest đã có.
+- **Microservices**: far too much infrastructure for one person, with no need for independent scaling.
+- **Plain Express**: you would rebuild DI, guards, validation and modules yourself; Nest already provides them.

@@ -1,53 +1,53 @@
-# ADR-012 — Room realtime theo role/user, không broadcast toàn org
+# ADR-012 — Realtime rooms by role/user, no org-wide broadcast
 
-- **Trạng thái**: Proposed (bắt buộc trước khi code FR-09)
-- **Ngày**: 2026-11-08
-- **Nguồn**: FR-09, mục 5
-- **Liên quan**: ADR-007, SCR-008
+- **Status**: Proposed (required before coding FR-09)
+- **Date**: 2026-11-08
+- **Source**: FR-09, section 5
+- **Related**: ADR-007, SCR-008
 
-## Bối cảnh
+## Context
 
-Spec nói phát sự kiện tới `room org_id`. Nhưng Sales chỉ được thấy deal mình sở hữu. Nếu mọi Sales trong
-org nhận `deal.moved`, họ biết deal/stage/giá trị của người khác — vi phạm RBAC và quy tắc bất biến về
-tenant/quyền.
+The spec emits events to `room org_id`. But Sales may only see deals they own. If every Sales user in the org
+receives `deal.moved`, they learn another user's deal/stage/value — violating RBAC and the tenant/permission
+invariants.
 
-## Quyết định
+## Decision
 
-Không dùng room chung `org:{orgId}` cho dữ liệu nghiệp vụ. Dùng:
+Do not use a shared `org:{orgId}` room for business data. Use:
 
-| Room | Ai | Event |
+| Room | Who | Events |
 | --- | --- | --- |
-| `user:{userId}` | user | deal của mình, task, notification |
-| `org:{orgId}:managers` | Manager/Admin | mọi deal/import/webhook event trong org |
-| `org:{orgId}:system` | tất cả | thông báo không chứa dữ liệu nghiệp vụ |
+| `user:{userId}` | the user | own deals, tasks, notifications |
+| `org:{orgId}:managers` | Manager/Admin | every deal/import/webhook event in the org |
+| `org:{orgId}:system` | everyone | notices carrying no business data |
 
-Khi deal đổi owner: phát cho owner cũ, owner mới, và managers. Không phát cho toàn org.
+When a deal changes owner: emit to the previous owner, the new owner and managers. Never to the whole org.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Tuân thủ RBAC; Sales không thấy deal người khác.
-- Payload tối giản; giảm rò rỉ.
-- Manager vẫn có realtime toàn đội.
+- RBAC-compliant; Sales never see another user's deal.
+- Minimal payloads; less leakage.
+- Managers still get realtime for the whole team.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Logic chọn room phức tạp hơn broadcast.
-- Nếu role thay đổi, phải re-join/leave room (reconnect hoặc server cập nhật).
-- Nhiều socket/room hơn; cần test kỹ.
+- Room-selection logic is more complex than broadcasting.
+- A role change requires re-joining/leaving rooms (reconnect or a server-side update).
+- More sockets/rooms; needs careful tests.
 
-## Quy tắc
+## Rules
 
-- Server tự join room từ JWT; client không gửi room.
-- Manager/Admin join `org:{orgId}:managers`; Sales không.
-- Khi đổi role: disconnect socket hoặc emit `role.changed` để client reconnect.
-- Event `deal.assigned` phải tới cả owner cũ (nếu còn active) và owner mới.
-- Test: Sales B không nhận event deal của Sales A; Manager nhận; owner cũ nhận assign.
-- Không đưa title/value/email vào payload; client có quyền refetch.
+- The server joins rooms from the JWT; clients never send a room.
+- Manager/Admin join `org:{orgId}:managers`; Sales do not.
+- On a role change: disconnect the socket or emit `role.changed` so the client reconnects.
+- `deal.assigned` must reach both the previous owner (when still active) and the new owner.
+- Tests: Sales B never receives Sales A's deal events; Manager does; the previous owner receives the assignment.
+- Never put title/value/email in the payload; clients with permission refetch.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Broadcast org**: vi phạm quyền.
-- **Chỉ room user**: Manager không thấy realtime đội.
-- **Lọc ở client**: dữ liệu đã tới client, không an toàn.
+- **Broadcast to the org**: violates permissions.
+- **Only user rooms**: managers lose team realtime.
+- **Filter on the client**: the data already reached the client, so it is unsafe.

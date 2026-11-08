@@ -1,43 +1,43 @@
-# ADR-002 — Multi-tenant bằng cột `org_id` (shared schema)
+# ADR-002 — Multi-tenant via an `org_id` column (shared schema)
 
-- **Trạng thái**: Accepted
-- **Ngày**: 2026-11-08
-- **Nguồn**: spec mục 4, C3
-- **Liên quan**: NFR-02, SCR-001
+- **Status**: Accepted
+- **Date**: 2026-11-08
+- **Source**: spec section 4, C3
+- **Related**: NFR-02, SCR-001
 
-## Bối cảnh
+## Context
 
-Cần cách ly dữ liệu giữa các tổ chức với chi phí thấp, phù hợp đồ án và quy mô nhỏ. Các lựa chọn:
-database-per-tenant, schema-per-tenant, shared schema + `org_id`.
+Data must be isolated between organizations cheaply, fitting a small project. Options: database-per-tenant,
+schema-per-tenant, shared schema + `org_id`.
 
-## Quyết định
+## Decision
 
-Dùng shared schema: mọi bảng nghiệp vụ có `org_id`; mọi truy vấn lọc theo org lấy từ JWT. Dùng composite
-FK `(org_id, id)` để CSDL chặn tham chiếu chéo tenant. Bổ sung `org_id` cho `stages` (SCR-001).
+Use a shared schema: every business table has `org_id`; every query filters by the org taken from the JWT. Use
+composite FKs `(org_id, id)` so the database rejects cross-tenant references. Add `org_id` to `stages` (SCR-001).
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Một migration, một connection pool, backup đơn giản.
-- Dễ query báo cáo toàn org; chi phí hạ tầng thấp.
-- Composite FK tạo “lưới an toàn” ở DB, không chỉ ở code.
+- One migration, one connection pool, simple backups.
+- Org-wide reporting queries are easy; low infrastructure cost.
+- Composite FKs create a safety net in the database, not just in code.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Rủi ro quên `org_id` ở một truy vấn → lộ dữ liệu.
-- Không cách ly vật lý; một lỗi SQL có thể ảnh hưởng nhiều org.
-- Index phải bắt đầu bằng `org_id`; có thể phình.
+- One query forgetting `org_id` leaks data.
+- No physical isolation; one bad SQL statement can affect several orgs.
+- Indexes must lead with `org_id` and can grow large.
 
-## Đối sách bắt buộc
+## Mandatory mitigations
 
-- Repository nhận `orgId` tường minh; không `findUnique({id})` cho dữ liệu nghiệp vụ.
-- Test cách ly tenant cho **mọi** endpoint (org B gọi ID org A → 404).
-- `$queryRaw` phải có `org_id = $1`; review thủ công.
-- Composite FK + unique `(org_id,id)` trên bảng cha.
-- Không dùng `orgId` từ body/query/header.
+- Repositories take an explicit `orgId`; no `findUnique({id})` for business data.
+- Tenant-isolation tests for **every** endpoint (org B calling an org A ID → 404).
+- `$queryRaw` must include `org_id = $1`; reviewed manually.
+- Composite FK + unique `(org_id,id)` on parent tables.
+- Never take `orgId` from the body/query/header.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Schema-per-tenant**: migration N lần, connection phức tạp, không cần.
-- **Database-per-tenant**: chi phí vận hành cao, khó báo cáo chéo (không cần).
+- **Schema-per-tenant**: N migrations, complex connections, unnecessary.
+- **Database-per-tenant**: high operational cost, hard to report across tenants (not needed).

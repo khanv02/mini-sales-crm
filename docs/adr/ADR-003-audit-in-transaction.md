@@ -1,43 +1,43 @@
-# ADR-003 — Audit log trong cùng transaction
+# ADR-003 — Audit log inside the same transaction
 
-- **Trạng thái**: Accepted
-- **Ngày**: 2026-11-08
-- **Nguồn**: spec mục 4, C4
-- **Liên quan**: FR-13, SCR-013
+- **Status**: Accepted
+- **Date**: 2026-11-08
+- **Source**: spec section 4, C4
+- **Related**: FR-13, SCR-013
 
-## Bối cảnh
+## Context
 
-C4 yêu cầu mọi thay đổi dữ liệu nghiệp vụ có audit (ai, làm gì, khi nào, trước/sau). Nếu ghi audit sau
-commit bằng job/queue, có thể mất log khi process chết hoặc transaction rollback.
+C4 requires every business data change to be audited (who, what, when, before/after). Writing audit after commit
+through a job/queue can lose rows when the process dies or the transaction rolls back.
 
-## Quyết định
+## Decision
 
-Ghi audit trong cùng transaction với mutation, qua `AuditService.record(tx, entry)`. Nếu insert audit lỗi,
-transaction rollback. Audit append-only; không có API sửa/xóa. Redact secret/PII.
+Write audit inside the same transaction as the mutation, via `AuditService.record(tx, entry)`. If the audit insert
+fails, the transaction rolls back. Audit is append-only; there is no edit/delete API. Secrets/PII are redacted.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Bất biến “không thay đổi nào thiếu log” đúng trong mọi trường hợp.
-- Truy vấn before/after nhất quán với dữ liệu.
-- Không cần outbox cho audit.
+- The invariant "no change without a log" holds in every case.
+- before/after queries stay consistent with the data.
+- No outbox is needed for audit.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Tăng độ trễ ghi và kích thước transaction.
-- `before/after` JSONB có thể lớn; cần giới hạn.
-- Audit và nghiệp vụ dùng chung connection/transaction.
+- Adds write latency and transaction size.
+- `before/after` JSONB can be large; it needs limits.
+- Audit and business data share one connection/transaction.
 
-## Quy tắc
+## Rules
 
-- Chỉ ghi khi mutation thực sự thay đổi dữ liệu (không ghi no-op).
-- `before/after` là diff hoặc snapshot đã redact; tối đa 32KB, cắt bớt kèm cờ.
-- Không ghi `password_hash`, token, secret, authorization header.
-- Job nền cũng dùng transaction + audit khi ghi dữ liệu nghiệp vụ.
-- Test rollback: lỗi sau update → không có audit, dữ liệu cũ.
+- Only write when the mutation actually changes data (no no-op audits).
+- `before/after` is a redacted diff or snapshot; max 32KB, truncated with a flag.
+- Never store `password_hash`, tokens, secrets or authorization headers.
+- Background jobs also use a transaction + audit when they write business data.
+- Rollback test: a failure after the update leaves no audit row and the old data intact.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Audit async qua queue**: có thể mất log, vi phạm C4.
-- **Trigger DB**: khó redact/lấy actor/requestId, khó test, khó version schema.
+- **Async audit through a queue**: can lose rows, violating C4.
+- **Database triggers**: hard to redact, to capture actor/requestId, to test, and to version the schema.

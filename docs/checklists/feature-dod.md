@@ -1,59 +1,59 @@
 # Checklist — Feature Definition of Done
 
-Dùng cho mỗi feature/PR trước khi merge. Không tick đủ thì chưa xong.
+Use for every feature/PR before merging. If it is not fully ticked, it is not done.
 
 ## Spec & traceability
 
-- [ ] Feature có `spec.md`, `plan.md`, `tasks.md`; status rõ.
-- [ ] Mỗi AC có ID và test tương ứng; `docs/traceability.md` đã cập nhật.
-- [ ] Không có “NEEDS CLARIFICATION”/TBD trong spec.
-- [ ] Thay đổi hành vi đã cập nhật spec gốc hoặc SCR/ADR.
+- [ ] The feature has `spec.md`, `plan.md`, `tasks.md` with a clear status.
+- [ ] Every AC has an ID and a matching test; `docs/traceability.md` is updated.
+- [ ] No "NEEDS CLARIFICATION"/TBD left in the spec.
+- [ ] Behaviour changes are reflected in the source spec or in an SCR/ADR.
 
-## Hành vi & test
+## Behaviour & tests
 
-- [ ] Mỗi endpoint có happy path + lỗi validation + role thấp hơn + tenant khác.
-- [ ] Test viết trước, đã thấy fail (ghi chú PR nếu không).
-- [ ] Test cách ly tenant: org B gọi ID org A → 404, DB không đổi.
-- [ ] Test optimistic lock/idempotency/retry nếu feature có.
-- [ ] Test audit: đúng actor/entity/action/before-after; rollback không audit.
-- [ ] E2E cho luồng chính (nếu UI).
-- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test` xanh; coverage service ≥ 70%.
+- [ ] Every endpoint has happy path + validation failure + lower role + different tenant.
+- [ ] Tests were written first and seen failing (note it in the PR when not possible).
+- [ ] Tenant-isolation test: org B calling an org A ID → 404, no DB change.
+- [ ] Optimistic-lock/idempotency/retry tests when the feature has them.
+- [ ] Audit test: correct actor/entity/action/before-after; a rollback leaves no audit row.
+- [ ] E2E for the main flow (when there is UI).
+- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test` are green; service coverage ≥ 70%.
 
-## Dữ liệu & migration
+## Data & migration
 
-- [ ] Schema thay đổi có migration; chạy từ DB trống thành công.
-- [ ] `org_id` + composite FK cho bảng mới.
-- [ ] Index cho query mới; EXPLAIN không seq scan bất thường.
-- [ ] Seed idempotent; không ảnh hưởng production.
-- [ ] Có rollback/backup nếu migration rủi ro.
+- [ ] Schema changes ship with a migration; it runs from an empty DB.
+- [ ] New tables have `org_id` + composite FK.
+- [ ] New queries have indexes; EXPLAIN shows no unexpected seq scan.
+- [ ] The seed is idempotent and never touches production.
+- [ ] A rollback/backup path exists if the migration is risky.
 
-## Bảo mật
+## Security
 
-- [ ] Input validate zod/DTO; output không lộ field nhạy cảm.
-- [ ] Không log password/token/secret/PII thừa.
-- [ ] RBAC đúng `docs/permissions-matrix.md`.
-- [ ] Rate limit cho endpoint public/nặng (nếu có).
-- [ ] Secret lấy từ env; `.env.example` cập nhật; không commit.
-- [ ] Checklist `docs/checklists/security-review.md` đã chạy.
+- [ ] Input is validated with zod/DTO; output leaks no sensitive field.
+- [ ] No password/token/secret/unnecessary PII in logs.
+- [ ] RBAC matches `docs/permissions-matrix.md`.
+- [ ] Rate limits on public/heavy endpoints (when applicable).
+- [ ] Secrets come from env; `.env.example` updated; nothing committed.
+- [ ] `docs/checklists/security-review.md` has been run.
 
-## Vận hành
+## Operations
 
-- [ ] Log JSON có requestId/org/user; lỗi 5xx lên Sentry.
-- [ ] Health/ready không bị ảnh hưởng; graceful shutdown.
-- [ ] Job có retry/backoff/DLQ; idempotent.
-- [ ] Cache invalidation đúng (nếu có).
-- [ ] Không chặn request bởi việc nặng.
+- [ ] JSON logs carry requestId/org/user; 5xx errors reach Sentry.
+- [ ] Health/ready is unaffected; graceful shutdown works.
+- [ ] Jobs have retry/backoff/DLQ and are idempotent.
+- [ ] Cache invalidation is correct (when applicable).
+- [ ] Heavy work never blocks a request.
 
-## Tài liệu & demo
+## Documentation & demo
 
-- [ ] API/event/data model khớp `docs/`.
-- [ ] README/quickstart cập nhật nếu lệnh/env đổi.
-- [ ] ADR mới (nếu quyết định kiến trúc) + index.
-- [ ] Demo được bằng seed trong ≤ 5 phút.
-- [ ] PR nhỏ, mô tả FR/AC, ảnh hưởng, rollback.
+- [ ] API/event/data model match `docs/`.
+- [ ] README/quickstart updated when commands or env vars change.
+- [ ] New ADR (for architectural decisions) + index entry.
+- [ ] The feature can be demoed from seed data in ≤ 5 minutes.
+- [ ] The PR is small and describes FR/AC, impact and rollback.
 
-## Ký xác nhận
+## Sign-off
 
-- [ ] Tác giả: đã tự review diff.
-- [ ] Reviewer: đã kiểm tra C1–C9 + tenant/audit.
-- [ ] Ngày/PR link: ...
+- [ ] Author: self-reviewed the diff.
+- [ ] Reviewer: checked C1–C9 + tenant/audit.
+- [ ] Date/PR link: ...

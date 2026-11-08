@@ -1,48 +1,50 @@
-# ADR-014 — Position bằng fractional indexing
+# ADR-014 — Fractional indexing for position
 
-- **Trạng thái**: Proposed
-- **Ngày**: 2026-11-08
-- **Nguồn**: FR-05
-- **Liên quan**: ADR-005
+- **Status**: Proposed
+- **Date**: 2026-11-08
+- **Source**: FR-05
+- **Related**: ADR-005
 
-## Bối cảnh
+## Context
 
-Kanban cần chèn card vào giữa hai card khác. Nếu dùng integer `position` và reindex toàn stage mỗi lần kéo,
-ta phải update nhiều row trong transaction, tăng khóa và xung đột. Spec chỉ nói `position`, không nói kiểu.
+The kanban must insert a card between two others. With integer `position` and a full-stage reindex on every drag we
+would update many rows inside a transaction, adding locks and conflicts. The spec only says `position`, not its
+type.
 
-## Quyết định
+## Decision
 
-Dùng `position numeric(20,10)`:
+Use `position numeric(20,10)`:
 
-- Client gửi `position` là index đích (0-based) trong stage.
-- Server lấy neighbor trước/sau, tính midpoint: `(prev + next) / 2`; nếu đầu/cuối thì `prev - 1` / `next + 1`.
-- Nếu khoảng giữa quá nhỏ (< 1e-9) → rebalance toàn stage trong transaction (hiếm), giữ thứ tự.
-- Sort `(position asc, id asc)` để ổn định khi trùng.
-- `version` của deal bảo vệ xung đột cùng deal; hai deal khác nhau có thể trùng position, tie-break id.
+- The client sends `position` as the target index (0-based) inside the stage.
+- The server reads the previous/next neighbour and computes the midpoint `(prev + next) / 2`; at the head/tail it
+  uses `prev - 1` / `next + 1`.
+- If the gap becomes too small (< 1e-9) → rebalance the whole stage inside the transaction (rare), preserving order.
+- Sort by `(position asc, id asc)` for stability on ties.
+- The deal `version` protects same-deal conflicts; two different deals may share a position and tie-break on id.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Move chỉ update 1 row (trừ rebalance hiếm).
-- Không khóa toàn stage; phù hợp kéo thả.
-- Chèn giữa dễ, không cần integer gap.
+- A move updates one row (except for the rare rebalance).
+- No stage-wide lock; a good fit for drag-and-drop.
+- Easy middle insertion without integer gaps.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- `numeric` chậm hơn integer một chút; index lớn hơn.
-- Cần xử lý rebalance và test precision.
-- Client phải hiểu position là index đích, server trả position thực.
+- `numeric` is a bit slower than integer; the index is larger.
+- Rebalancing and precision must be tested.
+- The client must understand that position is a target index while the server returns the real position.
 
-## Quy tắc
+## Rules
 
-- Không unique `(stage_id, position)` vì có thể trùng khi đua; sort tie-break.
-- Khi move sang stage mới, tính position trong stage đích.
-- Rebalance trong transaction, audit một lần move (không audit từng row).
-- Test: chèn đầu/giữa/cuối; 100 lần chèn liên tiếp vẫn giữ thứ tự; rebalance khi precision cạn.
+- No unique `(stage_id, position)` because races can create ties; sort with a tie-break instead.
+- Moving to a new stage computes the position inside the target stage.
+- Rebalance inside the transaction and audit a single move (never per row).
+- Tests: insert at head/middle/tail; 100 consecutive inserts keep the order; rebalance when precision runs out.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Integer + reindex**: ghi nhiều, khóa, chậm.
-- **LexoRank string**: tốt nhưng phức tạp hơn, khó debug; không cần.
-- **Float**: precision kém, dễ trùng.
+- **Integer + reindex**: many writes, locks, slow.
+- **LexoRank strings**: good but more complex and harder to debug; unnecessary.
+- **Float**: poor precision, prone to ties.

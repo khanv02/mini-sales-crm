@@ -1,52 +1,53 @@
-# ADR-011 — Mã hóa webhook secret thay vì lưu hash
+# ADR-011 — Encrypt the webhook secret instead of storing a hash
 
-- **Trạng thái**: Proposed (bắt buộc trước khi code FR-11)
-- **Ngày**: 2026-11-08
-- **Nguồn**: FR-11, mục 6
-- **Liên quan**: ADR-004, SCR-003
+- **Status**: Proposed (required before coding FR-11)
+- **Date**: 2026-11-08
+- **Source**: FR-11, section 6
+- **Related**: ADR-004, SCR-003
 
-## Bối cảnh
+## Context
 
-Schema gốc có `webhook_sources.secret_hash`. HMAC yêu cầu server biết **secret gốc** để tính lại chữ ký.
-Hash một chiều không thể dùng để verify. Đây là mâu thuẫn chặn FR-11.
+The original schema has `webhook_sources.secret_hash`. HMAC requires the server to know the **original secret** in
+order to recompute the signature; a one-way hash cannot be used for verification. This contradiction blocks FR-11.
 
-## Quyết định
+## Decision
 
-Lưu secret đã mã hóa đối xứng:
+Store the secret with symmetric encryption:
 
-- `secret_ciphertext`: AES-256-GCM, nonce ngẫu nhiên 12 byte, tag; key từ `WEBHOOK_SECRET_ENC_KEY` (32 byte).
-- `secret_last4`: 4 ký tự cuối để Admin nhận diện.
-- `rotated_at`: thời điểm xoay vòng.
-- Secret plaintext chỉ trả **một lần** khi tạo/rotate; không có endpoint đọc lại.
-- Khi rotate: tạo secret mới, giữ secret cũ trong grace period 24h (cột `previous_secret_ciphertext`,
-  `previous_expires_at`) để không mất event đang gửi.
+- `secret_ciphertext`: AES-256-GCM, random 12-byte nonce, tag; key from `WEBHOOK_SECRET_ENC_KEY` (32 bytes).
+- `secret_last4`: the last 4 characters so Admin can recognise it.
+- `rotated_at`: when it was last rotated.
+- The plaintext secret is returned **once** on create/rotate; there is no read-back endpoint.
+- On rotate: create a new secret and keep the old one for a 24h grace period (`previous_secret_ciphertext`,
+  `previous_expires_at`) so in-flight events are not lost.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- Verify HMAC được; vẫn không lưu plaintext.
-- Rotate không downtime nhờ grace period.
-- Khóa mã hóa tách khỏi DB; lộ DB không đủ giải mã nếu không có env key.
+- HMAC verification works while plaintext is never stored.
+- Rotation without downtime thanks to the grace period.
+- The encryption key lives outside the DB; a DB leak alone cannot decrypt anything.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Cần quản lý/rotate encryption key; mất key → không verify được (phải rotate secret).
-- So với hash, bảo mật phụ thuộc key management.
-- Cần migration + cột previous.
+- The encryption key must be managed/rotated; losing it makes verification impossible (the secret must be
+  rotated).
+- Compared to hashing, security depends on key management.
+- Needs a migration plus the previous-secret columns.
 
-## Quy tắc
+## Rules
 
-- Không log ciphertext/plaintext/secret.
-- Không trả secret trong `GET`.
-- `secret_last4` chỉ để hiển thị.
-- Key không commit; production dùng secret manager.
-- Test: tạo source → ký bằng secret trả về → 202; rotate → secret cũ còn grace, secret mới hoạt động;
-  hết grace → secret cũ 401.
-- Nếu `WEBHOOK_SECRET_ENC_KEY` thiếu/sai độ dài → app không khởi động.
+- Never log ciphertext/plaintext/secrets.
+- Never return the secret in a `GET` response.
+- `secret_last4` is for display only.
+- The key is never committed; production uses a secret manager.
+- Tests: create a source → sign with the returned secret → 202; rotate → the old secret still works during grace
+  while the new one works; after grace → the old secret returns 401.
+- If `WEBHOOK_SECRET_ENC_KEY` is missing or has the wrong length → the app does not start.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Lưu plaintext**: lộ DB là lộ toàn bộ webhook.
-- **Lưu hash**: không verify được HMAC (mâu thuẫn gốc).
-- **Chỉ dùng public key**: không có bí mật, ai biết URL cũng gửi được.
+- **Store plaintext**: a DB leak exposes every webhook.
+- **Store a hash**: HMAC cannot be verified (the original contradiction).
+- **Use only the public key**: there is no secret, so anyone who knows the URL could post.

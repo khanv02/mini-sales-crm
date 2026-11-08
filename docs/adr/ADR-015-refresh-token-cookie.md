@@ -1,49 +1,51 @@
-# ADR-015 — Refresh token qua HttpOnly cookie
+# ADR-015 — Refresh token in an HttpOnly cookie
 
-- **Trạng thái**: Proposed
-- **Ngày**: 2026-11-08
-- **Nguồn**: FR-01, Q về lưu token
-- **Liên quan**: SCR-009
+- **Status**: Proposed
+- **Date**: 2026-11-08
+- **Source**: FR-01, the question about token storage
+- **Related**: SCR-009
 
-## Bối cảnh
+## Context
 
-Spec chọn JWT access 15 phút + refresh 7 ngày, rotate. SPA thường lưu refresh token trong localStorage,
-nhưng như vậy mọi XSS đều lấy được token dài hạn. Cần cân bằng bảo mật và đơn giản cho API client/test.
+The spec chose a 15-minute JWT access token plus a 7-day rotating refresh token. SPAs usually keep the refresh
+token in localStorage, but then any XSS steals a long-lived token. We need a balance between security and
+simplicity for API clients/tests.
 
-## Quyết định
+## Decision
 
-- Access token trả trong body; frontend giữ trong memory, gửi `Authorization: Bearer`.
-- Refresh token đặt trong cookie `HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth`, TTL 7 ngày.
-- `POST /auth/refresh` đọc cookie; nếu không có, chấp nhận `refreshToken` trong body cho API client/test.
-- `POST /auth/logout` clear cookie + revoke family.
-- Không lưu refresh token trong localStorage/sessionStorage.
-- CORS bật `credentials: true` với whitelist origin; CSRF được giảm thiểu nhờ SameSite=Lax + chỉ endpoint
-  refresh/logout dùng cookie, và kiểm tra `Origin` với whitelist.
+- The access token is returned in the body; the frontend keeps it in memory and sends `Authorization: Bearer`.
+- The refresh token lives in a cookie `HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth` with a 7-day TTL.
+- `POST /auth/refresh` reads the cookie; when it is absent it accepts `refreshToken` in the body for API
+  clients/tests.
+- `POST /auth/logout` clears the cookie and revokes the family.
+- The refresh token is never stored in localStorage/sessionStorage.
+- CORS enables `credentials: true` with an origin whitelist; CSRF is mitigated by `SameSite=Lax` (only the
+  refresh/logout endpoints use cookies) plus an `Origin` whitelist check.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- XSS không đọc được refresh token.
-- Rotate/reuse detection vẫn hoạt động.
-- API client/test vẫn dùng body khi cần.
+- XSS cannot read the refresh token.
+- Rotation/reuse detection still works.
+- API clients/tests can still use the body flow when needed.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Cần cấu hình CORS credentials/cookie đúng.
-- Mobile/third-party client cần body flow.
-- CSRF vẫn là bề mặt cần test (SameSite + Origin check).
+- CORS credentials/cookies must be configured correctly.
+- Mobile/third-party clients need the body flow.
+- CSRF remains a surface to test (SameSite + Origin check).
 
-## Quy tắc
+## Rules
 
-- Cookie `Secure` bắt buộc ở production; dev có thể tắt qua env nhưng mặc định bật.
-- Không đặt access token trong cookie.
-- Refresh token hash lưu DB; cookie chỉ chứa opaque token.
-- Test: refresh không cookie/body → 401; cookie sai → 401; rotate; reuse revoke family; logout clear.
-- Không trả refresh token trong response body khi dùng cookie (tránh lộ qua log); body flow chỉ khi
-  `X-Client-Type: api` hoặc môi trường test.
+- The `Secure` cookie flag is mandatory in production; dev may disable it through env but it defaults to on.
+- Never put the access token in a cookie.
+- The refresh token hash is stored in the DB; the cookie only holds the opaque token.
+- Tests: refresh without cookie/body → 401; wrong cookie → 401; rotate; reuse revokes the family; logout clears.
+- Do not return the refresh token in the response body when the cookie flow is used (avoids leaking it into logs);
+  the body flow is only for `X-Client-Type: api` or test environments.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **localStorage**: rủi ro XSS cao.
-- **Session cookie cho toàn bộ auth**: spec đã loại session; access JWT vẫn stateless.
+- **localStorage**: high XSS risk.
+- **Session cookies for all auth**: the spec rejected sessions; the access JWT stays stateless.

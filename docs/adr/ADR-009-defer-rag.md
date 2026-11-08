@@ -1,43 +1,44 @@
-# ADR-009 — Hoãn FR-20 (RAG) khỏi M3
+# ADR-009 — Defer FR-20 (RAG) beyond M3
 
-- **Trạng thái**: Proposed (cần duyệt trước M3)
-- **Ngày**: 2026-11-08
-- **Nguồn**: spec Q4, FR-20
-- **Liên quan**: FR-16–FR-19
+- **Status**: Proposed (needs sign-off before M3)
+- **Date**: 2026-11-08
+- **Source**: spec Q4, FR-20
+- **Related**: FR-16–FR-19
 
-## Bối cảnh
+## Context
 
-FR-20 (hỏi đáp trên ghi chú bằng RAG, pgvector, trích dẫn nguồn) là tùy chọn. M3 đã có 4 tính năng AI
-(summary, email draft, lead score, cost control) chiếm 2 tuần. RAG thêm embedding pipeline, chunking,
-retrieval, citation, eval — vượt quá thời lượng và làm loãng mục tiêu portfolio.
+FR-20 (question answering over notes with RAG, pgvector and source citations) is optional. M3 already carries four
+AI features (summary, email draft, lead scoring, cost control) and takes two weeks. RAG adds an embedding
+pipeline, chunking, retrieval, citation and evaluation — beyond the available time, and it dilutes the portfolio
+goal.
 
-## Quyết định
+## Decision
 
-**Không làm FR-20 trong M3.** Giữ schema/kiến trúc sẵn sàng (PostgreSQL + pgvector có thể bật), nhưng không
-thêm endpoint/UI/embedding. Nếu làm sau, cần ADR mới + spec mới.
+**Do not build FR-20 in M3.** Keep the schema/architecture ready (PostgreSQL + pgvector can be enabled) without
+adding endpoints/UI/embeddings. Building it later needs a new ADR + a new spec.
 
-## Hệ quả
+## Consequences
 
-**Tích cực**
+**Positive**
 
-- M3 tập trung vào streaming, quota, cost, eval — những thứ đo được.
-- Giảm rủi ro chi phí LLM và phạm vi.
-- Vẫn có thể mở rộng sau với dữ liệu đã có.
+- M3 focuses on streaming, quota, cost and evaluation — things that can be measured.
+- Lower LLM cost and scope risk.
+- It can still be added later on top of the data we already store.
 
-**Tiêu cực / đánh đổi**
+**Negative / trade-offs**
 
-- Portfolio thiếu một tính năng “AI nâng cao”.
-- Nếu người dùng kỳ vọng RAG, cần truyền thông rõ.
+- The portfolio lacks an "advanced AI" feature.
+- If users expect RAG, that has to be communicated clearly.
 
-## Điều kiện làm lại
+## Conditions for revisiting
 
-- M3 đã xong và ổn định.
-- Có dataset notes đủ lớn, sạch.
-- Có ngân sách embedding + lưu vector.
-- Có eval retrieval/citation rõ.
-- ADR mới phê duyệt.
+- M3 is finished and stable.
+- A large, clean notes dataset exists.
+- There is budget for embeddings + vector storage.
+- There is a clear retrieval/citation evaluation.
+- A new ADR is approved.
 
-## Phương án đã loại
+## Rejected alternatives
 
-- **Làm RAG trong M3**: scope creep, giảm chất lượng các FR bắt buộc.
-- **Bỏ hẳn**: giữ optional cho tương lai.
+- **Build RAG in M3**: scope creep that lowers the quality of the mandatory FRs.
+- **Drop it entirely**: keep it optional for the future.
