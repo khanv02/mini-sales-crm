@@ -78,3 +78,4 @@ desktop.ini
 # Agent scratch and local verification artifacts
 .tmp-verify/
 .perch/
+.session-log.md
