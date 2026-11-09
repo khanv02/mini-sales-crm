@@ -33,7 +33,8 @@
       redis services; pnpm cache; **secret scan (gitleaks) fails on `.env`/secret**.
 - [ ] **T015** [P] Web shell: providers, router, layout, API client, error boundary, login placeholder.
 - [ ] **T016** Scripts `scripts/check-infra.ps1`, `scripts/backup.ps1`, `scripts/restore.ps1`; manual test.
-- [ ] **T017** [P] `README.md` + `docs/quickstart.md`; SDD links; troubleshooting for common failures.
+- [ ] **T017** [P] `README.md` (client-facing product copy only, no SDD links or internals) + `docs/quickstart.md`
+      (technical setup with SDD links); troubleshooting for common failures.
 - [ ] **T018** Verify a fresh clone: delete volumes, run the quickstart, health, lint/typecheck/test/build.
 - [ ] **T019** [P] Update `docs/traceability.md`; confirm the constitution/ADR index; PR checklist.
 - [ ] **T020** `common/queue`: BullMQ module + Redis connection, queue factory, worker bootstrap, default

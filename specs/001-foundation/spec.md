@@ -87,7 +87,7 @@ An empty DB runs migrations to build the schema; the seed is idempotent; a minim
 ### Edge Cases
 
 - Docker not running → a clear instruction, not a stack trace.
-- Ports 3000/5173 taken → the README explains how to change them.
+- Ports 3000/5173 taken → documented in `docs/quickstart.md` section 8 (the README stays product-only).
 - Windows paths/CRLF → PowerShell scripts; no bash dependency.
 - Redis down while the API still starts → `/health/live` 200, `/health/ready` 503.
 - Perf seed accidentally enabled in production → blocked by `NODE_ENV=production` plus `ALLOW_SEED=false`

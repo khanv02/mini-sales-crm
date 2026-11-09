@@ -1,6 +1,6 @@
 # ADR-011 — Encrypt the webhook secret instead of storing a hash
 
-- **Status**: Proposed (required before coding FR-11)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: FR-11, section 6
 - **Related**: ADR-004, SCR-003

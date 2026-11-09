@@ -1,6 +1,6 @@
 # ADR-008 — Email: Mailpit in dev, provider adapter in production
 
-- **Status**: Proposed (needs sign-off before M2)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: spec Q3, FR-12
 - **Related**: C7, NFR-03

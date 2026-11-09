@@ -1,6 +1,6 @@
 # ADR-014 — Fractional indexing for position
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: FR-05
 - **Related**: ADR-005

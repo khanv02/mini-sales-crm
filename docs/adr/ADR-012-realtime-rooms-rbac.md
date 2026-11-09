@@ -1,6 +1,6 @@
 # ADR-012 — Realtime rooms by role/user, no org-wide broadcast
 
-- **Status**: Proposed (required before coding FR-09)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: FR-09, section 5
 - **Related**: ADR-007, SCR-008

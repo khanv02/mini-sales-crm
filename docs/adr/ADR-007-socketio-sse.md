@@ -1,6 +1,6 @@
 # ADR-007 — Socket.IO for realtime, SSE for AI streaming
 
-- **Status**: Proposed (needs sign-off before M1)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: spec Q2
 - **Related**: FR-09, FR-16, ADR-012

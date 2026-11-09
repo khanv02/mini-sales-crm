@@ -1,6 +1,6 @@
 # ADR-009 — Defer FR-20 (RAG) beyond M3
 
-- **Status**: Proposed (needs sign-off before M3)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: spec Q4, FR-20
 - **Related**: FR-16–FR-19

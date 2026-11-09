@@ -1,8 +1,9 @@
 # Pulse CRM — SDD Index
 
 This documentation set turns product spec v0.1 into a **Spec → Plan → Tasks → Code → Verify** workflow that can be
-executed by AI and reviewed by humans. The original source of truth remains
-`Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md`; clarifications live in `docs/spec-review.md` and `docs/adr/`.
+executed by AI and reviewed by humans. The original concept PRD remains `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md`
+(v0.1 reference archive); the living, executable specification is maintained in `specs/` and `docs/`, with
+clarifications in `docs/spec-review.md` and `docs/adr/`.
 
 ## 1. Structure
 
@@ -128,21 +129,20 @@ A feature is only done when:
 
 Details: `docs/checklists/feature-dod.md`.
 
-## 6. Decisions awaiting approval
+## 6. Approved decisions & pending spec updates
 
-The following items are **Proposed** in `docs/adr/README.md` and must be settled before M1 starts (they cover
-FR-01, FR-03, FR-05, FR-07, FR-09, FR-11, FR-12, FR-16 and FR-20):
+The following architectural decisions have been **Accepted** (recorded in `docs/adr/`):
 
-1. `ADR-006`: use Prisma (instead of Drizzle).
+1. `ADR-006`: use Prisma as the ORM.
 2. `ADR-007`: Socket.IO for realtime, SSE for AI streaming.
 3. `ADR-008`: Mailpit in dev; email adapter, no real email sent in M1/M2.
 4. `ADR-009`: defer FR-20 (RAG) beyond M3.
-5. `ADR-011`: store the webhook secret encrypted (replaces `secret_hash` in the source spec).
-6. `ADR-012`: realtime rooms by role/user instead of broadcasting to the whole org.
-7. `ADR-013`: contact search with `pg_trgm` + `unaccent` (FR-03, M1).
-8. `ADR-014`: fractional position for kanban ordering (FR-05, M1).
-9. `ADR-015`: refresh token in an HttpOnly cookie, access token in the body (FR-01, M1).
-10. The SCRs in `docs/spec-review.md`, especially SCR-001 (`stages.org_id`) and SCR-002 (`closed_at`), and the
-    SCRs still marked "Pending spec" (SCR-003, SCR-007, SCR-008, SCR-015) that must be merged into spec v0.2.
+5. `ADR-010`: task is an activity with type='task'.
+6. `ADR-011`: store the webhook secret encrypted (replaces `secret_hash` in the source spec).
+7. `ADR-012`: realtime rooms by role/user instead of broadcasting to the whole org.
+8. `ADR-013`: contact search with `pg_trgm` + `unaccent` (FR-03, M1).
+9. `ADR-014`: fractional position for kanban ordering (FR-05, M1).
+10. `ADR-015`: refresh token in an HttpOnly cookie, access token in the body (FR-01, M1).
 
-Do not code the affected parts until the items above are approved or amended.
+The pending SCRs in `docs/spec-review.md` (SCR-003, SCR-007, SCR-008, SCR-015) remain to be folded into spec v0.2
+during the regular milestone convergence. Implementation proceeds per the accepted ADRs and feature specs.
