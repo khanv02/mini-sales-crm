@@ -4,35 +4,35 @@
 
 ## Summary
 
-Thêm Socket.IO gateway xác thực JWT, room theo user/manager/system, phát event sau commit cho deal/task/
-notification; notification center API/UI; đảm bảo Sales không nhận dữ liệu người khác.
+Add a Socket.IO gateway with JWT auth, rooms by user/manager/system, emit events after commit for deal/task/
+notification; notification center API/UI; ensure Sales never receive other people's data.
 
 ## Technical Context
 
-- **Backend**: NestJS `@nestjs/websockets` + Socket.IO; adapter Redis (chuẩn bị scale); EventBus nội bộ.
+- **Backend**: NestJS `@nestjs/websockets` + Socket.IO; Redis adapter (scale-ready); internal EventBus.
 - **Frontend**: `socket.io-client`, TanStack Query invalidation, toast, connection indicator.
-- **Storage**: notifications; không bảng mới khác.
-- **Testing**: Jest + socket.io-client; Playwright 2 context; fake timers.
-- **Performance**: event tới client ≤ 1s p95.
+- **Storage**: notifications; no other new tables.
+- **Testing**: Jest + socket.io-client; Playwright 2 contexts; fake timers.
+- **Performance**: event to client ≤ 1s p95.
 
 ## Constitution Check
 
-| Gate | Cách đáp ứng | Trạng thái |
+| Gate | How it is satisfied | Status |
 | --- | --- | --- |
 | C1 strict | event types/payload zod | Pass |
-| C2 phân lớp | gateway → notification service; publisher sau commit | Pass |
-| C3 org_id | room lấy từ JWT; payload có org; test tenant | Pass |
-| C4 audit | notification không phải business mutation; deal audit ở 003 | Pass |
-| C5 validate | payload event schema; notification DTO | Pass |
-| C6 secret | JWT handshake; không log token | Pass |
-| C7 async | emit sau commit; lỗi không chặn | Pass |
+| C2 layering | gateway → notification service; publisher after commit | Pass |
+| C3 org_id | rooms from JWT; payload carries org; tenant test | Pass |
+| C4 audit | notification is not a business mutation; deal audit in 003 | Pass |
+| C5 validate | event payload schema; notification DTO | Pass |
+| C6 secret | JWT handshake; no token logging | Pass |
+| C7 async | emit after commit; errors do not block | Pass |
 | C8 test | RBAC room, E2E, reconnect | Pass |
-| C9 PR nhỏ | T400–T419 | Pass |
+| C9 small PR | T400–T419 | Pass |
 
 ## Data Model
 
 - `notifications`: org, user, type, payload, dedupe_key, read_at; unique dedupe.
-- `deals`/`activities` là nguồn event; không thêm outbox ở MVP (at-most-once).
+- `deals`/`activities` are the event source; no outbox in the MVP (at-most-once).
 
 ## Socket design
 
@@ -54,61 +54,61 @@ EventBus.publish(event) after tx commit
 ```
 
 - Envelope `{ eventId, occurredAt, orgId, type, payload }`.
-- Client dedupe eventId; version check cho deal.
-- Nếu emit lỗi: log warn, metric; không throw.
+- Client dedupes eventId; version check for deals.
+- If emit fails: log warn, metric; do not throw.
 
 ## Notification service
 
 - `create({orgId,userId,type,payload,dedupeKey})` → upsert `on conflict` (unique partial).
-- Nếu insert mới → emit `notification.created`; nếu conflict → bỏ qua.
+- If a new insert → emit `notification.created`; if conflict → skip.
 - List: filter unread/type, cursor `(created_at,id)`; mark read idempotent; read-all.
-- RBAC: chỉ notification của mình; tenant từ JWT.
-- Cleanup/retention: chưa.
+- RBAC: only own notifications; tenant from JWT.
+- Cleanup/retention: not yet.
 
 ## API
 
-| Method | Path | Ghi chú |
+| Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/notifications?unread=true&type=` | của mình |
+| GET | `/notifications?unread=true&type=` | own |
 | PATCH | `/notifications/:id/read` | idempotent |
-| POST | `/notifications/read-all` | của mình |
+| POST | `/notifications/read-all` | own |
 
 ## Frontend
 
-- `SocketProvider` sau login; refresh token trước khi reconnect; disconnect khi logout.
+- `SocketProvider` after login; refresh token before reconnect; disconnect on logout.
 - `useRealtime` invalidate:
   - `deal.moved` → `['deals', pipelineId]`, `['deal', id]`
   - `deal.assigned` → deals + notifications
   - `task.due` → `['tasks']`, notifications
   - `notification.created` → `['notifications']`
-- Toast cho assignment/overdue; bell unread count.
-- Connection status nhỏ (online/offline); khi reconnect → invalidate tất cả query liên quan.
-- Không dựa vào event để thay dữ liệu đầy đủ; luôn refetch nếu lệch version.
+- Toast for assignment/overdue; bell unread count.
+- Small connection status (online/offline); on reconnect → invalidate all related queries.
+- Do not rely on events to replace full data; always refetch if the version diverges.
 
 ## Testing
 
-| Nhóm | Test |
+| Group | Test |
 | --- | --- |
-| Auth socket | token sai/hết hạn; không join |
-| Rooms | Sales không join managers; Manager join |
-| deal.moved | owner/manager nhận; Sales khác không |
-| assign | owner cũ/mới nhận; notification |
-| task.due | assignee nhận; dedupe |
+| Auth socket | wrong/expired token; no join |
+| Rooms | Sales do not join managers; Manager joins |
+| deal.moved | owner/manager receive; other Sales do not |
+| assign | old/new owner receive; notification |
+| task.due | assignee receives; dedupe |
 | Notification API | list/read/read-all, role/tenant |
-| Failure | emit lỗi không làm fail HTTP |
-| E2E | 2 context, < 1s; reconnect resync |
+| Failure | emit failure does not fail HTTP |
+| E2E | 2 contexts, < 1s; reconnect resync |
 
 ## Risks & Mitigations
 
-| Rủi ro | Giảm thiểu |
+| Risk | Mitigation |
 | --- | --- |
-| Rò dữ liệu qua room/payload | ADR-012, test RBAC, payload tối giản |
-| Event trước commit | Publish hook sau transaction; test rollback |
-| Nhiều tab/nhiều instance | eventId dedupe; Redis adapter khi scale |
-| Reconnect mất event | invalidate/refetch; không replay |
-| Token hết hạn giữa phiên | client refresh + reconnect; server disconnect |
-| Role đổi khi online | reconnect/role.changed; test |
+| Data leak via room/payload | ADR-012, RBAC tests, minimal payload |
+| Event before commit | Publish hook after transaction; rollback test |
+| Many tabs/many instances | eventId dedupe; Redis adapter when scaling |
+| Reconnect loses events | invalidate/refetch; no replay |
+| Token expires mid-session | client refresh + reconnect; server disconnect |
+| Role changes while online | reconnect/role.changed; test |
 
 ## Complexity Tracking
 
-Không vi phạm. Việc chọn room theo role phức tạp hơn broadcast nhưng bắt buộc để tuân thủ RBAC.
+No violation. Choosing rooms by role is more complex than broadcast but required to comply with RBAC.

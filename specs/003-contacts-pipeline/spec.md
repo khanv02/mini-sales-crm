@@ -7,115 +7,128 @@
 
 ## User Scenarios & Testing
 
-### US-1 — Quản lý contact (Priority: P1)
+### US-1 — Manage contacts (Priority: P1)
 
-Sales tạo, tìm, sửa, xóa mềm contact của mình; Manager/Admin thấy toàn org.
+Sales create, find, edit and soft-delete their own contacts; Manager/Admin see the whole org.
 
-**Vì sao P1**: Contact là nguồn lead; không có contact thì không có deal.
+**Why P1**: contacts are the lead source; without contacts there are no deals.
 
-**Kiểm thử độc lập**: Tạo contact, search theo tên/email/công ty, sửa, xóa; kiểm tra Sales khác không thấy.
+**Independent test**: create a contact, search by name/email/company, edit, delete; check that another Sales
+cannot see it.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR03-01** Given Sales, When tạo contact có name + email hợp lệ, Then `201`, owner = mình, audit
-   `CONTACT_CREATED`, email lowercase.
-2. **AC-FR03-02** Given 10.000 contact, When search `?search=...` + filter + `limit`, Then trả đúng, phân trang
-   cursor, không trả contact đã xóa; p95 < 300ms.
-3. **AC-FR03-03** Given Sales A và Sales B cùng org, When A list contact, Then chỉ thấy contact owner A;
-   Manager/Admin thấy cả A và B; contact chưa gán chỉ Manager/Admin thấy.
-4. **AC-FR03-04** Given contact của mình, When Sales cập nhật name/phone/company, Then `200`, audit
-   before/after; When Sales B cập nhật contact A, Then `404`.
-5. **AC-FR03-05** Given contact tồn tại, When DELETE, Then soft delete (`deleted_at`), biến mất khỏi list/search;
-   contact cùng email được tạo lại sau đó.
-6. **AC-FR03-06** Given email đã có trong org (chưa xóa), When tạo/sửa contact trùng, Then `409
-   CONTACT_EMAIL_EXISTS`; email khác org được phép.
-7. **AC-FR03-07** Given Sales, When tạo contact với `ownerId` người khác, Then `403`/`400`; owner luôn là mình.
-8. **AC-FR03-08** Given Admin org B, When đọc/sửa/xóa contact org A bằng ID, Then `404`; DB không đổi.
+1. **AC-FR03-01** Given Sales, When creating a contact with a valid name + email, Then `201`, owner = self, audit
+   `CONTACT_CREATED`, email lowercased.
+2. **AC-FR03-02** Given 10,000 contacts, When searching `?search=...` + filter + `limit`, Then the correct results
+   are returned, cursor pagination, soft-deleted contacts are not returned; p95 < 300ms.
+3. **AC-FR03-03** Given Sales A and Sales B in the same org, When A lists contacts, Then A sees only contacts owned
+   by A; Manager/Admin see both A and B; unassigned contacts are visible only to Manager/Admin.
+4. **AC-FR03-04** Given a contact of their own, When Sales updates name/phone/company, Then `200`, audit
+   before/after; When Sales B updates contact A, Then `404`.
+5. **AC-FR03-05** Given a contact exists, When DELETE, Then soft delete (`deleted_at`), it disappears from
+   list/search; a contact with the same email can be created again afterwards.
+6. **AC-FR03-06** Given an email already in the org (not deleted), When creating/editing a duplicate contact, Then
+   `409 CONTACT_EMAIL_EXISTS`; an email from another org is allowed.
+7. **AC-FR03-07** Given Sales, When creating a contact with someone else's `ownerId`, Then `403`/`400`; the owner is
+   always self.
+8. **AC-FR03-08** Given Admin of org B, When reading/editing/deleting an org A contact by ID, Then `404`; the DB is
+   unchanged.
 
 ---
 
-### US-2 — Cấu hình pipeline & stage (Priority: P2)
+### US-2 — Pipeline & stage configuration (Priority: P2)
 
-Admin tạo pipeline, thêm/sửa/sắp xếp stage; không xóa stage còn deal; mỗi pipeline có stage thắng/thua.
+Admin creates pipelines, adds/edits/reorders stages; a stage that still has deals is not deleted; each pipeline has
+a won/lost stage.
 
-**Vì sao P2**: Cần cho kanban; org mới có pipeline seed nên có thể demo trước khi làm UI admin.
+**Why P2**: needed for the kanban; a new org has a seeded pipeline so it can be demoed before the admin UI exists.
 
-**Kiểm thử độc lập**: Tạo pipeline 4 stage, reorder, thử xóa stage có deal, thử xóa stage cuối.
+**Independent test**: create a 4-stage pipeline, reorder, try to delete a stage with deals, try to delete the last
+stage.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR04-01** Given Admin, When tạo pipeline + stage, Then `201`, `org_id` đúng, position tăng dần, audit.
-2. **AC-FR04-02** Given stage, When Admin đổi tên/position hoặc reorder, Then `200`, thứ tự đúng, audit;
-   `is_won`/`is_lost` tối đa một mỗi pipeline.
-3. **AC-FR04-03** Given stage còn deal, When Admin xóa, Then `409 STAGE_HAS_DEALS`, stage còn nguyên.
-4. **AC-FR04-04** Given pipeline còn 1 stage hoặc thiếu stage won/lost, When xóa/đổi cờ, Then `409
-   LAST_STAGE`/`WON_STAGE_REQUIRED`/`LOST_STAGE_REQUIRED`.
-5. **AC-FR04-05** Given pipeline còn deal, When Admin xóa pipeline, Then `409 PIPELINE_HAS_DEALS`.
-6. **AC-FR04-06** Given Manager/Sales, When gọi endpoint pipeline/stage ghi, Then `403`; đọc pipeline được.
-7. **AC-FR04-07** Given Admin org B, When sửa pipeline/stage org A, Then `404`; không đổi DB.
+1. **AC-FR04-01** Given Admin, When creating a pipeline + stage, Then `201`, correct `org_id`, increasing position,
+   audit.
+2. **AC-FR04-02** Given a stage, When Admin renames/repositions or reorders, Then `200`, correct order, audit;
+   `is_won`/`is_lost` at most one each per pipeline.
+3. **AC-FR04-03** Given a stage that still has deals, When Admin deletes it, Then `409 STAGE_HAS_DEALS`, the stage is
+   intact.
+4. **AC-FR04-04** Given a pipeline with 1 stage left or missing the won/lost stage, When deleting/changing the flag,
+   Then `409 LAST_STAGE`/`WON_STAGE_REQUIRED`/`LOST_STAGE_REQUIRED`.
+5. **AC-FR04-05** Given a pipeline that still has deals, When Admin deletes the pipeline, Then `409
+   PIPELINE_HAS_DEALS`.
+6. **AC-FR04-06** Given Manager/Sales, When calling a pipeline/stage write endpoint, Then `403`; reading pipelines is
+   allowed.
+7. **AC-FR04-07** Given Admin of org B, When editing an org A pipeline/stage, Then `404`; the DB is unchanged.
 
 ---
 
-### US-3 — Deal & kanban kéo thả (Priority: P1)
+### US-3 — Deals & drag-and-drop kanban (Priority: P1)
 
-Sales tạo deal, kéo giữa stage; Manager/Admin xem toàn org; xung đột phiên bản trả 409.
+Sales create deals and drag them between stages; Manager/Admin see the whole org; a version conflict returns 409.
 
-**Vì sao P1**: Đây là giá trị cốt lõi (G1) và demo chính M1.
+**Why P1**: this is the core value (G1) and the main M1 demo.
 
-**Kiểm thử độc lập**: Tạo deal, list board, move, thử 2 move cùng version, kiểm tra audit + version.
+**Independent test**: create a deal, list the board, move, try 2 moves with the same version, check audit + version.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR05-01** Given contact + stage hợp lệ, When tạo deal, Then `201`, status `OPEN`, version 1, owner =
-   current (hoặc người được Manager/Admin gán), currency = org, position cuối stage, audit.
-2. **AC-FR05-02** Given pipeline, When `GET /deals?pipelineId=...`, Then trả deal theo stage/position; Sales
-   chỉ deal của mình; Manager/Admin toàn org.
-3. **AC-FR05-03** Given deal version N, When move `{stageId, position, version:N}`, Then `200`, stage/position/
-   version N+1, audit `DEAL_MOVED` trong cùng transaction; event phát sau commit.
-4. **AC-FR05-04** Given hai người cùng version N, When move đồng thời, Then một `200`, một `409
-   DEAL_VERSION_CONFLICT` kèm `currentVersion`; DB chỉ có một kết quả; audit chỉ 1 bản ghi move.
-5. **AC-FR05-05** Given người khác đã move, When client gửi version cũ, Then `409`; UI tải lại trạng thái mới.
-6. **AC-FR05-06** Given Sales A và Sales B, When A move deal của B, Then `404`; Manager/Admin move được.
-7. **AC-FR05-07** Given Manager/Admin, When `PATCH /deals/:id/assign` sang owner active cùng org, Then owner
-   đổi, version tăng, audit `DEAL_ASSIGNED`, event; gán owner inactive/khác org → `400 INVALID_OWNER`.
-8. **AC-FR05-08** Given value âm, currency khác org, stage khác pipeline, hoặc thiếu field, When tạo/sửa,
-   Then `400` với code tương ứng; không ghi DB.
-9. **AC-FR05-09** Given Admin org B, When move/read deal org A, Then `404`; không đổi DB.
-10. **AC-FR05-10** Given 5.000 deal, When list board, Then p95 < 300ms; không N+1; index được dùng.
+1. **AC-FR05-01** Given a valid contact + stage, When creating a deal, Then `201`, status `OPEN`, version 1, owner =
+   current (or the person assigned by Manager/Admin), currency = org, position at the end of the stage, audit.
+2. **AC-FR05-02** Given a pipeline, When `GET /deals?pipelineId=...`, Then deals are returned by stage/position;
+   Sales see only their own deals; Manager/Admin see the whole org.
+3. **AC-FR05-03** Given deal version N, When moving `{stageId, position, version:N}`, Then `200`, stage/position/
+   version N+1, audit `DEAL_MOVED` in the same transaction; the event is emitted after commit.
+4. **AC-FR05-04** Given two people with the same version N, When moving concurrently, Then one `200`, one `409
+   DEAL_VERSION_CONFLICT` with `currentVersion`; the DB holds only one result; the audit has only 1 move row.
+5. **AC-FR05-05** Given someone else has already moved it, When the client sends an old version, Then `409`; the UI
+   reloads the new state.
+6. **AC-FR05-06** Given Sales A and Sales B, When A moves B's deal, Then `404`; Manager/Admin can move it.
+7. **AC-FR05-07** Given Manager/Admin, When `PATCH /deals/:id/assign` to an active owner in the same org, Then the
+   owner changes, the version increments, audit `DEAL_ASSIGNED`, event; assigning an inactive/other-org owner →
+   `400 INVALID_OWNER`.
+8. **AC-FR05-08** Given a negative value, a currency other than the org's, a stage from another pipeline, or a
+   missing field, When creating/editing, Then `400` with the corresponding code; nothing is written to the DB.
+9. **AC-FR05-09** Given Admin of org B, When moving/reading an org A deal, Then `404`; the DB is unchanged.
+10. **AC-FR05-10** Given 5,000 deals, When listing the board, Then p95 < 300ms; no N+1; indexes are used.
 
 ---
 
-### US-4 — Chốt thắng/thua (Priority: P2)
+### US-4 — Win/loss close (Priority: P2)
 
-Deal chuyển vào stage won/lost; thua bắt buộc lý do; reopen được.
+A deal moves into the won/lost stage; a loss requires a reason; it can be reopened.
 
-**Vì sao P2**: Cần cho báo cáo và vòng đời deal; có thể làm sau kanban vài ngày.
+**Why P2**: needed for reporting and the deal lifecycle; it can come a few days after the kanban.
 
-**Kiểm thử độc lập**: Move sang won/lost; kiểm tra status, closed_at, lost_reason; reopen.
+**Independent test**: move to won/lost; check status, closed_at, lost_reason; reopen.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR06-01** Given deal OPEN, When move sang stage `is_won`, Then `status=WON`, `closed_at` set,
+1. **AC-FR06-01** Given deal OPEN, When moving to a stage with `is_won`, Then `status=WON`, `closed_at` set,
    `lost_reason=null`, audit.
-2. **AC-FR06-02** Given deal OPEN, When move sang stage `is_lost` thiếu `lostReason`, Then `400
-   LOST_REASON_REQUIRED`; deal không đổi.
-3. **AC-FR06-03** Given move sang lost có lý do, Then `status=LOST`, `closed_at` set, `lost_reason` lưu, audit.
-4. **AC-FR06-04** Given deal WON/LOST, When move về stage OPEN, Then `status=OPEN`, `closed_at=null`,
-   `lost_reason=null`, audit; báo cáo cập nhật.
-5. **AC-FR06-05** Given deal WON, When đọc dashboard/report (004), Then tính theo `closed_at`; không dùng
-   `updated_at`; audit và status nhất quán.
+2. **AC-FR06-02** Given deal OPEN, When moving to a stage with `is_lost` without `lostReason`, Then `400
+   LOST_REASON_REQUIRED`; the deal is unchanged.
+3. **AC-FR06-03** Given a move to lost with a reason, Then `status=LOST`, `closed_at` set, `lost_reason` stored,
+   audit.
+4. **AC-FR06-04** Given deal WON/LOST, When moving back to an OPEN stage, Then `status=OPEN`, `closed_at=null`,
+   `lost_reason=null`, audit; reports update.
+5. **AC-FR06-05** Given deal WON, When reading the dashboard/report (004), Then it is counted by `closed_at`;
+   `updated_at` is not used; audit and status are consistent.
 
 ### Edge Cases
 
-- Contact bị xóa mềm nhưng còn deal → deal vẫn đọc được; tạo deal mới với contact đã xóa → 400.
-- Stage bị xóa khi có deal → chặn 409; deal không mồ côi.
-- Move sang stage cùng pipeline nhưng position ngoài range → clamp đầu/cuối, không lỗi.
-- Position giữa hai card quá nhỏ → rebalance stage, vẫn giữ thứ tự.
-- Xóa stage won/lost cuối → chặn; đổi cờ won/lost khi đã có stage khác → 409.
-- Sales tạo deal với contact không sở hữu → 404 (che tồn tại).
-- Hai request tạo contact cùng email đồng thời → unique DB, một 409.
-- Search term rỗng/ký tự đặc biệt → trả list mặc định hoặc 400; không SQL injection.
-- Pipeline không có stage → không cho tạo deal; seed luôn có stage.
+- A contact is soft-deleted but still has deals → the deals remain readable; creating a new deal with a deleted
+  contact → 400.
+- A stage is deleted while it has deals → blocked with 409; deals are never orphaned.
+- A move to a stage in the same pipeline but with a position out of range → clamp to the start/end, no error.
+- The position between two cards is too small → rebalance the stage, keeping the order.
+- Deleting the last won/lost stage → blocked; changing the won/lost flag when another stage already has it → 409.
+- Sales creates a deal with a contact they do not own → 404 (hide existence).
+- Two requests create a contact with the same email concurrently → DB unique, one 409.
+- An empty search term/special characters → return the default list or 400; no SQL injection.
+- A pipeline with no stage → deals cannot be created; the seed always has stages.
 
 ## Requirements
 
@@ -123,62 +136,63 @@ Deal chuyển vào stage won/lost; thua bắt buộc lý do; reopen được.
 
 **Contacts**
 
-- **FR-03.1**: CRUD contact; name bắt buộc; email/phone optional; email lowercase; soft delete.
-- **FR-03.2**: List/search/filter theo `search` (name/email/company), `ownerId`, `source`, `createdFrom/To`;
+- **FR-03.1**: Contact CRUD; name required; email/phone optional; email lowercase; soft delete.
+- **FR-03.2**: List/search/filter by `search` (name/email/company), `ownerId`, `source`, `createdFrom/To`;
   cursor pagination; limit ≤ 100.
-- **FR-03.3**: Sales chỉ owner; Manager/Admin toàn org; contact chưa gán chỉ Manager/Admin.
-- **FR-03.4**: Unique `(org_id, lower(email))` khi chưa xóa; map lỗi `CONTACT_EMAIL_EXISTS`.
-- **FR-03.5**: Search dùng trigram + unaccent; p95 < 300ms với 10k; index như data-model.
-- **FR-03.6**: Sales không đổi owner; Manager/Admin được assign qua `PATCH /deals/:id/assign` (bắt buộc, AC-FR05-07).
+- **FR-03.3**: Sales only their own; Manager/Admin the whole org; unassigned contacts only Manager/Admin.
+- **FR-03.4**: Unique `(org_id, lower(email))` while not deleted; map the error to `CONTACT_EMAIL_EXISTS`.
+- **FR-03.5**: Search uses trigram + unaccent; p95 < 300ms with 10k; indexes as in data-model.
+- **FR-03.6**: Sales cannot change the owner; Manager/Admin can assign via `PATCH /deals/:id/assign` (mandatory,
+  AC-FR05-07).
 
 **Pipeline**
 
 - **FR-04.1**: Admin CRUD pipeline/stage; stage position numeric; reorder transaction.
-- **FR-04.2**: Mỗi pipeline tối đa 1 won + 1 lost; ít nhất 1 stage; không xóa stage cuối.
-- **FR-04.3**: Không xóa stage/pipeline còn deal → 409.
-- **FR-04.4**: Sales đọc pipeline/stage; không ghi.
+- **FR-04.2**: Each pipeline has at most 1 won + 1 lost; at least 1 stage; the last stage cannot be deleted.
+- **FR-04.3**: A stage/pipeline that still has deals cannot be deleted → 409.
+- **FR-04.4**: Sales read pipeline/stage; no writes.
 
 **Deals**
 
-- **FR-05.1**: Create/read/update deal; status do server; version; currency = org; owner hợp lệ.
-- **FR-05.2**: Board query theo pipeline, group stage, sort position/id; cursor theo stage nếu cần.
-- **FR-05.3**: Move `{stageId, position, version}`; fractional position; audit + domain event sau commit.
-- **FR-05.4**: Optimistic lock; 0 row → 409 kèm currentVersion; không retry tự động.
-- **FR-05.5**: Assign owner Manager/Admin; Sales không.
-- **FR-05.6**: RBAC/tenant như permissions matrix.
+- **FR-05.1**: Create/read/update deal; status set by the server; version; currency = org; valid owner.
+- **FR-05.2**: Board query by pipeline, group by stage, sort by position/id; cursor by stage when needed.
+- **FR-05.3**: Move `{stageId, position, version}`; fractional position; audit + domain event after commit.
+- **FR-05.4**: Optimistic lock; 0 rows → 409 with currentVersion; no automatic retry.
+- **FR-05.5**: Assign owner by Manager/Admin; Sales cannot.
+- **FR-05.6**: RBAC/tenant as in the permissions matrix.
 
 **Win/loss**
 
-- **FR-06.1**: `status` suy ra từ stage; `closed_at` set/clear; `lost_reason` bắt buộc khi LOST.
-- **FR-06.2**: Reopen hợp lệ; audit.
-- **FR-06.3**: DB check constraint khớp service.
+- **FR-06.1**: `status` derived from the stage; `closed_at` set/cleared; `lost_reason` required when LOST.
+- **FR-06.2**: Reopen is allowed; audit.
+- **FR-06.3**: DB check constraint matches the service.
 
 ### Key Entities
 
-- Contact, Pipeline, Stage, Deal; chi tiết `docs/data-model.md` mục 4.4–4.7.
-- Audit log cho mọi mutation; domain event `deal.moved`, `deal.assigned` (tiêu thụ ở 005).
+- Contact, Pipeline, Stage, Deal; details in `docs/data-model.md` sections 4.4–4.7.
+- Audit log for every mutation; domain events `deal.moved`, `deal.assigned` (consumed in 005).
 
 ## Success Criteria
 
-- **SC-001**: Luồng tạo contact → deal → kéo stage → won chạy < 30s thao tác.
-- **SC-002**: 100% AC có test; 100% endpoint có tenant/role test.
-- **SC-003**: p95 list/search/board < 300ms với seed 10k/5k.
-- **SC-004**: 0 mất dữ liệu khi 2 người move đồng thời; luôn có 409 cho người sau.
-- **SC-005**: Mọi mutation có audit đúng before/after (đã redact).
+- **SC-001**: The flow create contact → deal → drag stage → won takes < 30s of interaction.
+- **SC-002**: 100% of ACs have tests; 100% of endpoints have tenant/role tests.
+- **SC-003**: p95 list/search/board < 300ms with a 10k/5k seed.
+- **SC-004**: 0 data loss when 2 people move concurrently; the later one always gets 409.
+- **SC-005**: Every mutation has a correct before/after audit (redacted).
 
 ## Assumptions
 
-- Mỗi deal gắn đúng 1 contact, 1 pipeline, 1 stage; contact có thể có nhiều deal.
-- Deal không có API xóa cứng trong MVP; kết thúc bằng WON/LOST.
-- Một org có thể có nhiều pipeline; UI MVP mặc định pipeline đầu tiên.
-- Currency = org currency; chưa đa tiền tệ.
-- Position do server tính; client gửi index đích.
-- Event realtime được phát ngay cả khi feature 005 chưa có (dùng event bus nội bộ; gateway sau).
+- Each deal is attached to exactly 1 contact, 1 pipeline, 1 stage; a contact can have many deals.
+- Deals have no hard-delete API in the MVP; they end as WON/LOST.
+- An org can have multiple pipelines; the MVP UI defaults to the first pipeline.
+- Currency = org currency; no multi-currency yet.
+- Position is computed by the server; the client sends the target index.
+- Realtime events are emitted even before feature 005 exists (using an internal event bus; the gateway comes later).
 
 ## Out of Scope
 
 - Custom fields, tags, attachments.
-- Merge contact, import (feature 006), bulk edit.
+- Contact merge, import (feature 006), bulk edit.
 - Deal products/line items, discount, tax.
 - Multi-currency/FX.
 - Pipeline probability/weighted forecast.
@@ -186,7 +200,7 @@ Deal chuyển vào stage won/lost; thua bắt buộc lý do; reopen được.
 
 ## Traceability
 
-| Nguồn | AC | Task |
+| Source | AC | Task |
 | --- | --- | --- |
 | FR-03 | AC-FR03-01..08 | T200–T208, T221, T226 |
 | FR-04 | AC-FR04-01..07 | T209–T211, T222 |

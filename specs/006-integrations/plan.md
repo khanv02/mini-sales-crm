@@ -4,37 +4,37 @@
 
 ## Summary
 
-Thêm BullMQ worker cho import CSV, webhook lead và email nhắc việc. Trọng tâm: idempotency, HMAC an toàn,
-retry/DLQ, không chặn request, không rò secret.
+Add BullMQ workers for CSV import, webhook leads and reminder email. Focus: idempotency, safe HMAC,
+retry/DLQ, no request blocking, no secret leakage.
 
 ## Technical Context
 
 - **Backend**: `@nestjs/bullmq`, BullMQ, Redis; `csv-parse`, `busboy`/multer, `nodemailer`.
-- **Storage**: import_jobs, webhook_sources/events; storage local/S3 adapter.
-- **Crypto**: AES-256-GCM cho webhook secret; HMAC-SHA256 timing-safe.
-- **Testing**: Jest + Redis thật; Mailpit; fake worker; Supertest raw body.
-- **Performance**: upload 5k → 202 < 1s; xử lý < 2 phút local.
+- **Storage**: import_jobs, webhook_sources/events; local/S3 storage adapter.
+- **Crypto**: AES-256-GCM for webhook secret; HMAC-SHA256 timing-safe.
+- **Testing**: Jest + real Redis; Mailpit; fake worker; Supertest raw body.
+- **Performance**: upload 5k → 202 < 1s; processing < 2 minutes locally.
 
 ## Constitution Check
 
-| Gate | Cách đáp ứng | Trạng thái |
+| Gate | How it is satisfied | Status |
 | --- | --- | --- |
 | C1 strict | zod payload/CSV types; no any | Pass |
-| C2 phân lớp | controller → service → repo; worker gọi service | Pass |
-| C3 org_id | job/event mang orgId; worker re-check | Pass |
+| C2 layering | controller → service → repo; worker calls the service | Pass |
+| C3 org_id | job/event carry orgId; worker re-checks | Pass |
 | C4 audit | import contact/webhook contact create audit | Pass |
 | C5 validate/error | CSV/HMAC/payload codes | Pass |
-| C6 secret | AES key env; secret không log/response | Pass |
-| C7 async | toàn bộ nặng qua queue | Pass |
+| C6 secret | AES key env; secret not logged/returned | Pass |
+| C7 async | all heavy work through the queue | Pass |
 | C8 test | idempotency/retry/tenant/role | Pass |
-| C9 PR nhỏ | T500–T520 | Pass |
+| C9 small PR | T500–T520 | Pass |
 
 ## Data Model
 
 - `import_jobs`: file_hash, created_by, progress, error_report_key, timestamps.
 - `webhook_sources`: secret_ciphertext, last4, previous_* (grace), default_owner, active.
 - `webhook_events`: idempotency unique, status, attempts, last_error, processed_at.
-- Chi tiết `docs/data-model.md` 4.10–4.12.
+- Details in `docs/data-model.md` 4.10–4.12.
 
 ## Import flow
 
@@ -56,11 +56,11 @@ Worker:
   → emit import.completed (005)
 ```
 
-- Audit: một bản ghi `IMPORT_CONTACTS` tổng hợp + từng contact? C4 nói mọi thay đổi; để tránh 5k audit row,
-  ghi audit từng contact là đúng nhưng nặng. Quyết định: ghi audit từng contact (batch insert) để tuân C4;
-  thêm audit job summary. Nếu quá tải, tối ưu batch insert.
-- Retry: job idempotent theo unique email + status; nếu chạy lại, bỏ qua contact đã tạo bởi job (dùng
-  `source`/audit? đơn giản: unique email + upsert skip).
+- Audit: one aggregate `IMPORT_CONTACTS` record + one per contact? C4 says every change; to avoid 5k audit rows,
+  writing audit per contact is correct but heavy. Decision: write audit per contact (batch insert) to comply with
+  C4; add a job summary audit. If it is too heavy, optimize the batch insert.
+- Retry: the job is idempotent by unique email + status; when re-run, skip contacts already created by the job
+  (use `source`/audit? simpler: unique email + upsert skip).
 
 ## Webhook flow
 
@@ -85,45 +85,45 @@ Worker:
 ```
 
 - Secret: AES-256-GCM; `secret_last4`; plaintext only on create/rotate; previous secret grace 24h.
-- Body limit 256KB; JSON parse lỗi → 400; không log body đầy đủ.
-- Replay: timestamp + idempotency key; cùng key khác payload → 409.
+- Body limit 256KB; JSON parse error → 400; do not log the full body.
+- Replay: timestamp + idempotency key; same key with a different payload → 409.
 
 ## Email flow
 
 ```text
-Scheduler (004) tạo notification TASK_DUE/OVERDUE
+Scheduler (004) creates TASK_DUE/OVERDUE notification
   → enqueue emails/send-email { to, template, data, dedupeKey }
   → jobId = email:{dedupeKey}; worker checks sent/dedupe
   → Mailer adapter (Mailpit dev) → success log
   → fail: retry 3 backoff → DLQ; task unaffected
 ```
 
-- Templates: `task-due`, `task-overdue`; tiếng Việt; link tới deal.
-- Không gửi nếu assignee inactive/không email.
-- Không log subject/body đầy đủ; chỉ template/to/dedupeKey.
+- Templates: `task-due`, `task-overdue`; Vietnamese; link to the deal.
+- Do not send if the assignee is inactive/has no email.
+- Do not log the full subject/body; only template/to/dedupeKey.
 
 ## Storage
 
 - Interface `ObjectStorage { put(key, stream), getSignedUrl(key, ttl), delete(key) }`.
-- Dev: local volume `./.data/uploads`; prod: S3-compatible (MinIO/S3) qua env.
-- Key: `org/{orgId}/imports/{jobId}/errors.csv`; signed URL 15 phút.
-- Xóa file tạm sau xử lý; error report giữ 7 ngày (retention đề xuất).
+- Dev: local volume `./.data/uploads`; prod: S3-compatible (MinIO/S3) via env.
+- Key: `org/{orgId}/imports/{jobId}/errors.csv`; signed URL 15 minutes.
+- Delete the temp file after processing; keep the error report for 7 days (proposed retention).
 
 ## API
 
-| Method | Path | Ghi chú |
+| Method | Path | Notes |
 | --- | --- | --- |
 | POST | `/imports/contacts` | Manager/Admin |
 | GET | `/imports/:id` | progress |
-| GET | `/imports/:id/errors` | signed URL hoặc stream |
+| GET | `/imports/:id/errors` | signed URL or stream |
 | POST | `/webhooks/leads/:publicKey` | public + HMAC |
 | GET/POST | `/webhook-sources` | Admin |
 | PATCH/DELETE | `/webhook-sources/:id` | Admin |
-| POST | `/webhook-sources/:id/rotate-secret` | trả secret một lần |
+| POST | `/webhook-sources/:id/rotate-secret` | returns the secret once |
 
 ## Testing
 
-| Nhóm | Test |
+| Group | Test |
 | --- | --- |
 | Import | 5k, progress, error report, duplicate, same file, invalid, role/tenant |
 | Webhook | signature/replay/idempotency/retry/DLQ/secret rotate |
@@ -133,16 +133,16 @@ Scheduler (004) tạo notification TASK_DUE/OVERDUE
 
 ## Risks & Mitigations
 
-| Rủi ro | Giảm thiểu |
+| Risk | Mitigation |
 | --- | --- |
-| HMAC raw body bị Nest parse | `rawBody: true`; verify trước JSON parse |
-| Secret lộ | AES-GCM, không log, chỉ trả một lần; test |
-| Import 5k audit nặng | Batch insert trong transaction; đo perf |
-| Worker trùng | unique + status conditional + jobId |
-| DLQ đầy | Alert/metric; Admin UI/script retry |
-| File lớn/zip bomb | Giới hạn size/row; stream; không giải nén |
-| Email spam | Chỉ nội bộ; dedupe; không gửi ngoài org |
+| HMAC raw body parsed by Nest | `rawBody: true`; verify before JSON parse |
+| Secret leak | AES-GCM, no logging, return once; test |
+| 5k import audit too heavy | Batch insert inside the transaction; measure perf |
+| Duplicate worker | unique + conditional status + jobId |
+| DLQ full | Alert/metric; Admin UI/script retry |
+| Large file/zip bomb | Size/row limits; stream; no decompression |
+| Email spam | Internal only; dedupe; no sending outside the org |
 
 ## Complexity Tracking
 
-Không vi phạm. Encryption secret và outbox/sweeper là phức tạp bắt buộc để đáp ứng FR-11.
+No violation. Secret encryption and the outbox/sweeper are complexity required to satisfy FR-11.

@@ -4,38 +4,38 @@
 
 ## Summary
 
-Hoàn thiện lớp tin cậy/vận hành: audit viewer, export CSV streaming an toàn, rate limit theo user/IP/source,
-và cache dashboard 60s với invalidation theo version. Đây là nền để 005/006/008 dùng lại.
+Complete the trust/operations layer: audit viewer, safe streaming CSV export, rate limit per user/IP/source,
+and a 60s dashboard cache with version-based invalidation. This is the foundation 005/006/008 reuse.
 
 ## Technical Context
 
 - **Backend**: modules `audit`, `exports`, `common/rate-limit`, `common/cache`.
 - **Redis**: token bucket, cache key/version, single-flight (AI).
-- **CSV**: stream + escape; `csv-stringify` hoặc tự implement.
-- **Testing**: Jest/Supertest; fake Redis; perf audit 100k; export 100k.
+- **CSV**: stream + escape; `csv-stringify` or a custom implementation.
+- **Testing**: Jest/Supertest; fake Redis; audit perf 100k; export 100k.
 - **Performance**: audit p95 < 300ms; cache hit < 50ms.
 
 ## Constitution Check
 
-| Gate | Cách đáp ứng | Trạng thái |
+| Gate | How it is satisfied | Status |
 | --- | --- | --- |
 | C1 strict | DTO/filter typed | Pass |
-| C2 phân lớp | AuditRepository/ExportService; controller mỏng | Pass |
-| C3 org_id | mọi query org; cache key org | Pass |
-| C4 audit | audit read-only; export ghi audit | Pass |
-| C5 validate/error | filter/date/limit validate | Pass |
-| C6 secret | không secret; audit redaction | Pass |
-| C7 async | export stream; cache background? không cần | Pass |
+| C2 layering | AuditRepository/ExportService; thin controller | Pass |
+| C3 org_id | every query scoped to org; cache key includes org | Pass |
+| C4 audit | audit read-only; export writes audit | Pass |
+| C5 validate/error | filter/date/limit validation | Pass |
+| C6 secret | no secrets; audit redaction | Pass |
+| C7 async | export stream; cache background? not needed | Pass |
 | C8 test | role/tenant/cache invalidation | Pass |
-| C9 PR nhỏ | T600–T608 | Pass |
+| C9 small PR | T600–T608 | Pass |
 
 ## Audit
 
-- Query `audit_logs` theo org + filter; cursor `(created_at,id)`; limit ≤ 100.
-- `before/after` đã redact từ 003; audit viewer không trả secret.
-- Không có route mutation; Nest không expose PATCH/DELETE.
+- Query `audit_logs` by org + filter; cursor `(created_at,id)`; limit ≤ 100.
+- `before/after` already redacted since 003; the audit viewer never returns secrets.
+- No mutation route; Nest does not expose PATCH/DELETE.
 - Index: `(org_id, created_at)`, `(org_id, entity, entity_id, created_at)`, `(org_id, actor_id, created_at)`.
-- UI Admin: bảng, filter entity/actor/action/date, drawer diff.
+- Admin UI: table, filter entity/actor/action/date, diff drawer.
 
 ## Export
 
@@ -44,28 +44,28 @@ GET /exports/contacts?search=&ownerId=&source=
   → role Manager/Admin
   → count > 100k → 400
   → set headers text/csv, BOM
-  → stream rows từ cursor (batch 500) → escape → response
+  → stream rows from cursor (batch 500) → escape → response
   → audit EXPORT { filter, rowCount }
 ```
 
-- Escape: nếu ô bắt đầu `= + - @ \t \r` → prefix `'`; luôn quote nếu chứa `, " \n`.
-- Deals export join contact/stage/owner; không select cột secret.
-- Không dùng `findMany` toàn bộ; dùng cursor/batch.
-- Nếu client disconnect → dừng stream, log.
+- Escape: if a cell starts with `= + - @ \t \r` → prefix `'`; always quote if it contains `, " \n`.
+- Deals export joins contact/stage/owner; do not select secret columns.
+- Do not use `findMany` on everything; use cursor/batch.
+- If the client disconnects → stop the stream, log.
 
 ## Rate limit
 
 - Redis key:
   - `rl:user:{userId}:{minute}` → count/token bucket.
-  - `rl:ip:{ip}:{minute}` cho public/auth.
-  - `rl:source:{sourceId}:{minute}` cho webhook.
-- Dùng `rate-limiter-flexible` (Redis) hoặc Lua atomic; TTL 2 phút.
+  - `rl:ip:{ip}:{minute}` for public/auth.
+  - `rl:source:{sourceId}:{minute}` for webhook.
+- Use `rate-limiter-flexible` (Redis) or atomic Lua; TTL 2 minutes.
 - Headers: `X-RateLimit-Limit/Remaining/Reset`, `Retry-After`.
-- Middleware/guard order: auth → tenant → rate limit (trừ health/webhook).
-- Redis lỗi:
+- Middleware/guard order: auth → tenant → rate limit (except health/webhook).
+- Redis failure:
   - auth/login + webhook: fail-closed 503/429.
-  - đọc thường: fail-open, log warn, metric.
-- Test boundary ±1; hai user độc lập; header đúng.
+  - normal reads: fail-open, log warn, metric.
+- Test boundary ±1; two independent users; correct headers.
 
 ## Cache
 
@@ -78,26 +78,27 @@ On mutation contact/deal/activity (after commit):
   INCR org:{orgId}:data_version
 ```
 
-- Canonical filters: sort keys, bỏ undefined, date ISO.
-- Cache value JSON; không cache lỗi.
-- Redis lỗi → query DB trực tiếp.
-- Không cache cross-user: Sales key có userId; Manager/Admin `all` nhưng vẫn org.
-- Invalidation chỉ sau commit; rollback không bump.
-- Single-flight (optional): lock `lock:report:{key}` 5s để tránh stampede; nếu không lấy được lock → query DB.
+- Canonical filters: sort keys, drop undefined, ISO dates.
+- Cache value JSON; do not cache errors.
+- Redis failure → query the DB directly.
+- No cross-user caching: Sales keys include userId; Manager/Admin use `all` but still per org.
+- Invalidation only after commit; rollback does not bump.
+- Single-flight (optional): lock `lock:report:{key}` for 5s to avoid stampede; if the lock is not acquired →
+  query the DB.
 
 ## API
 
-| Method | Path | Ghi chú |
+| Method | Path | Notes |
 | --- | --- | --- |
 | GET | `/audit-logs` | Admin |
 | GET | `/exports/contacts` | Manager/Admin |
 | GET | `/exports/deals` | Manager/Admin |
 
-Rate limit/cache áp dụng middleware, không endpoint riêng.
+Rate limit/cache are applied by middleware, not dedicated endpoints.
 
 ## Testing
 
-| Nhóm | Test |
+| Group | Test |
 | --- | --- |
 | Audit | list/filter/pagination, role/tenant, no mutation, redaction |
 | Export | columns/filters/100k/stream, injection, role/tenant, audit |
@@ -107,15 +108,15 @@ Rate limit/cache áp dụng middleware, không endpoint riêng.
 
 ## Risks & Mitigations
 
-| Rủi ro | Giảm thiểu |
+| Risk | Mitigation |
 | --- | --- |
-| Cache key thiếu filter gây sai số | Canonicalize + test từng filter |
-| Invalidation trễ | Bump sau commit; test E2E move → summary |
-| Rate limit chặn nhầm | Key/user; burst; test nhiều user |
-| Export OOM | Stream batch; test 100k |
-| Audit lộ PII | Redaction + Admin-only + test |
-| Redis single point | Bypass cache/fail-open đọc; health ready |
+| Cache key missing a filter causes wrong numbers | Canonicalize + test each filter |
+| Invalidation lag | Bump after commit; E2E test move → summary |
+| Rate limit wrongly blocks | Key/user; burst; test many users |
+| Export OOM | Stream in batches; test 100k |
+| Audit leaks PII | Redaction + Admin-only + test |
+| Redis single point | Bypass cache/fail-open reads; health ready |
 
 ## Complexity Tracking
 
-Không vi phạm. Cache chỉ cho dashboard; không cache dữ liệu nhạy cảm khác.
+No violation. Cache only for the dashboard; no caching of other sensitive data.
