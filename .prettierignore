@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+backend/prisma/migrations
+docs/api/openapi.yaml
+.specify
+*.md

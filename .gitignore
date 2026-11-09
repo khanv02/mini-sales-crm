@@ -52,6 +52,7 @@ yarn-error.log*
 uploads/
 tmp/
 temp/
+backups/
 *.sqlite
 *.sqlite3
 *.dump
