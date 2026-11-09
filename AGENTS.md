@@ -80,3 +80,25 @@ Where to look:
 10. **Separate apps.** Frontend and backend live in separate folders: `apps/api` (backend, NestJS) and `apps/web`
     (frontend, React + Vite); shared types/zod live in `packages/shared`. Never mix server and client code in one
     folder, and never import across the two apps (go through `packages/shared`).
+
+## 4. Git and branching workflow
+
+- **Branch naming conventions**:
+  - `feature/<id>-<short-description>`: Feature work tied to SDD milestones (e.g., `feature/001-foundation`, `feature/003-contacts-pipeline`).
+  - `hotfix/<issue>-<short-description>`: Urgent fixes addressing regressions or defects in released code.
+  - `chore/<short-description>`: Tooling, dependency, and configuration maintenance.
+  - `docs/<short-description>`: Documentation, spec refinement, and governance updates.
+- **Commit discipline**: Small, atomic commits with conventional commit messages tagged with task/requirement IDs (`feat(FR-xx): ...`, `docs(spec): ...`, `fix(Txxx): ...`).
+- **Push policy**: **NEVER automatically push to remote repositories.** All commits remain local. Pushing to remote is permitted only when the user explicitly instructs the agent to push.
+
+## 5. Standard report format for task outputs
+
+Every response reporting task completion, code edits, or progress must include a concise, review-friendly markdown summary designed for the human reviewer:
+
+1. **Files Changed**: List exact paths of modified, created, or deleted files.
+2. **Changes Summary**: Brief, high-signal description of what was added or edited.
+3. **Project Impact**: How the changes affect the overall system, contracts, or runtime behavior.
+4. **Conflicts & Blockers**: Any detected conflicts, resolution applied, or decisions pending.
+5. **Trade-offs & Rationale**: Why this approach was chosen over alternatives, and any compromises made.
+
+Keep this summary clear, objective, and token-efficient so the human reviewer can evaluate and approve changes quickly.
