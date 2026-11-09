@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "pretypecheck": "pnpm --filter @pulse/shared build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src e2e vite.config.ts",
+    "lint": "eslint src e2e vite.config.ts --max-warnings=0",
     "pretest:unit": "pnpm --filter @pulse/shared build",
     "test:unit": "vitest run",
     "test:e2e": "playwright test"

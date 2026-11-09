@@ -1,4 +1,4 @@
 # Root compose entrypoint required by `docs/quickstart.md` (docker compose up -d).
-# The service definitions live in infra/docker-compose.yml.
+# The service definitions live in backend/infra/docker-compose.yml.
 include:
-  - path: infra/docker-compose.yml
+  - path: backend/infra/docker-compose.yml

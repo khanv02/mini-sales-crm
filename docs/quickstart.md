@@ -1,4 +1,4 @@
-# Quickstart — Pulse CRM (M0)
+﻿# Quickstart â€” Pulse CRM (M0)
 
 Goal: from clone to a running app in **a few commands**, satisfying NFR-06 and the M0 DoD.
 
@@ -76,7 +76,7 @@ pnpm db:seed         # sample data + perf dataset (never in production)
 What the idempotent seed creates (dev/test only):
 
 - Orgs `Acme` / `Globex`; user `admin@acme.test` / `Password123!` plus Manager/Sales for each org.
-- From feature 003 onwards: pipeline “Sales Pipeline” with New/Qualified/Proposal/Won/Lost.
+- From feature 003 onwards: pipeline â€œSales Pipelineâ€ with New/Qualified/Proposal/Won/Lost.
 - 10,000 contacts + 5,000 deals for org `Acme`, only when `SEED_PERF=true` (feature 003+).
 
 Seed guards (both default to `false`, see `docs/data-model.md` section 6):
@@ -89,14 +89,14 @@ Seed guards (both default to `false`, see `docs/data-model.md` section 6):
 
 ```powershell
 # Windows PowerShell (Docker Compose v2)
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/restore.ps1 -BackupFile backups\pulse-<timestamp>.dump
+powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/backup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/restore.ps1 -BackupFile backups\pulse-<timestamp>.dump
 ```
 
 ```bash
 # Linux/macOS
-pwsh scripts/backup.ps1
-pwsh scripts/restore.ps1 -BackupFile backups/pulse-<timestamp>.dump
+pwsh backend/scripts/backup.ps1
+pwsh backend/scripts/restore.ps1 -BackupFile backups/pulse-<timestamp>.dump
 ```
 
 The backup is a PostgreSQL custom-format dump written to `backups/`; the restore target defaults to the separate

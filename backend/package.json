@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "api",
   "version": "0.1.0",
   "private": true,
   "prisma": {
-    "seed": "node ../scripts/run-with-env.mjs pnpm exec tsx prisma/seed.ts"
+    "seed": "node scripts/run-with-env.mjs pnpm exec tsx prisma/seed.ts"
   },
   "scripts": {
     "predev": "pnpm --filter @pulse/shared build",
@@ -13,7 +13,7 @@
     "start": "node dist/main.js",
     "pretypecheck": "pnpm --filter @pulse/shared build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src test prisma/seed.ts",
+    "lint": "eslint src test prisma/seed.ts --max-warnings=0",
     "pretest:unit": "pnpm --filter @pulse/shared build",
     "test:unit": "jest --config test/jest-unit.config.ts",
     "test:unit:cov": "jest --config test/jest-unit.config.ts --coverage",
@@ -21,11 +21,11 @@
     "test:integration": "jest --config test/jest-integration.config.ts --runInBand",
     "test": "pnpm test:unit && pnpm test:integration",
     "db:generate": "prisma generate",
-    "db:migrate": "node ../scripts/run-with-env.mjs pnpm exec prisma migrate deploy",
-    "db:migrate:dev": "node ../scripts/run-with-env.mjs pnpm exec prisma migrate dev",
-    "db:seed": "node ../scripts/run-with-env.mjs pnpm exec tsx prisma/seed.ts",
-    "db:reset": "node ../scripts/run-with-env.mjs pnpm exec prisma migrate reset --force",
-    "db:studio": "node ../scripts/run-with-env.mjs pnpm exec prisma studio"
+    "db:migrate": "node scripts/run-with-env.mjs pnpm exec prisma migrate deploy",
+    "db:migrate:dev": "node scripts/run-with-env.mjs pnpm exec prisma migrate dev",
+    "db:seed": "node scripts/run-with-env.mjs pnpm exec tsx prisma/seed.ts",
+    "db:reset": "node scripts/run-with-env.mjs pnpm exec prisma migrate reset --force",
+    "db:studio": "node scripts/run-with-env.mjs pnpm exec prisma studio"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.5",

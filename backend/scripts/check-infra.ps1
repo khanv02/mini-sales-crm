@@ -1,4 +1,4 @@
-# Verify that PostgreSQL and Redis from infra/docker-compose.yml are reachable.
+﻿# Verify that PostgreSQL and Redis from backend/infra/docker-compose.yml are reachable.
 # Exit code 0 when both are ready; non-zero naming the failing component otherwise.
 # Requires Docker Compose v2.
 $ErrorActionPreference = 'Stop'
