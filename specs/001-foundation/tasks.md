@@ -6,10 +6,11 @@
 
 ## Phase 1 â€” Setup
 
-- [x] **T001** Initialise the pnpm workspace: `package.json`, `pnpm-workspace.yaml`, `.nvmrc`, `.editorconfig`,
-      `.gitignore`, `.gitattributes`; root scripts `dev`, `build`, `lint`, `typecheck`, `test`, `test:unit`,
-      `test:integration`, `test:e2e`, `test:perf`, `eval:score`, `infra:check`, `db:*`. These are exactly the
-      aliases used by `docs/quickstart.md`, `docs/testing-strategy.md` and CI (T014).
+- [x] **T001** Initialise the pnpm workspace: `package.json`, `pnpm-workspace.yaml`, `.gitignore`; root scripts
+      `dev`, `build`, `lint`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `test:perf`,
+      `eval:score`, `infra:check`, `db:*`. These are exactly the aliases used by `docs/quickstart.md`,
+      `docs/testing-strategy.md` and CI (T014). Each package owns its `tsconfig.json`; Node 22 is pinned by the
+      root `engines` field, so no `.nvmrc`/`.editorconfig`/`.gitattributes` is kept at the repo root.
 - [x] **T002** [P] Scaffold `backend` NestJS strict TS, ESLint/Prettier/Jest, `src/main.ts`, `app.module.ts`.
 - [x] **T003** [P] Scaffold `frontend` React+Vite+TS, Tailwind, shadcn/ui, TanStack Query, React Router, Vitest.
 - [x] **T004** [P] Scaffold `packages/shared`: tsconfig, zod, types, constants; exported via the package name.

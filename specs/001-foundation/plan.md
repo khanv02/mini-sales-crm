@@ -138,7 +138,7 @@ Missing/invalid → exit code 1 with a clear message; the value itself is never 
 | Risk | Level | Mitigation |
 | --- | --- | --- |
 | Prisma does not support partial/trigram in the schema | High | Manual SQL migration; test migrating from empty |
-| Windows path/CRLF/script | Medium | PowerShell scripts; `.gitattributes`; test on Windows |
+| Windows path/CRLF/script | Medium | PowerShell scripts; `prettier.endOfLine = lf`; test on Windows |
 | CI slow because of integration | Medium | pnpm cache; service healthcheck; parallel tests with separate DBs |
 | Secret leaking into logs | High | Redaction test; never log the env object |
 | Health ready flaky | Low | Short timeout/retry; distinguish live/ready |
