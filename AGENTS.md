@@ -90,9 +90,9 @@ Where to look:
   - `hotfix/<issue>-<short-description>`: Urgent fixes addressing regressions or defects in released code.
   - `chore/<short-description>`: Tooling, dependency, and configuration maintenance.
   - `docs/<short-description>`: Documentation, spec refinement, and governance updates.
-- **Commit discipline**: Small, atomic commits with concise conventional messages (`feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`). Do not embed task/requirement IDs in the commit subject; keep the subject short and readable.
+- **Commit discipline**: Small, atomic commits with concise conventional messages (`feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`). Never embed task/ticket IDs in the subject (e.g., use `docs: update api conventions` instead of `docs(T017): ...` or `feat(FR-05): ...`). Keep subjects clean, concise, and visually appealing.
 - **Push policy**: **NEVER automatically push to remote repositories.** All commits remain local. Pushing to remote is permitted only when the user explicitly instructs the agent to push.
-- **Session log**: Track what changed in each work session in `.session-log.md` at the repo root. This file is git-ignored and never committed; it is a private scratchpad for the human reviewer to see what the agent did per session.
+- **Session log & ticket tracking**: Record task/ticket details, requirement IDs, and step-by-step changes in `.session-log.md` at the repo root after each session. This file is git-ignored and never committed; it serves as a private, concise scratchpad for the human reviewer.
 
 ## 5. Standard report format for task outputs
 
@@ -104,9 +104,9 @@ Every response reporting task completion, code edits, or progress must include a
 4. **Conflicts & Blockers**: Any detected conflicts, resolution applied, or decisions pending.
 5. **Trade-offs & Rationale**: Why this approach was chosen over alternatives, and any compromises made.
 
+Keep this summary clear, objective, and token-efficient so the human reviewer can evaluate and approve changes quickly.
+
 ## 6. Scope discipline
 
 - **Do exactly the assigned task — no more, no less.** Do not refactor unrelated code, reformat files, or "improve" things the user did not ask for. If a cleanup is warranted but out of scope, note it and ask; do not act on it.
 - **No overkill.** Prefer the simplest solution that satisfies the requirement. Do not add abstractions, layers, or tooling that the current stage does not need. A small project should stay small.
-
-Keep this summary clear, objective, and token-efficient so the human reviewer can evaluate and approve changes quickly.
