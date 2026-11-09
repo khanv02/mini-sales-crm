@@ -73,3 +73,7 @@ desktop.ini
 .stylelintcache
 .cache/
 .turbo/
+
+# Agent scratch and local verification artifacts
+.tmp-verify/
+.perch/
