@@ -1,6 +1,6 @@
 # Spec Critique & Decision Log
 
-**Reviewed document**: `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
+**Reviewed document**: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
 **Date**: 2026-11-08
 **Reviewer**: AI (as requested by section 12 of the spec)
 **Status**: Proposal — needs human sign-off before M1 coding starts

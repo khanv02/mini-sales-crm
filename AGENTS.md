@@ -20,7 +20,7 @@ Where to look:
 | Need | Read |
 | --- | --- |
 | Human-facing introduction (Vietnamese) | `README.md` |
-| Original concept PRD (v0.1 archive, Vietnamese) | `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` |
+| Original concept PRD (v0.1 archive, Vietnamese) | `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` |
 | Project law (C1–C9, quality gates) | `.specify/memory/constitution.md` |
 | SDD index, feature map, ID conventions | `specs/README.md` |
 | Feature requirements + acceptance criteria | `specs/00X-*/spec.md` |
@@ -51,7 +51,7 @@ Where to look:
 - Exception: the root `README.md` is the **client-facing** introduction (Vietnamese) and is maintained in
   Vietnamese. It must not expose internal artifacts: no ADR/SCR/task IDs, no SDD file index, no env vars, ports,
   rate limits or other internals. Every other repository artifact stays English.
-- Historical reference artifact: `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` at the repository root is the
+- Historical reference artifact: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` is the
   original concept PRD (v0.1 reference archive) preserved in Vietnamese for historical lineage; it is frozen and
   not modified during active development. The living, executable source of truth is maintained in English under
   `specs/` and `docs/`.

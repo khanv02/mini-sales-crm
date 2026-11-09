@@ -1,7 +1,7 @@
 # Pulse CRM — SDD Index
 
 This documentation set turns product spec v0.1 into a **Spec → Plan → Tasks → Code → Verify** workflow that can be
-executed by AI and reviewed by humans. The original concept PRD remains `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md`
+executed by AI and reviewed by humans. The original concept PRD remains `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md`
 (v0.1 reference archive); the living, executable specification is maintained in `specs/` and `docs/`, with
 clarifications in `docs/spec-review.md` and `docs/adr/`.
 
