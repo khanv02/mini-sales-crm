@@ -15,7 +15,7 @@
 
 ### Tests first
 
-- [ ] **T303** `apps/api/test/integration/activities.spec.ts`: note/call/email create, timeline order,
+- [ ] **T303** `backend/test/integration/activities.spec.ts`: note/call/email create, timeline order,
       pagination, update, Sales own/Manager all, tenant, audit.
 - [ ] **T304** Validation test: empty/too long content, wrong type, deal in another org.
 
@@ -28,9 +28,9 @@
 
 ### Tests first
 
-- [ ] **T306** `apps/api/test/integration/tasks.spec.ts`: create task due/assignee, missing → 400, done,
+- [ ] **T306** `backend/test/integration/tasks.spec.ts`: create task due/assignee, missing → 400, done,
       idempotent done, overdue filter, Manager filter assignee, tenant.
-- [ ] **T307** `apps/api/test/unit/task-scheduler.spec.ts`: due soon/overdue buckets, dedupe 10 runs, inactive.
+- [ ] **T307** `backend/test/unit/task-scheduler.spec.ts`: due soon/overdue buckets, dedupe 10 runs, inactive.
 
 ### Implementation
 
@@ -44,9 +44,9 @@
 
 ### Tests first
 
-- [ ] **T311** `apps/api/test/integration/reports.spec.ts`: newLeads, dealsByStage, pipelineValue, winRate,
+- [ ] **T311** `backend/test/integration/reports.spec.ts`: newLeads, dealsByStage, pipelineValue, winRate,
       forecast, filters, empty, Sales scope, tenant, invalid range.
-- [ ] **T312** `apps/api/test/perf/reports.perf.ts`: 5k deals p95 < 300ms.
+- [ ] **T312** `backend/test/perf/reports.perf.ts`: 5k deals p95 < 300ms.
 
 ### Implementation
 
@@ -56,10 +56,10 @@
 
 ## Phase 5 — Frontend & verification
 
-- [ ] **T316** [P] `apps/web/src/features/deals/Timeline.tsx`: tabs, add note/call, task form.
-- [ ] **T317** [P] `apps/web/src/features/tasks`: tabs Open/Overdue/Done, mark done, overdue badge.
-- [ ] **T318** [P] `apps/web/src/features/dashboard`: cards/charts/filters, currency, empty/loading.
-- [ ] **T319** `apps/web/e2e/tasks-dashboard.spec.ts`: task overdue → list; dashboard figures; update
+- [ ] **T316** [P] `frontend/src/features/deals/Timeline.tsx`: tabs, add note/call, task form.
+- [ ] **T317** [P] `frontend/src/features/tasks`: tabs Open/Overdue/Done, mark done, overdue badge.
+- [ ] **T318** [P] `frontend/src/features/dashboard`: cards/charts/filters, currency, empty/loading.
+- [ ] **T319** `frontend/e2e/tasks-dashboard.spec.ts`: task overdue → list; dashboard figures; update
       traceability.
 
 ## Dependencies

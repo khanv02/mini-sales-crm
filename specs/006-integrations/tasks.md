@@ -17,9 +17,9 @@
 
 ### Tests first
 
-- [ ] **T504** `apps/api/test/integration/imports.spec.ts`: 5k upload 202, progress, error report, duplicate
+- [ ] **T504** `backend/test/integration/imports.spec.ts`: 5k upload 202, progress, error report, duplicate
       email, same file, invalid header/size/rows, Sales 403, tenant.
-- [ ] **T505** `apps/api/test/unit/import-worker.spec.ts`: chunk/retry/partial, duplicate in file, owner_email.
+- [ ] **T505** `backend/test/unit/import-worker.spec.ts`: chunk/retry/partial, duplicate in file, owner_email.
 
 ### Implementation
 
@@ -33,9 +33,9 @@
 
 ### Tests first
 
-- [ ] **T509** `apps/api/test/integration/webhooks.spec.ts`: valid, invalid/missing signature, replay, duplicate
+- [ ] **T509** `backend/test/integration/webhooks.spec.ts`: valid, invalid/missing signature, replay, duplicate
       key, conflict payload, inactive/unknown source, payload invalid, tenant.
-- [ ] **T510** `apps/api/test/unit/webhook-worker.spec.ts`: retry 3, DEAD, no duplicate, upsert contact.
+- [ ] **T510** `backend/test/unit/webhook-worker.spec.ts`: retry 3, DEAD, no duplicate, upsert contact.
 
 ### Implementation
 
@@ -52,7 +52,7 @@
 
 ### Tests first
 
-- [ ] **T516** `apps/api/test/unit/mailer.spec.ts`: adapter/template/dedupe; Mailpit integration test.
+- [ ] **T516** `backend/test/unit/mailer.spec.ts`: adapter/template/dedupe; Mailpit integration test.
 
 ### Implementation
 

@@ -6,7 +6,7 @@
 
 ## Phase 1 — Setup
 
-- [ ] **T400** `apps/api/src/modules/realtime/realtime.gateway.ts` + `ws-auth.middleware.ts`: JWT handshake;
+- [ ] **T400** `backend/src/modules/realtime/realtime.gateway.ts` + `ws-auth.middleware.ts`: JWT handshake;
       join `user:{id}`, `org:{id}:managers` (Manager/Admin), `org:{id}:system`; unit test auth/rooms.
 - [ ] **T401** [P] `common/events/realtime-publisher.ts`: resolve rooms per event; interface; mapping test.
 - [ ] **T402** [P] `packages/shared/src/events.ts`: envelope/payload zod; export types.
@@ -16,7 +16,7 @@
 
 ### Tests first
 
-- [ ] **T404** `apps/api/test/integration/realtime.spec.ts`: connect with wrong/expired token; Sales do not join
+- [ ] **T404** `backend/test/integration/realtime.spec.ts`: connect with wrong/expired token; Sales do not join
       managers; Manager joins; Sales B does not receive deal A; owner receives; event after commit.
 - [ ] **T405** Test that an emit failure does not fail HTTP; an old event version is ignored by the client (client
       helper unit test).
@@ -45,13 +45,13 @@
 
 ## Phase 4 — Frontend & E2E
 
-- [ ] **T413** [P] `apps/web/src/lib/socket.ts` + `SocketProvider`: connect/reconnect, token refresh,
+- [ ] **T413** [P] `frontend/src/lib/socket.ts` + `SocketProvider`: connect/reconnect, token refresh,
       connection state, query invalidation.
 - [ ] **T414** [P] Notification bell/dropdown/page: unread, mark read, read-all, toast.
 - [ ] **T415** Kanban realtime patch: apply `deal.moved` if the version is newer; if it diverges → invalidate.
-- [ ] **T416** `apps/web/e2e/kanban-realtime.spec.ts`: 2 contexts, A moves, B/Manager see it ≤ 1s (p95 over 20
+- [ ] **T416** `frontend/e2e/kanban-realtime.spec.ts`: 2 contexts, A moves, B/Manager see it ≤ 1s (p95 over 20
       runs).
-- [ ] **T417** `apps/web/e2e/reconnect.spec.ts`: offline/online → refetch, no state loss.
+- [ ] **T417** `frontend/e2e/reconnect.spec.ts`: offline/online → refetch, no state loss.
 
 ## Phase 5 — Verification
 

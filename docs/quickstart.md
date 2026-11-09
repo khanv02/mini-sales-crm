@@ -11,7 +11,11 @@ Goal: from clone to a running app in **a few commands**, satisfying NFR-06 and t
 | Docker Desktop | 4+ (Compose v2) |
 | Git | 2.40+ |
 
-Windows: use PowerShell 7+ with the WSL2 backend for Docker. Linux/macOS: equivalent.
+Windows: use PowerShell 5.1+ with the WSL2 backend for Docker. Linux/macOS: equivalent.
+
+Code is split by responsibility: `backend/` holds the NestJS API, Prisma schema/migrations/seed and backend tests;
+`frontend/` holds the React + Vite app and Playwright tests; shared types and zod schemas live in
+`packages/shared`.
 
 ## 2. Install
 
@@ -43,11 +47,15 @@ docker compose up -d postgres redis mailpit
 docker compose ps
 ```
 
-- PostgreSQL: `localhost:5432` (db `pulse`, user `pulse`, password from `.env`)
+- PostgreSQL: `localhost:${POSTGRES_PORT:-5432}` (db `pulse`, user `pulse`, password from `.env`)
 - Redis: `localhost:6379`
 - Mailpit UI: http://localhost:8025 (SMTP 1025)
 - API: http://localhost:3000
 - Web: http://localhost:5173
+
+If port 5432 is already used by a local PostgreSQL, set `POSTGRES_PORT=5433` in `.env` and use the same port in
+`DATABASE_URL`, for example `postgresql://pulse:pulse@localhost:5433/pulse?schema=public`. Then start the stack
+with `docker compose up -d postgres`.
 
 Check connectivity:
 
@@ -76,6 +84,25 @@ Seed guards (both default to `false`, see `docs/data-model.md` section 6):
 - `ALLOW_SEED=true` is required to run the seed outside dev/test; with `NODE_ENV=production` the seed exits
   unless it is explicitly set.
 - `SEED_PERF=true` additionally loads the 10,000/5,000/20,000 perf dataset.
+
+### Backup and restore
+
+```powershell
+# Windows PowerShell (Docker Compose v2)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/restore.ps1 -BackupFile backups\pulse-<timestamp>.dump
+```
+
+```bash
+# Linux/macOS
+pwsh scripts/backup.ps1
+pwsh scripts/restore.ps1 -BackupFile backups/pulse-<timestamp>.dump
+```
+
+The backup is a PostgreSQL custom-format dump written to `backups/`; the restore target defaults to the separate
+`pulse_restore` database so verification never overwrites local data. Both scripts run `pg_dump`/`pg_restore`
+inside the Compose container and copy the dump in/out with `docker compose cp`, so they are binary-safe on
+Windows PowerShell 5.1 and PowerShell 7+.
 
 ## 5. Run the dev servers
 
@@ -150,8 +177,9 @@ Never commit `.env`; CI uses GitHub secrets.
 
 | Symptom | Fix |
 | --- | --- |
-| `ECONNREFUSED 5432` | `docker compose up -d postgres`; check for a port clash |
+| `ECONNREFUSED 5432` | `docker compose up -d postgres`; check for a port clash and set `POSTGRES_PORT` |
 | Prisma `P1001` | Wrong `DATABASE_URL`, or the DB is not ready |
+| Prisma schema not found | Run DB commands from the repo root; the schema lives in `backend/prisma/schema.prisma` |
 | Redis `ECONNREFUSED` | `docker compose up -d redis` |
 | Migration drift | `pnpm db:reset` (local only) |
 | Web gets 401 from the API | Access token expired; check the refresh cookie/CORS |

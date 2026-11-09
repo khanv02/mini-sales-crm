@@ -82,7 +82,7 @@ Thresholds may only be relaxed by an ADR.
 - **AC-NFR07-01**: Given a new PR, When CI runs, Then lint, typecheck, unit, integration (real PostgreSQL +
   Redis) and build are mandatory; any red job blocks the merge.
 - **AC-NFR07-02**: Given a test run, When coverage is computed, Then the service layer
-  `apps/api/src/modules/**/*.service.ts` is ≥ 70% line and branch; below the threshold fails CI (unless a
+  `backend/src/modules/**/*.service.ts` is ≥ 70% line and branch; below the threshold fails CI (unless a
   reviewed justification is recorded).
 - **AC-NFR07-03**: Given a commit containing `.env` or a secret, When CI/pre-commit runs, Then the secret scan
   fails and blocks the merge; 0 real secrets in the branch history.

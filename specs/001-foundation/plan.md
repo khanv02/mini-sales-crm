@@ -40,35 +40,34 @@ No exceptions.
 
 ```text
 .
-├─ apps/
-│  ├─ api/
-│  │  ├─ src/
-│  │  │  ├─ main.ts
-│  │  │  ├─ app.module.ts
-│  │  │  ├─ common/
-│  │  │  │  ├─ config/          # zod env schema
-│  │  │  │  ├─ errors/          # filter, codes, AppError
-│  │  │  │  ├─ logging/         # pino, requestId, redaction
-│  │  │  │  ├─ health/
-│  │  │  │  └─ prisma/
-│  │  │  └─ modules/            # auth, users, ... (added incrementally)
-│  │  └─ test/
-│  │     ├─ unit/
-│  │     ├─ integration/
-│  │     ├─ factories/
-│  │     └─ setup/
-│  └─ web/
-│     ├─ src/
-│     │  ├─ app/                # router/layout/providers
-│     │  ├─ components/ui/
-│     │  ├─ features/
-│     │  └─ lib/api
-│     └─ e2e/
+├─ backend/                     # NestJS API and all backend tooling
+│  ├─ src/
+│  │  ├─ main.ts
+│  │  ├─ app.module.ts
+│  │  ├─ common/
+│  │  │  ├─ config/             # zod env schema
+│  │  │  ├─ errors/             # filter, codes, AppError
+│  │  │  ├─ logging/            # pino, requestId, redaction
+│  │  │  ├─ health/
+│  │  │  └─ prisma/
+│  │  └─ modules/               # auth, users, ... (added incrementally)
+│  ├─ test/
+│  │  ├─ unit/
+│  │  ├─ integration/
+│  │  ├─ factories/
+│  │  └─ setup/
+│  └─ prisma/
+│     ├─ schema.prisma
+│     ├─ migrations/
+│     └─ seed.ts
+├─ frontend/                    # React + Vite app
+│  ├─ src/
+│  │  ├─ app/                   # router/layout/providers
+│  │  ├─ components/ui/
+│  │  ├─ features/
+│  │  └─ lib/api
+│  └─ e2e/
 ├─ packages/shared/src/         # zod schemas, types, constants
-├─ prisma/
-│  ├─ schema.prisma
-│  ├─ migrations/
-│  └─ seed.ts
 ├─ scripts/                     # check-infra, backup
 ├─ infra/
 │  └─ docker-compose.yml

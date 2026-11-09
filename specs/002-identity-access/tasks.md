@@ -22,7 +22,7 @@
 
 ### Tests first
 
-- [ ] **T106** `apps/api/test/integration/auth.spec.ts`: register happy path, duplicate (case), weak password,
+- [ ] **T106** `backend/test/integration/auth.spec.ts`: register happy path, duplicate (case), weak password,
       no hash in the response, org+admin transaction, audit.
 - [ ] **T107** Concurrent register with the same email → 1 org, 1 409.
 
@@ -49,15 +49,15 @@
 
 ### Tests first
 
-- [ ] **T114** `apps/api/test/integration/users.spec.ts`: list/create/update role/deactivate, last admin,
+- [ ] **T114** `backend/test/integration/users.spec.ts`: list/create/update role/deactivate, last admin,
       self-deactivate, Sales 403, org B 404, audit.
-- [ ] **T115** `apps/api/test/integration/rbac.spec.ts`: tenant matrix, role matrix, deactivated refresh.
+- [ ] **T115** `backend/test/integration/rbac.spec.ts`: tenant matrix, role matrix, deactivated refresh.
 
 ### Implementation
 
 - [ ] **T116** `modules/users`: repository/service/controller; create user (the admin sets the password); update
       role/active; last-admin/self guards; audit.
-- [ ] **T117** `apps/api/test/unit/token.service.spec.ts`, `auth.guard.spec.ts`; coverage.
+- [ ] **T117** `backend/test/unit/token.service.spec.ts`, `auth.guard.spec.ts`; coverage.
 
 ## Phase 5 — Polish
 

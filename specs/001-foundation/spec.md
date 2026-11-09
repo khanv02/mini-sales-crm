@@ -98,8 +98,8 @@ An empty DB runs migrations to build the schema; the seed is idempotent; a minim
 
 ### Functional Requirements
 
-- **FR-M0.1**: The repo is a pnpm workspace with `apps/api`, `apps/web`, `packages/shared`, `prisma/`, `infra/`,
-  `docs/`, `specs/`.
+- **FR-M0.1**: The repo is a pnpm workspace with `backend/` (API + Prisma), `frontend/`, `packages/shared/`,
+  `infra/`, `docs/`, `specs/`.
 - **FR-M0.2**: NestJS API with TypeScript strict, prefix `/api/v1`, Swagger at `/api/docs` (dev).
 - **FR-M0.3**: Web app with React + Vite + TS, Tailwind + shadcn/ui, TanStack Query, React Router.
 - **FR-M0.4**: Docker Compose with PostgreSQL 16, Redis 7, Mailpit; healthchecks; durable volumes.

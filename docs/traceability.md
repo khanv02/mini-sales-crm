@@ -108,6 +108,9 @@ extra ACs are annotated.
 
 ## 5. Status & gaps
 
+- [x] 001 Foundation (M0) is implemented: pnpm workspace (`backend/`, `frontend/`, `packages/shared/`), API health,
+      error shape, logging/Sentry, BullMQ base, Prisma migration + idempotent seed, web shell, CI and ops scripts.
+      Evidence: `backend/test/{unit,integration}`, `frontend/e2e/foundation.spec.ts`, `pnpm lint|typecheck|test|build`.
 - [x] FR-01…FR-19 have feature, AC, tasks and tests.
 - [x] NFR-01…NFR-07 have feature/task/test.
 - [ ] FR-20 deferred (ADR-009) — not counted in M3.

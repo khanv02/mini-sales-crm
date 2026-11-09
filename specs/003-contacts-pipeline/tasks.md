@@ -16,21 +16,21 @@
 
 ### Tests first
 
-- [ ] **T204** `apps/api/test/integration/contacts.spec.ts`: create/list/get/update/delete, search, filter,
+- [ ] **T204** `backend/test/integration/contacts.spec.ts`: create/list/get/update/delete, search, filter,
       pagination, duplicate email, soft delete, Sales owner, Manager/Admin all, tenant.
-- [ ] **T205** `apps/api/test/perf/contacts-search.perf.ts`: seed 10k, p95 < 300ms.
+- [ ] **T205** `backend/test/perf/contacts-search.perf.ts`: seed 10k, p95 < 300ms.
 
 ### Implementation
 
 - [ ] **T206** `modules/contacts/contact.repository.ts`: org-scoped CRUD; search trigram/unaccent; cursor.
 - [ ] **T207** `contact.service.ts` + `contact.controller.ts`: validation, scope, audit, duplicate mapping.
-- [ ] **T208** `apps/api/test/unit/contact-search.spec.ts`; EXPLAIN check; fix the index if it is a seq scan.
+- [ ] **T208** `backend/test/unit/contact-search.spec.ts`; EXPLAIN check; fix the index if it is a seq scan.
 
 ## Phase 3 — US2 Pipeline (P2)
 
 ### Tests first
 
-- [ ] **T209** `apps/api/test/integration/pipelines.spec.ts`: CRUD pipeline/stage, reorder, delete guards,
+- [ ] **T209** `backend/test/integration/pipelines.spec.ts`: CRUD pipeline/stage, reorder, delete guards,
       won/lost invariant, name duplicate, role/tenant.
 
 ### Implementation
@@ -43,11 +43,11 @@
 
 ### Tests first
 
-- [ ] **T212** `apps/api/test/integration/deals.spec.ts`: create/list/get/update, validation, RBAC/tenant,
+- [ ] **T212** `backend/test/integration/deals.spec.ts`: create/list/get/update, validation, RBAC/tenant,
       audit, assign.
-- [ ] **T213** `apps/api/test/integration/deals-concurrency.spec.ts`: two parallel moves same version →
+- [ ] **T213** `backend/test/integration/deals-concurrency.spec.ts`: two parallel moves same version →
       one 200/one 409; audit 1; board correct.
-- [ ] **T214** `apps/api/test/unit/position.spec.ts`: insert head/middle/end, 100 inserts, rebalance.
+- [ ] **T214** `backend/test/unit/position.spec.ts`: insert head/middle/end, 100 inserts, rebalance.
 
 ### Implementation
 
@@ -60,7 +60,7 @@
 
 ### Tests first
 
-- [ ] **T218** `apps/api/test/integration/deals-win-loss.spec.ts`: won, lost require reason, reopen, closed_at,
+- [ ] **T218** `backend/test/integration/deals-win-loss.spec.ts`: won, lost require reason, reopen, closed_at,
       report consistency, audit.
 
 ### Implementation
@@ -70,12 +70,12 @@
 
 ## Phase 6 — Frontend & E2E
 
-- [ ] **T221** [P] `apps/web/src/features/contacts`: list/search/filter/create/edit/delete, pagination.
-- [ ] **T222** [P] `apps/web/src/features/pipelines`: admin stage editor, dnd reorder, won/lost, delete guard.
-- [ ] **T223** `apps/web/src/features/deals/KanbanBoard.tsx`: dnd-kit, optimistic move, 409 rollback/toast,
+- [ ] **T221** [P] `frontend/src/features/contacts`: list/search/filter/create/edit/delete, pagination.
+- [ ] **T222** [P] `frontend/src/features/pipelines`: admin stage editor, dnd reorder, won/lost, delete guard.
+- [ ] **T223** `frontend/src/features/deals/KanbanBoard.tsx`: dnd-kit, optimistic move, 409 rollback/toast,
       assign menu.
 - [ ] **T224** Deal drawer/form: create/edit, win/loss modal, validation, currency format.
-- [ ] **T225** `apps/web/e2e/core-flow.spec.ts`: login → contact → deal → move → won.
+- [ ] **T225** `frontend/e2e/core-flow.spec.ts`: login → contact → deal → move → won.
 - [ ] **T226** [P] Perf + docs: run 10k/5k, record; update traceability; PR checklist.
 
 ## Dependencies

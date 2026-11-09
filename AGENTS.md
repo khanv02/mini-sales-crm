@@ -10,7 +10,9 @@
 Pulse CRM — a small, multi-tenant CRM built spec-first: contacts, pipeline/deals, activities, tasks and
 dashboard, realtime notifications, import/webhook/email, governance layers, and AI assist.
 
-**Current state**: specification only. No application code exists yet, so do not invent files, code paths,
+**Current state**: M0 foundation (feature 001) is implemented: pnpm workspace with `backend/` (NestJS API,
+Prisma schema/migrations/seed, health, errors, logging, queue base), `frontend/` (React + Vite shell) and
+`packages/shared`. CRM features from M1 onward remain specification-only, so do not invent files, code paths,
 endpoints, tables, events or dependencies that the SDD does not describe.
 
 Where to look:
@@ -77,9 +79,9 @@ Where to look:
    requests are never blocked by it.
 9. **Small, traceable changes.** One feature slice or task group per change, the FR/AC ID in the description,
    and `docs/traceability.md` updated in the same change.
-10. **Separate apps.** Frontend and backend live in separate folders: `apps/api` (backend, NestJS) and `apps/web`
-    (frontend, React + Vite); shared types/zod live in `packages/shared`. Never mix server and client code in one
-    folder, and never import across the two apps (go through `packages/shared`).
+10. **Separate apps.** Frontend and backend live in separate folders: `backend/` (NestJS API) and `frontend/`
+    (React + Vite); shared types/zod live in `packages/shared`. Never mix server and client code in one folder,
+    and never import across the two apps (go through `packages/shared`).
 
 ## 4. Git and branching workflow
 

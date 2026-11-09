@@ -36,7 +36,7 @@ PostgreSQL.
 ## 3. Test data
 
 - Each test file uses its own database or schema; migrations run once and data is truncated between tests.
-- Factories in `apps/api/test/factories`:
+- Factories in `backend/test/factories`:
   - `createOrg({ name })`
   - `createUser({ org, role, active })`
   - `createContact({ org, owner })`
@@ -129,7 +129,7 @@ PostgreSQL/Redis.
 ## 7. Performance (NFR-01)
 
 - Seed: 10,000 contacts, 5,000 deals, 20,000 activities, 2 orgs.
-- Scripts: `apps/api/test/perf/seed-perf.ts` (deterministic seed), `run-perf.ts` (runner) and per-suite scenario
+- Scripts: `backend/test/perf/seed-perf.ts` (deterministic seed), `run-perf.ts` (runner) and per-suite scenario
   files such as `contacts-search.perf.ts` (003 T205) and `reports.perf.ts` (004 T312); results are written to
   `docs/perf/` (see `docs/nfr.md` NFR-01).
 - Measure p50/p95/p99 for:
@@ -177,7 +177,7 @@ jobs:
 ## 10. Coverage
 
 - Measure the service layer (excluding generated Prisma code, DTOs and module boilerplate).
-- Global threshold: 70% line/branch for `apps/api/src/modules/**/*.service.ts` and important repositories.
+- Global threshold: 70% line/branch for `backend/src/modules/**/*.service.ts` and important repositories.
 - Coverage never replaces behaviour tests; ACs come first.
 - A PR that drops coverage below the threshold fails CI unless the PR records a justification.
 

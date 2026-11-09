@@ -19,7 +19,7 @@
 
 ### Tests first
 
-- [ ] **T705** `apps/api/test/integration/ai-summary.spec.ts`: SSE order, first token, org isolation, truncation,
+- [ ] **T705** `backend/test/integration/ai-summary.spec.ts`: SSE order, first token, org isolation, truncation,
       provider error, client abort, RBAC/tenant, usage record.
 - [ ] **T706** Frontend test: stream reader, error UI.
 
@@ -27,13 +27,13 @@
 
 - [ ] **T707** `modules/ai/deal-summary.service.ts` + controller `POST /ai/deals/:id/summary`; quota/cache;
       usage; error mapping.
-- [ ] **T708** `apps/web/src/features/ai/DealSummaryPanel.tsx`: stream, stop, copy, error.
+- [ ] **T708** `frontend/src/features/ai/DealSummaryPanel.tsx`: stream, stop, copy, error.
 
 ## Phase 3 — US2 Email draft (P2)
 
 ### Tests first
 
-- [ ] **T709** `apps/api/test/integration/ai-email-draft.spec.ts`: draft schema, no send/log, org/RBAC.
+- [ ] **T709** `backend/test/integration/ai-email-draft.spec.ts`: draft schema, no send/log, org/RBAC.
 
 ### Implementation
 
@@ -43,9 +43,9 @@
 
 ### Tests first
 
-- [ ] **T711** `apps/api/test/integration/ai-score.spec.ts`: 202 run, 0–100/reason, history, cache, invalid
+- [ ] **T711** `backend/test/integration/ai-score.spec.ts`: 202 run, 0–100/reason, history, cache, invalid
       output, quota 429, tenant.
-- [ ] **T712** `apps/api/test/unit/score-output.spec.ts`: schema/range/retry.
+- [ ] **T712** `backend/test/unit/score-output.spec.ts`: schema/range/retry.
 
 ### Implementation
 
