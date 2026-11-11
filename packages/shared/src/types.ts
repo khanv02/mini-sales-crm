@@ -22,3 +22,29 @@ export interface HealthReport {
     redis: 'up' | 'down';
   };
 }
+
+/** User as exposed by the API (never carries the password hash). */
+export interface AuthUser {
+  id: string;
+  orgId: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: string;
+}
+
+/** `POST /auth/register|login|refresh` response body (ADR-015: refresh token stays in the cookie). */
+export interface AuthResponse {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  user: AuthUser;
+}
+
+export interface UserListResponse {
+  data: AuthUser[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+

@@ -16,5 +16,8 @@ export const apiErrorSchema = z.object({
   requestId: z.string().min(1),
 });
 
+/** Query-string boolean (`?active=false`) that only accepts the literals true/false. */
+export const booleanQuerySchema = z.enum(['true', 'false']).transform((value) => value === 'true');
+
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type ApiErrorSchema = z.infer<typeof apiErrorSchema>;

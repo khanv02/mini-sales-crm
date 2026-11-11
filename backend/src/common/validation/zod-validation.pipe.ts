@@ -1,5 +1,5 @@
 import type { PipeTransform } from '@nestjs/common';
-import { ZodError, type ZodSchema } from 'zod';
+import { ZodError, type ZodType, type ZodTypeDef } from 'zod';
 import { AppError, ERROR_CODES } from '../errors/app-error';
 
 export function zodFieldErrors(error: ZodError): Record<string, string[]> {
@@ -13,8 +13,14 @@ export function zodFieldErrors(error: ZodError): Record<string, string[]> {
   return fields;
 }
 
+/**
+ * Validates with a zod schema and returns the parsed (normalised) value.
+ *
+ * The schema is typed with an `unknown` input so schemas that transform their
+ * input (`z.coerce`, `z.enum(...).transform(...)`, `.default(...)`) are accepted.
+ */
 export class ZodValidationPipe<T> implements PipeTransform<unknown, T> {
-  constructor(private readonly schema: ZodSchema<T>) {}
+  constructor(private readonly schema: ZodType<T, ZodTypeDef, unknown>) {}
 
   transform(value: unknown): T {
     const parsed = this.schema.safeParse(value);

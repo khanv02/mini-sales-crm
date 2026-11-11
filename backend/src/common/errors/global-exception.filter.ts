@@ -92,6 +92,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       body.details = normalized.details;
     }
 
+    // 429 carries Retry-After (docs/api-conventions.md section 7); the service
+    // puts the remaining window in `details.retryAfter`.
+    const retryAfter = normalized.details?.retryAfter;
+    if (normalized.status === 429 && typeof retryAfter === 'number' && retryAfter > 0) {
+      response.setHeader('Retry-After', String(Math.ceil(retryAfter)));
+    }
+
     response.status(normalized.status).json(body);
   }
 }

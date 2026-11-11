@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { Algorithm, hash } from '@node-rs/argon2';
 import { PrismaClient, type Organization, type User, UserRole } from '@prisma/client';
+import Redis from 'ioredis';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { loadEnv } from '../../src/common/config/env';
 
 export const prisma = new PrismaClient();
 
-const TEST_PASSWORD = 'Password123!';
+export const TEST_PASSWORD = 'Password123!';
 
 let cachedPasswordHash: string | undefined;
 
@@ -49,15 +50,34 @@ export async function createUser(input: {
   });
 }
 
-export function loginAs(user: Pick<User, 'id' | 'orgId' | 'role'>): {
+export function loginAs(user: Pick<User, 'id' | 'orgId' | 'role' | 'active'>): {
   accessToken: string;
   authorization: string;
 } {
   const env = loadEnv();
-  const accessToken = jwt.sign({ sub: user.id, orgId: user.orgId, role: user.role }, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.JWT_ACCESS_TTL as SignOptions['expiresIn'],
-  });
+  const accessToken = jwt.sign(
+    { sub: user.id, orgId: user.orgId, role: user.role, active: user.active, jti: randomUUID() },
+    env.JWT_ACCESS_SECRET,
+    { expiresIn: env.JWT_ACCESS_TTL as SignOptions['expiresIn'] },
+  );
   return { accessToken, authorization: `Bearer ${accessToken}` };
+}
+
+let rateLimitClient: Redis | undefined;
+
+/** Shared Redis client for tests that must inspect or clear rate-limit state. */
+export function redisClient(): Redis {
+  rateLimitClient ??= new Redis(loadEnv().REDIS_URL, { maxRetriesPerRequest: 1 });
+  return rateLimitClient;
+}
+
+/** Clears login lockout counters so tests do not leak state into each other. */
+export async function resetRateLimits(): Promise<void> {
+  const client = redisClient();
+  const keys = await client.keys('auth:login:fail:*');
+  if (keys.length > 0) {
+    await client.del(...keys);
+  }
 }
 
 /** Remove all business/auth rows between tests. */
@@ -69,4 +89,8 @@ export async function resetDatabase(): Promise<void> {
 
 export async function disconnect(): Promise<void> {
   await prisma.$disconnect();
+  if (rateLimitClient) {
+    rateLimitClient.disconnect();
+    rateLimitClient = undefined;
+  }
 }

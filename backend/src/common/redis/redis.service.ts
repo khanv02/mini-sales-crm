@@ -51,6 +51,15 @@ export class RedisService implements OnModuleInit, OnApplicationShutdown {
     return this.client.ping();
   }
 
+  /**
+   * Raw client for callers that need commands beyond `ping` (rate-limit counters,
+   * short-lived caches). Callers that make a security decision must handle a
+   * rejection as "dependency unavailable" and fail closed.
+   */
+  getClient(): Redis {
+    return this.client;
+  }
+
   async onApplicationShutdown(): Promise<void> {
     if (this.client.status === 'end') {
       return;
