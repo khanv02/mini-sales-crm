@@ -16,7 +16,7 @@ Thresholds may only be relaxed by an ADR.
 | NFR-03 Reliability | AC-NFR03-01..03 | 001, 006 | `health.spec.ts`, `queue.spec.ts`, shutdown test |
 | NFR-04 Observability | AC-NFR04-01..02 | 001 | `logger.spec.ts`, Sentry smoke |
 | NFR-05 Data | AC-NFR05-01..02 | 001 | migration test, backup/restore |
-| NFR-06 Delivery | AC-NFR06-01..02 | 001 | `docs/quickstart.md`, `scripts/check-infra` |
+| NFR-06 Delivery | AC-NFR06-01..02 | 001 | `docs/quickstart.md`, `backend/scripts/check-infra` |
 | NFR-07 Quality | AC-NFR07-01..03 | 001 | CI workflow, coverage, secret scan |
 
 ## NFR-01 — Performance
@@ -67,14 +67,14 @@ Thresholds may only be relaxed by an ADR.
 - **AC-NFR05-01**: Given an empty database, When all migrations run, Then the schema matches the expected
   version order; re-running changes nothing; a mid-way failure never leaves a half-applied schema
   (transaction/rollback or explicit repair instructions).
-- **AC-NFR05-02**: Given existing data, When running `scripts/backup.ps1` and restoring it into a temporary
+- **AC-NFR05-02**: Given existing data, When running `backend/scripts/backup.ps1` and restoring it into a temporary
   database, Then the backup opens and data/schema match; the procedure is documented in `docs/quickstart.md`.
 
 ## NFR-06 — Delivery
 
 - **AC-NFR06-01**: Given a clean machine with Node/pnpm/Docker, When following `docs/quickstart.md`, Then the
   app runs within ≤ 15 minutes on Windows/macOS/Linux without asking the author; common failures are documented.
-- **AC-NFR06-02**: Given infrastructure that is not ready, When running `scripts/check-infra`, Then it exits
+- **AC-NFR06-02**: Given infrastructure that is not ready, When running `backend/scripts/check-infra`, Then it exits
   non-zero with a message naming which DB/Redis is unreachable; it exits 0 when everything is ready.
 
 ## NFR-07 — Quality
@@ -82,7 +82,7 @@ Thresholds may only be relaxed by an ADR.
 - **AC-NFR07-01**: Given a new PR, When CI runs, Then lint, typecheck, unit, integration (real PostgreSQL +
   Redis) and build are mandatory; any red job blocks the merge.
 - **AC-NFR07-02**: Given a test run, When coverage is computed, Then the service layer
-  `apps/api/src/modules/**/*.service.ts` is ≥ 70% line and branch; below the threshold fails CI (unless a
+  `backend/src/modules/**/*.service.ts` is ≥ 70% line and branch; below the threshold fails CI (unless a
   reviewed justification is recorded).
 - **AC-NFR07-03**: Given a commit containing `.env` or a secret, When CI/pre-commit runs, Then the secret scan
   fails and blocks the merge; 0 real secrets in the branch history.

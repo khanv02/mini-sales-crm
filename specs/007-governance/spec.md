@@ -9,80 +9,83 @@
 
 ### US-1 — Audit log (Priority: P1)
 
-Admin xem ai đã làm gì, khi nào, trước/sau; lọc theo entity/actor/thời gian.
+Admin sees who did what, when, before/after; filters by entity/actor/time.
 
-**Vì sao P1**: C4 và FR-13; là bằng chứng tin cậy/portfolio.
+**Why P1**: C4 and FR-13; it is trustworthy evidence/portfolio.
 
-**Kiểm thử độc lập**: Thực hiện mutation; mở audit; filter; thử role/tenant; thử sửa/xóa audit.
+**Independent test**: Perform a mutation; open the audit; filter; try role/tenant; try to modify/delete an audit
+record.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR13-01** Given Admin, When `GET /audit-logs`, Then danh sách mới nhất trước, cursor, có
+1. **AC-FR13-01** Given Admin, When `GET /audit-logs`, Then the list is newest first, cursor, with
    actor/entity/action/before/after/createdAt/requestId.
-2. **AC-FR13-02** Given filter `entity`, `entityId`, `actorId`, `action`, `from/to`, When query, Then đúng
-   kết quả; filter sai → 400; kết hợp được.
-3. **AC-FR13-03** Given nhiều bản ghi, When phân trang, Then cursor ổn định, không trùng/thiếu khi có bản ghi mới.
-4. **AC-FR13-04** Given Manager/Sales, When gọi audit, Then `403`; Admin org B → `404`/không thấy org A.
-5. **AC-FR13-05** Given bất kỳ request sửa/xóa audit, When gọi, Then `404/405`; audit không đổi. Audit đã
-   redact password/token/secret.
+2. **AC-FR13-02** Given filters `entity`, `entityId`, `actorId`, `action`, `from/to`, When querying, Then correct
+   results; invalid filter → 400; filters can be combined.
+3. **AC-FR13-03** Given many records, When paginating, Then the cursor is stable, with no duplicates/gaps when new
+   records arrive.
+4. **AC-FR13-04** Given Manager/Sales, When calling audit, Then `403`; Admin of org B → `404`/cannot see org A.
+5. **AC-FR13-05** Given any request to modify/delete an audit record, When calling it, Then `404/405`; the audit
+   is unchanged. Audit has already redacted password/token/secret.
 
 ---
 
 ### US-2 — Export CSV (Priority: P2)
 
-Manager/Admin export contacts/deals theo filter; file đúng, an toàn CSV injection.
+Manager/Admin exports contacts/deals by filter; correct file, safe from CSV injection.
 
-**Vì sao P2**: FR-14; hữu ích vận hành nhưng không chặn demo.
+**Why P2**: FR-14; operationally useful but does not block the demo.
 
-**Kiểm thử độc lập**: Export với filter; mở file; kiểm tra cột/số dòng/escape; thử Sales.
+**Independent test**: Export with a filter; open the file; check columns/row count/escaping; try Sales.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR14-01** Given Manager/Admin, When export contacts với filter, Then `200 text/csv`, UTF-8 BOM, đúng
-   số dòng, không có contact đã xóa.
-2. **AC-FR14-02** Given Manager/Admin, When export deals, Then cột `title,contact,stage,value,currency,owner,
-   status,expectedClose,closedAt,createdAt`; filter khớp list.
-3. **AC-FR14-03** Given ô bắt đầu `=,+,-,@`, When export, Then được escape (prefix `'`) và bọc quote; mở
-   Excel không thực thi công thức.
-4. **AC-FR14-04** Given Sales, When export, Then `403`; org khác → không thấy dữ liệu; export được audit.
-5. **AC-FR14-05** Given > 100.000 dòng, When export, Then `400 EXPORT_TOO_LARGE`; stream không giữ toàn bộ
-   trong RAM.
+1. **AC-FR14-01** Given Manager/Admin, When exporting contacts with a filter, Then `200 text/csv`, UTF-8 BOM,
+   correct row count, no soft-deleted contacts.
+2. **AC-FR14-02** Given Manager/Admin, When exporting deals, Then columns `title,contact,stage,value,currency,
+   owner,status,expectedClose,closedAt,createdAt`; the filter matches the list.
+3. **AC-FR14-03** Given a cell starting with `=,+,-,@`, When exporting, Then it is escaped (prefix `'`) and
+   wrapped in quotes; opening in Excel does not execute formulas.
+4. **AC-FR14-04** Given Sales, When exporting, Then `403`; other org → no data visible; the export is audited.
+5. **AC-FR14-05** Given > 100,000 rows, When exporting, Then `400 EXPORT_TOO_LARGE`; the stream does not hold
+   everything in RAM.
 
 ---
 
 ### US-3 — Rate limit & cache (Priority: P1)
 
-Hệ thống giới hạn theo user/IP; dashboard cache 60s và vô hiệu khi dữ liệu đổi.
+The system limits per user/IP; the dashboard cache lasts 60s and is invalidated when data changes.
 
-**Vì sao P1**: FR-15/NFR-01; bảo vệ API và giữ p95.
+**Why P1**: FR-15/NFR-01; protects the API and keeps p95.
 
-**Kiểm thử độc lập**: Bắn request vượt ngưỡng; đo headers; gọi dashboard 2 lần; move deal; gọi lại.
+**Independent test**: Fire requests beyond the threshold; measure headers; call the dashboard twice; move a deal;
+call again.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR15-01** Given user đã đăng nhập, When vượt 300 request/phút, Then `429 RATE_LIMITED` +
-   `Retry-After` + headers limit; các user khác không bị ảnh hưởng.
-2. **AC-FR15-02** Given login sai 5 lần/15 phút, When thử tiếp, Then `429 TOO_MANY_ATTEMPTS` (FR-01).
-3. **AC-FR15-03** Given webhook source, When vượt 60 request/phút, Then `429`; không tạo event.
-4. **AC-FR15-04** Given dashboard gọi lần đầu, When gọi trong 60s, Then lần 2 lấy cache (nhanh, cùng số);
-   TTL 60s.
-5. **AC-FR15-05** Given cache dashboard, When tạo/sửa/move deal hoặc contact/activity, Then cache bị vô hiệu;
-   lần gọi sau trả số mới (không chờ TTL).
-6. **AC-FR15-06** Given Redis lỗi, When gọi API đọc, Then vẫn trả dữ liệu (bypass cache); login/webhook
-   fail-closed; log warn; `/health/ready` 503.
-7. **AC-FR15-07** Given Sales A/B, When gọi dashboard, Then cache key tách theo org/user/role/filter; A không
-   nhận số của B/org khác.
+1. **AC-FR15-01** Given a signed-in user, When exceeding 300 requests/minute, Then `429 RATE_LIMITED` +
+   `Retry-After` + limit headers; other users are unaffected.
+2. **AC-FR15-02** Given 5 failed logins/15 minutes, When trying again, Then `429 TOO_MANY_ATTEMPTS` (FR-01).
+3. **AC-FR15-03** Given a webhook source, When exceeding 60 requests/minute, Then `429`; no event created.
+4. **AC-FR15-04** Given the dashboard is called for the first time, When calling within 60s, Then the second call
+   uses the cache (fast, same numbers); TTL 60s.
+5. **AC-FR15-05** Given the dashboard cache, When creating/editing/moving a deal or contact/activity, Then the
+   cache is invalidated; the next call returns the new numbers (without waiting for the TTL).
+6. **AC-FR15-06** Given Redis failure, When calling a read API, Then data is still returned (cache bypass);
+   login/webhook fail-closed; log warn; `/health/ready` 503.
+7. **AC-FR15-07** Given Sales A/B, When calling the dashboard, Then the cache key is split by org/user/role/filter;
+   A does not receive B's/another org's numbers.
 
 ### Edge Cases
 
-- Cache key chứa filter order khác nhau → canonicalize để hit.
-- Mutation rollback → không bump version/invalidate (chỉ sau commit).
-- Nhiều instance → invalidation qua Redis version, không cache local.
-- Rate limit burst/boundary → token bucket; không chặn nhầm toàn org.
-- Audit filter thời gian rất rộng → giới hạn 366 ngày/400.
-- Export trong lúc dữ liệu đổi → snapshot nhất quán (transaction read repeatable nếu cần).
-- CSV có newline trong content → quote đúng.
-- Audit before/after quá lớn → cắt + cờ `truncated`.
+- Cache key with different filter orders → canonicalize to hit.
+- Mutation rollback → no version bump/invalidate (only after commit).
+- Several instances → invalidation via Redis version, no local cache.
+- Rate limit burst/boundary → token bucket; do not wrongly block the whole org.
+- Audit time filter very wide → limited to 366 days/400.
+- Export while data changes → consistent snapshot (repeatable read transaction if needed).
+- CSV with newlines in content → quoted correctly.
+- Audit before/after too large → truncate + `truncated` flag.
 
 ## Requirements
 
@@ -91,57 +94,57 @@ Hệ thống giới hạn theo user/IP; dashboard cache 60s và vô hiệu khi d
 **Audit**
 
 - **FR-13.1**: `GET /audit-logs` Admin; filters entity/entityId/actorId/action/from/to; cursor; max 100.
-- **FR-13.2**: Audit append-only; không endpoint mutation; redaction secret/PII; requestId/ip.
-- **FR-13.3**: Index theo org/time/entity/actor; p95 < 300ms với 100k bản ghi (nếu có).
+- **FR-13.2**: Audit append-only; no mutation endpoint; secret/PII redaction; requestId/ip.
+- **FR-13.3**: Index by org/time/entity/actor; p95 < 300ms with 100k records (if any).
 
 **Export**
 
-- **FR-14.1**: `GET /exports/contacts`, `/exports/deals` Manager/Admin; filter giống list.
-- **FR-14.2**: Stream CSV, UTF-8 BOM, escape injection, max 100k, filename có ngày.
-- **FR-14.3**: Audit `EXPORT` với filter/rowCount; không log nội dung file.
+- **FR-14.1**: `GET /exports/contacts`, `/exports/deals` Manager/Admin; filters same as the list.
+- **FR-14.2**: Stream CSV, UTF-8 BOM, injection escape, max 100k, filename includes the date.
+- **FR-14.3**: Audit `EXPORT` with filter/rowCount; do not log file contents.
 - **FR-14.4**: Sales 403; tenant isolation.
 
 **Rate limit & cache**
 
-- **FR-15.1**: Redis token bucket theo user (300/phút, burst 60), IP cho public/auth, source cho webhook.
-- **FR-15.2**: 429 + `Retry-After` + `X-RateLimit-*`; auth fail-closed, đọc fail-open.
+- **FR-15.1**: Redis token bucket per user (300/minute, burst 60), IP for public/auth, source for webhook.
+- **FR-15.2**: 429 + `Retry-After` + `X-RateLimit-*`; auth fail-closed, reads fail-open.
 - **FR-15.3**: Dashboard cache 60s, key `report:{orgId}:{role}:{userId|all}:{filtersHash}:{dataVersion}`;
-  invalidate bằng bump `org:{orgId}:data_version` sau mọi mutation contact/deal/activity.
-- **FR-15.4**: Redis lỗi → bypass cache/limit theo quy tắc; không trả dữ liệu org khác.
-- **FR-15.5**: Không cache dữ liệu nhạy cảm khác ngoài dashboard (trừ AI cache ở 008).
+  invalidate by bumping `org:{orgId}:data_version` after every contact/deal/activity mutation.
+- **FR-15.4**: Redis failure → bypass cache/limit per the rules; never return another org's data.
+- **FR-15.5**: Do not cache other sensitive data besides the dashboard (except the AI cache in 008).
 
 ### Key Entities
 
-- AuditLog (4.13); cache key/version trong Redis; không thêm bảng.
-- Export dùng dữ liệu Contact/Deal hiện có.
+- AuditLog (4.13); cache key/version in Redis; no new tables.
+- Export uses existing Contact/Deal data.
 
 ## Success Criteria
 
-- **SC-001**: Dashboard hit cache < 50ms; miss < 300ms p95.
-- **SC-002**: 0 cache key rò dữ liệu giữa user/org (test).
-- **SC-003**: Rate limit chính xác ±1 request tại boundary; headers đúng.
-- **SC-004**: 100% mutation invalidate cache trong < 100ms sau commit.
-- **SC-005**: 100% AC có test; export 100k dòng không OOM (< 200MB).
+- **SC-001**: Dashboard cache hit < 50ms; miss < 300ms p95.
+- **SC-002**: 0 cache keys leaking data between users/orgs (test).
+- **SC-003**: Rate limit accurate ±1 request at the boundary; correct headers.
+- **SC-004**: 100% of mutations invalidate the cache within < 100ms after commit.
+- **SC-005**: 100% of AC have tests; exporting 100k rows does not OOM (< 200MB).
 
 ## Assumptions
 
-- Redis là cache/rate limit store; không phải nguồn sự thật.
-- Dashboard cache chỉ cho `GET /reports/summary`; list/kanban không cache ở MVP.
-- Export chạy đồng bộ streaming; 100k dòng chấp nhận vài giây; nếu lớn hơn sẽ chuyển queue sau.
-- Audit retention chưa tự động (Q9).
-- Rate limit dùng thư viện `rate-limiter-flexible` hoặc implementation Redis atomic.
+- Redis is the cache/rate limit store; not the source of truth.
+- Dashboard cache only for `GET /reports/summary`; list/kanban are not cached in the MVP.
+- Export runs synchronous streaming; 100k rows take a few seconds; larger volumes move to a queue later.
+- Audit retention is not automated yet (Q9).
+- Rate limit uses the `rate-limiter-flexible` library or an atomic Redis implementation.
 
 ## Out of Scope
 
 - Audit retention/archival job, SIEM export.
 - Export Excel/PDF, scheduled export.
 - Per-org custom rate limit UI.
-- Cache toàn bộ API, CDN.
+- Caching the whole API, CDN.
 - Anomaly detection.
 
 ## Traceability
 
-| Nguồn | AC | Task |
+| Source | AC | Task |
 | --- | --- | --- |
 | FR-13 | AC-FR13-01..05 | T600–T601, T606, T608 |
 | FR-14 | AC-FR14-01..05 | T602, T606–T608 |

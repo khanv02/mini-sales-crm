@@ -9,7 +9,10 @@ RBAC/tenant guard foundation. Short-lived JWT access token + HttpOnly refresh co
 
 ## Technical Context
 
-- **Backend**: NestJS modules `auth`, `users`; Prisma; `@nestjs/jwt`; `argon2`; `rate-limiter-flexible`.
+- **Backend**: NestJS modules `auth`, `users`; Prisma; `jsonwebtoken` for access/refresh signing and
+  `@node-rs/argon2` for Argon2id; login lockout on Redis through the existing `RedisService` (`ioredis`).
+  (The libraries first sketched here - `@nestjs/jwt`, `rate-limiter-flexible` - were dropped because the repo
+  already ships `jsonwebtoken` and an ioredis client, and the lockout is a small fixed-window counter.)
 - **Auth**: 15m access JWT; 7d opaque refresh, HMAC hash, family; HttpOnly cookie.
 - **Storage**: `users`, `refresh_tokens`, `organizations`.
 - **Testing**: Jest + Supertest; real Redis for lockout; fake clock for expiry.

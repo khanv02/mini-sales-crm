@@ -1,0 +1,17 @@
+# Secret scan configuration used by CI and local pre-commit checks.
+# The default gitleaks ruleset is extended; only documented placeholders are
+# allowlisted, never real credential paths.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented local placeholders and fixtures"
+paths = [
+  '''\.env\.example$''',
+  '''docs/quickstart\.md$''',
+  '''backend/test/setup/env\.ts$''',
+]
+regexes = [
+  '''dev-only-(access-secret|refresh-pepper)-change-before-use''',
+  '''0000000000000000000000000000000000000000000000000000000000000000''',
+]

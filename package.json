@@ -1,0 +1,56 @@
+{
+  "name": "pulse-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pulse CRM monorepo (API, web, shared package)",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @pulse/shared build && concurrently -k -n api,web -c blue,green \"pnpm --filter api dev\" \"pnpm --filter web dev\"",
+    "build": "pnpm --filter @pulse/shared build && pnpm --filter api build && pnpm --filter web build",
+    "lint": "pnpm --filter api lint && pnpm --filter web lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @pulse/shared typecheck && pnpm --filter api typecheck && pnpm --filter web typecheck",
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "pnpm --filter @pulse/shared build && pnpm --filter api test:unit && pnpm --filter web test:unit",
+    "test:integration": "pnpm --filter @pulse/shared build && pnpm --filter api test:integration",
+    "test:cov": "pnpm --filter @pulse/shared build && pnpm --filter api test:unit:cov",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "test:perf": "node backend/scripts/manual-only.mjs test:perf",
+    "eval:score": "node backend/scripts/manual-only.mjs eval:score",
+    "infra:check": "powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/check-infra.ps1",
+    "db:generate": "pnpm --filter api db:generate",
+    "db:migrate": "pnpm --filter api db:migrate",
+    "db:migrate:dev": "pnpm --filter api db:migrate:dev",
+    "db:seed": "pnpm --filter api db:seed",
+    "db:reset": "pnpm --filter api db:reset",
+    "db:studio": "pnpm --filter api db:studio",
+    "postinstall": "pnpm --filter api db:generate"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.20.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "globals": "^15.14.0",
+    "prettier": "^3.5.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.22.0"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 110,
+    "tabWidth": 2,
+    "endOfLine": "lf"
+  }
+}

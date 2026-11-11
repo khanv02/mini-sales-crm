@@ -10,7 +10,9 @@
 Pulse CRM — a small, multi-tenant CRM built spec-first: contacts, pipeline/deals, activities, tasks and
 dashboard, realtime notifications, import/webhook/email, governance layers, and AI assist.
 
-**Current state**: specification only. No application code exists yet, so do not invent files, code paths,
+**Current state**: M0 foundation (feature 001) is implemented: pnpm workspace with `backend/` (NestJS API,
+Prisma schema/migrations/seed, health, errors, logging, queue base), `frontend/` (React + Vite shell) and
+`packages/shared`. CRM features from M1 onward remain specification-only, so do not invent files, code paths,
 endpoints, tables, events or dependencies that the SDD does not describe.
 
 Where to look:
@@ -18,6 +20,7 @@ Where to look:
 | Need | Read |
 | --- | --- |
 | Human-facing introduction (Vietnamese) | `README.md` |
+| Original concept PRD (v0.1 archive, Vietnamese) | `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` |
 | Project law (C1–C9, quality gates) | `.specify/memory/constitution.md` |
 | SDD index, feature map, ID conventions | `specs/README.md` |
 | Feature requirements + acceptance criteria | `specs/00X-*/spec.md` |
@@ -48,6 +51,10 @@ Where to look:
 - Exception: the root `README.md` is the **client-facing** introduction (Vietnamese) and is maintained in
   Vietnamese. It must not expose internal artifacts: no ADR/SCR/task IDs, no SDD file index, no env vars, ports,
   rate limits or other internals. Every other repository artifact stays English.
+- Historical reference artifact: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` is the
+  original concept PRD (v0.1 reference archive) preserved in Vietnamese for historical lineage; it is frozen and
+  not modified during active development. The living, executable source of truth is maintained in English under
+  `specs/` and `docs/`.
 - Reply to the user in the language they used, but keep every repository artifact in English.
 
 ## 3. Binding rules (condensed; the constitution is authoritative)
@@ -72,6 +79,34 @@ Where to look:
    requests are never blocked by it.
 9. **Small, traceable changes.** One feature slice or task group per change, the FR/AC ID in the description,
    and `docs/traceability.md` updated in the same change.
-10. **Separate apps.** Frontend and backend live in separate folders: `apps/api` (backend, NestJS) and `apps/web`
-    (frontend, React + Vite); shared types/zod live in `packages/shared`. Never mix server and client code in one
-    folder, and never import across the two apps (go through `packages/shared`).
+10. **Separate apps.** Frontend and backend live in separate folders: `backend/` (NestJS API) and `frontend/`
+    (React + Vite); shared types/zod live in `packages/shared`. Never mix server and client code in one folder,
+    and never import across the two apps (go through `packages/shared`).
+
+## 4. Git and branching workflow
+
+- **Branch naming conventions**:
+  - `feature/<id>-<short-description>`: Feature work tied to SDD milestones (e.g., `feature/001-foundation`, `feature/003-contacts-pipeline`).
+  - `hotfix/<issue>-<short-description>`: Urgent fixes addressing regressions or defects in released code.
+  - `chore/<short-description>`: Tooling, dependency, and configuration maintenance.
+  - `docs/<short-description>`: Documentation, spec refinement, and governance updates.
+- **Commit discipline**: Small, atomic commits with concise conventional messages (`feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`). Never embed task/ticket IDs in the subject (e.g., use `docs: update api conventions` instead of `docs(T017): ...` or `feat(FR-05): ...`). Keep subjects clean, concise, and visually appealing.
+- **Push policy**: **NEVER automatically push to remote repositories.** All commits remain local. Pushing to remote is permitted only when the user explicitly instructs the agent to push.
+- **Session log & ticket tracking**: Record task/ticket details, requirement IDs, and step-by-step changes in `.session-log.md` at the repo root after each session. This file is git-ignored and never committed; it serves as a private, concise scratchpad for the human reviewer.
+
+## 5. Standard report format for task outputs
+
+Every response reporting task completion, code edits, or progress must include a concise, review-friendly markdown summary designed for the human reviewer:
+
+1. **Files Changed**: List exact paths of modified, created, or deleted files.
+2. **Changes Summary**: Brief, high-signal description of what was added or edited.
+3. **Project Impact**: How the changes affect the overall system, contracts, or runtime behavior.
+4. **Conflicts & Blockers**: Any detected conflicts, resolution applied, or decisions pending.
+5. **Trade-offs & Rationale**: Why this approach was chosen over alternatives, and any compromises made.
+
+Keep this summary clear, objective, and token-efficient so the human reviewer can evaluate and approve changes quickly.
+
+## 6. Scope discipline
+
+- **Do exactly the assigned task — no more, no less.** Do not refactor unrelated code, reformat files, or "improve" things the user did not ask for. If a cleanup is warranted but out of scope, note it and ask; do not act on it.
+- **No overkill.** Prefer the simplest solution that satisfies the requirement. Do not add abstractions, layers, or tooling that the current stage does not need. A small project should stay small.

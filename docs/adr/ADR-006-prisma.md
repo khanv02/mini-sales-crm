@@ -1,6 +1,6 @@
 # ADR-006 — Use Prisma as the ORM
 
-- **Status**: Proposed (needs sign-off before M1)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: spec Q1
 - **Related**: NFR-05, NFR-07

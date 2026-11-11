@@ -7,106 +7,117 @@
 
 ## User Scenarios & Testing
 
-### US-1 — Tóm tắt lịch sử deal (Priority: P1)
+### US-1 — Deal history summary (Priority: P1)
 
-Sales mở deal, bấm “Tóm tắt”; server stream token ngay (< 3s), chỉ dùng dữ liệu org hiện tại.
+Sales opens a deal, clicks “Summary”; the server streams tokens immediately (< 3s), using only the current org's
+data.
 
-**Vì sao P1**: FR-16 là demo AI chính; streaming là điểm kỹ thuật portfolio.
+**Why P1**: FR-16 is the main AI demo; streaming is the portfolio technical highlight.
 
-**Kiểm thử độc lập**: Mock provider; gọi SSE; đo first token; kiểm tra prompt không chứa org khác; lỗi provider.
+**Independent test**: Mock provider; call SSE; measure the first token; check the prompt contains no other org;
+provider error.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR16-01** Given deal của mình, When `POST /ai/deals/:id/summary`, Then SSE `meta` rồi `token`; first
-   token p95 < 3s; kết thúc `done` có usage.
-2. **AC-FR16-02** Given input, When build prompt, Then chỉ gồm contact/deal/activity của org hiện tại; không
-   có org khác; email/phone được mask.
-3. **AC-FR16-03** Given lịch sử quá dài, When build prompt, Then cắt còn ≤ 8.000 token ước tính; giữ phần mới
-   nhất + tóm tắt; không vượt limit.
-4. **AC-FR16-04** Given provider lỗi/timeout, When stream, Then event `error` code thân thiện; deal/DB không
-   đổi; user có thể thử lại.
-5. **AC-FR16-05** Given client disconnect, When stream, Then abort provider; ghi usage `ERROR/CANCELLED`; không
-   treo connection.
-6. **AC-FR16-06** Given summary xong, When kiểm tra `ai_usage`, Then có token/cost/latency/user/org/feature.
-7. **AC-FR16-07** Given Sales B, When summary deal Sales A, Then `404`; Manager/Admin được; org khác `404`.
+1. **AC-FR16-01** Given own deal, When `POST /ai/deals/:id/summary`, Then SSE `meta` then `token`; first token
+   p95 < 3s; ends with `done` carrying usage.
+2. **AC-FR16-02** Given input, When building the prompt, Then only the current org's contact/deal/activity; no
+   other org; email/phone are masked.
+3. **AC-FR16-03** Given history that is too long, When building the prompt, Then truncate to ≤ 8,000 estimated
+   tokens; keep the newest part + summary; do not exceed the limit.
+4. **AC-FR16-04** Given provider error/timeout, When streaming, Then an `error` event with a friendly code; the
+   deal/DB are unchanged; the user can retry.
+5. **AC-FR16-05** Given client disconnect, When streaming, Then abort the provider; record usage
+   `ERROR/CANCELLED`; do not hang the connection.
+6. **AC-FR16-06** Given the summary finished, When checking `ai_usage`, Then it has token/cost/latency/user/org/
+   feature.
+7. **AC-FR16-07** Given Sales B, When summarizing Sales A's deal, Then `404`; Manager/Admin allowed; other org
+   `404`.
 
 ---
 
-### US-2 — Nháp email follow-up (Priority: P2)
+### US-2 — Follow-up email draft (Priority: P2)
 
-Sales tạo nháp email từ deal; hệ thống không tự gửi; user sửa rồi tự gửi ngoài hệ thống (MVP).
+Sales creates an email draft from a deal; the system does not send it; the user edits and sends it outside the
+system (MVP).
 
-**Vì sao P2**: FR-17; giá trị cao nhưng phụ thuộc summary/context.
+**Why P2**: FR-17; high value but depends on summary/context.
 
-**Kiểm thử độc lập**: Gọi endpoint; nhận draft; kiểm tra không có email gửi; sửa nội dung ở UI.
+**Independent test**: Call the endpoint; receive the draft; check no email was sent; edit the content in the UI.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR17-01** Given deal, When tạo draft, Then trả `subject`, `body`, `tone`, `language`; nội dung dựa
-   trên contact/deal/activity trong org.
-2. **AC-FR17-02** Given draft, When kiểm tra queue email/log, Then **không** có email nào được gửi; chỉ trả text.
-3. **AC-FR17-03** Given UI, When user sửa subject/body, Then lưu nháp local/không ghi đè deal; có thể copy.
-4. **AC-FR17-04** Given Sales B/org khác, When tạo draft deal A, Then `404`; prompt không chứa dữ liệu ngoài org.
+1. **AC-FR17-01** Given a deal, When creating a draft, Then return `subject`, `body`, `tone`, `language`; the
+   content is based on the contact/deal/activity in the org.
+2. **AC-FR17-02** Given a draft, When checking the email queue/log, Then **no** email was sent; only text is
+   returned.
+3. **AC-FR17-03** Given the UI, When the user edits subject/body, Then save the draft locally/do not overwrite the
+   deal; it can be copied.
+4. **AC-FR17-04** Given Sales B/another org, When creating a draft for deal A, Then `404`; the prompt contains no
+   data outside the org.
 
 ---
 
-### US-3 — Chấm điểm lead (Priority: P2)
+### US-3 — Lead scoring (Priority: P2)
 
-Hệ thống chấm 0–100 kèm lý do, lưu lịch sử, có bộ eval 30 lead để đo ổn định.
+The system scores 0–100 with a reason, stores history, and has an eval set of 30 leads to measure stability.
 
-**Vì sao P2**: FR-18; cần queue/eval, làm sau summary.
+**Why P2**: FR-18; needs queue/eval, done after summary.
 
-**Kiểm thử độc lập**: Chấm 1 contact; kiểm tra score/reason/history; chấm lại; cache; chạy eval 30 lead.
+**Independent test**: Score 1 contact; check score/reason/history; score again; cache; run the 30-lead eval.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR18-01** Given contact của mình, When `POST /ai/contacts/:id/score`, Then `202 runId`; worker xử lý;
-   `GET /ai/runs/:id` trả `score` 0–100 + `reason` + `model`.
-2. **AC-FR18-02** Given chấm nhiều lần, When xem history, Then mỗi lần là một bản ghi `ai_results`; không ghi đè.
-3. **AC-FR18-03** Given bộ eval ≥ 30 lead, When chạy `pnpm eval:score`, Then báo MAE giữa 3 lần chạy + tỷ lệ
-   trong band; lưu report.
-4. **AC-FR18-04** Given eval, When 3 lần cùng input, Then MAE trung bình ≤ 10 điểm; nếu vượt, ghi cảnh báo
-   (không chặn CI).
-5. **AC-FR18-05** Given cùng input hash trong 24h, When chấm lại, Then trả cache (không gọi provider), ghi
-   `cache_hit=true`; history vẫn có bản ghi cache.
-6. **AC-FR18-06** Given Sales B/org khác, When chấm contact A, Then `404`; score không rò dữ liệu.
+1. **AC-FR18-01** Given own contact, When `POST /ai/contacts/:id/score`, Then `202 runId`; the worker processes it;
+   `GET /ai/runs/:id` returns `score` 0–100 + `reason` + `model`.
+2. **AC-FR18-02** Given several scorings, When viewing history, Then each run is one `ai_results` record; no
+   overwrite.
+3. **AC-FR18-03** Given an eval set of ≥ 30 leads, When running `pnpm eval:score`, Then report the MAE across 3
+   runs + the in-band rate; store the report.
+4. **AC-FR18-04** Given the eval, When 3 runs use the same input, Then the average MAE ≤ 10 points; if exceeded,
+   record a warning (do not block CI).
+5. **AC-FR18-05** Given the same input hash within 24h, When scoring again, Then return the cache (no provider
+   call), record `cache_hit=true`; history still has a cache record.
+6. **AC-FR18-06** Given Sales B/another org, When scoring contact A, Then `404`; the score leaks no data.
 
 ---
 
-### US-4 — Kiểm soát chi phí (Priority: P1)
+### US-4 — Cost control (Priority: P1)
 
-Đếm token theo user/org, hạn mức ngày, cache input, báo 429 khi vượt.
+Count tokens per user/org, daily quota, input cache, return 429 when exceeded.
 
-**Vì sao P1**: FR-19; không có quota thì rủi ro chi phí LLM.
+**Why P1**: FR-19; without a quota there is LLM cost risk.
 
-**Kiểm thử độc lập**: Set quota thấp; gọi AI đến khi 429; kiểm tra provider không gọi; cache hit.
+**Independent test**: Set a low quota; call AI until 429; check the provider was not called; cache hit.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR19-01** Given mỗi lần gọi AI, When xong, Then `ai_usage` ghi input/output token, cost, user, org,
-   feature, latency, status.
-2. **AC-FR19-02** Given org/user vượt hạn mức ngày, When gọi AI, Then `429 AI_QUOTA_EXCEEDED` trước khi gọi
-   provider; `Retry-After` đến ngày mới.
-3. **AC-FR19-03** Given cùng input hash, When gọi lần 2 trong TTL, Then cache hit, cost 0/provider không gọi.
-4. **AC-FR19-04** Given bảng giá model, When tính cost, Then `cost_usd` khớp `tokens * price` (làm tròn 6
-   chữ số); không hard-code.
-5. **AC-FR19-05** Given sang ngày mới (timezone org), When gọi, Then quota reset; usage cũ vẫn còn.
-6. **AC-FR19-06** Given user, When `GET /ai/usage`, Then thấy usage của mình; Admin/Manager thấy org/tổng
-   hợp; Sales không thấy người khác.
-7. **AC-FR19-07** Given org B, When xem usage org A, Then `404`/không thấy; quota tách theo org.
+1. **AC-FR19-01** Given every AI call, When it finishes, Then `ai_usage` records input/output tokens, cost, user,
+   org, feature, latency, status.
+2. **AC-FR19-02** Given the org/user exceeds the daily quota, When calling AI, Then `429 AI_QUOTA_EXCEEDED` before
+   calling the provider; `Retry-After` until the new day.
+3. **AC-FR19-03** Given the same input hash, When calling a second time within the TTL, Then cache hit, cost 0/the
+   provider is not called.
+4. **AC-FR19-04** Given the model price table, When computing cost, Then `cost_usd` matches `tokens * price`
+   (rounded to 6 digits); not hard-coded.
+5. **AC-FR19-05** Given a new day (org timezone), When calling, Then the quota resets; old usage remains.
+6. **AC-FR19-06** Given a user, When `GET /ai/usage`, Then they see their own usage; Admin/Manager see the
+   org/aggregate; Sales do not see others.
+7. **AC-FR19-07** Given org B, When viewing org A's usage, Then `404`/nothing visible; quotas are split per org.
 
 ### Edge Cases
 
-- Provider trả về giữa chừng rồi đứt → lưu partial usage, status ERROR; không tính là thành công.
-- Model trả JSON score thiếu field/ngoài 0–100 → retry 1 lần rồi `AI_OUTPUT_INVALID`; không lưu score rác.
-- Input rỗng/quá ngắn → trả message thân thiện, không gọi provider.
-- Prompt injection trong note (“bỏ qua hướng dẫn…”) → coi là dữ liệu; system prompt cố định; output không
-  thực thi.
-- Email/phone mask nhưng tên công ty giữ; không gửi secret/audit.
-- Quota Redis mất → reconcile từ DB; có thể chậm hơn nhưng không vượt quá nhiều.
-- Nhiều request đồng thời cùng input → single-flight lock (Redis) để tránh gọi trùng.
-- Client disconnect giữa stream → abort; không tính full output.
-- RAG (FR-20) không có endpoint; trả 404/không hiển thị.
+- The provider returns partway then drops → save partial usage, status ERROR; not counted as success.
+- The model returns JSON score missing a field/outside 0–100 → retry once then `AI_OUTPUT_INVALID`; do not store a
+  junk score.
+- Empty/too-short input → return a friendly message, do not call the provider.
+- Prompt injection in a note (“ignore the instructions…”) → treat it as data; the system prompt is fixed; output
+  is not executed.
+- Email/phone masked but the company name kept; do not send secrets/audit.
+- Redis quota lost → reconcile from the DB; may be slower but does not overshoot much.
+- Several concurrent requests with the same input → single-flight lock (Redis) to avoid duplicate calls.
+- Client disconnects mid-stream → abort; do not count the full output.
+- RAG (FR-20) has no endpoint; return 404/do not display.
 
 ## Requirements
 
@@ -114,52 +125,53 @@ Hệ thống chấm 0–100 kèm lý do, lưu lịch sử, có bộ eval 30 lead
 
 - **FR-16.1**: `POST /ai/deals/:id/summary` SSE; event `meta/token/done/error`; first token p95 < 3s;
   timeout 30s; abort on disconnect.
-- **FR-16.2**: Prompt chỉ dữ liệu org hiện tại; mask email/phone; input ≤ 8.000 token ước tính; system prompt
-  cố định; nội dung CRM là untrusted.
-- **FR-16.3**: Lỗi provider không ảnh hưởng deal; trả message thân thiện; log requestId.
-- **FR-17.1**: `POST /ai/deals/:id/follow-up-email` trả draft JSON; **không** gửi email; user sửa/copy.
+- **FR-16.2**: Prompt uses only the current org's data; mask email/phone; input ≤ 8,000 estimated tokens; the
+  system prompt is fixed; CRM content is untrusted.
+- **FR-16.3**: Provider errors do not affect the deal; return a friendly message; log requestId.
+- **FR-17.1**: `POST /ai/deals/:id/follow-up-email` returns a draft JSON; does **not** send email; the user
+  edits/copies.
 - **FR-18.1**: `POST /ai/contacts/:id/score` → 202 runId; worker `ai`; `GET /ai/runs/:id`; score 0–100 + reason;
   history `ai_results`.
-- **FR-18.2**: Eval dataset ≥ 30 lead; script đo MAE/band/cost; chạy tay.
-- **FR-19.1**: `ai_usage` mỗi lần gọi; quota ngày org 200k/user 50k (env); 429 trước provider; cache 24h.
-- **FR-19.2**: `GET /ai/usage` theo quyền; cost từ bảng giá cấu hình; không hard-code.
-- **FR-19.3**: Single-flight/cache theo input hash; không cache cross-org.
-- **FR-20**: Không implement (ADR-009); không route/UI.
+- **FR-18.2**: Eval dataset ≥ 30 leads; script measuring MAE/band/cost; run manually.
+- **FR-19.1**: `ai_usage` on every call; daily quota org 200k/user 50k (env); 429 before the provider; cache 24h.
+- **FR-19.2**: `GET /ai/usage` per permission; cost from the configured price table; not hard-coded.
+- **FR-19.3**: Single-flight/cache by input hash; no cross-org caching.
+- **FR-20**: Not implemented (ADR-009); no route/UI.
 
 ### Key Entities
 
-- `ai_usage` (cost ledger), `ai_results` (output/history/cache); chi tiết `docs/data-model.md` 4.14–4.15.
-- Deal/Contact/Activity là nguồn context; không copy sang bảng AI.
+- `ai_usage` (cost ledger), `ai_results` (output/history/cache); details in `docs/data-model.md` 4.14–4.15.
+- Deal/Contact/Activity are the context source; not copied into AI tables.
 
 ## Success Criteria
 
-- **SC-001**: First token p95 < 3s với mock; < 5s với provider thật (ghi rõ môi trường).
-- **SC-002**: 0 dữ liệu org khác trong prompt (test + review).
-- **SC-003**: 100% lần gọi có usage; quota chặn trước provider; cache hit không cost.
-- **SC-004**: Eval 30 lead chạy được; MAE ≤ 10; báo cáo lưu.
-- **SC-005**: 100% AC có test; provider mock trong CI.
+- **SC-001**: First token p95 < 3s with the mock; < 5s with a real provider (state the environment).
+- **SC-002**: 0 other-org data in the prompt (test + review).
+- **SC-003**: 100% of calls have usage; the quota blocks before the provider; cache hits cost nothing.
+- **SC-004**: The 30-lead eval runs; MAE ≤ 10; the report is stored.
+- **SC-005**: 100% of AC have tests; mock provider in CI.
 
 ## Assumptions
 
-- `AI_PROVIDER=mock` mặc định dev/test; production cấu hình provider thật.
-- Model/giá cấu hình qua env/bảng JSON; không hard-code.
-- Summary/draft dùng context giới hạn; chưa có RAG.
-- Score chạy queue; summary stream trực tiếp (C7 cho phép stream).
-- Email draft không gửi; gửi thật ngoài scope (Q3/Q5).
-- Mask PII đơn giản (email/phone) trước khi gửi; có thể cải tiến.
+- `AI_PROVIDER=mock` by default in dev/test; production configures a real provider.
+- Model/prices are configured via env/JSON table; not hard-coded.
+- Summary/draft use limited context; no RAG yet.
+- Score runs through the queue; summary streams directly (C7 allows streaming).
+- Email drafts are not sent; real sending is out of scope (Q3/Q5).
+- Simple PII masking (email/phone) before sending; can be improved.
 
 ## Out of Scope
 
 - RAG/FR-20, embedding, pgvector.
-- Auto-send email, chỉnh sửa và gửi trong hệ thống (cần FR mới).
-- Fine-tuning, model tự host.
-- Multi-model routing/fallback phức tạp.
-- AI chat tự do ngoài 3 use case.
-- Billing/payment cho AI.
+- Auto-send email, editing and sending inside the system (needs a new FR).
+- Fine-tuning, self-hosted models.
+- Complex multi-model routing/fallback.
+- Free-form AI chat beyond the 3 use cases.
+- Billing/payment for AI.
 
 ## Traceability
 
-| Nguồn | AC | Task |
+| Source | AC | Task |
 | --- | --- | --- |
 | FR-16 | AC-FR16-01..07 | T700–T708, T718 |
 | FR-17 | AC-FR17-01..04 | T709–T710, T718 |

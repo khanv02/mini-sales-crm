@@ -105,5 +105,5 @@ For every endpoint in the matrix:
 | Admin of another org | 404 |
 | Missing/expired token | 401 |
 
-These tests live in `apps/api/test/integration/*.spec.ts` and use the `createUser(role, org)` and `loginAs(user)`
+These tests live in `backend/test/integration/*.spec.ts` and use the `createUser(role, org)` and `loginAs(user)`
 factories.

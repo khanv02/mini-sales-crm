@@ -1,6 +1,6 @@
 # ADR-010 — A task is an activity with `type='task'`
 
-- **Status**: Proposed (needs sign-off before M1)
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: FR-07, sections 6 and 8
 - **Related**: SCR-004

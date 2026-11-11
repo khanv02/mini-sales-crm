@@ -93,10 +93,30 @@ Dữ liệu của mỗi tổ chức được tách biệt hoàn toàn: không va
 
 ## 7. Công nghệ
 
-- Giao diện: React + TypeScript, cập nhật trạng thái mượt khi kéo–thả kanban.
-- Máy chủ: NestJS + PostgreSQL + Redis; tác vụ nền chạy qua hàng đợi.
-- Cập nhật thời gian thực: Socket.IO cho bảng kanban và thông báo; streaming cho trợ lý AI.
-- AI: tích hợp qua adapter, có thể thay nhà cung cấp mà không đổi nghiệp vụ.
+**Giao diện (frontend)**
+
+- React + TypeScript, đóng gói bằng Vite: ứng dụng nội bộ chạy nhanh, dễ mở rộng.
+- TanStack Query: đồng bộ dữ liệu với máy chủ và tự làm mới khi có thay đổi.
+- Tailwind CSS + shadcn/ui: giao diện thống nhất, dễ tùy biến.
+- dnd-kit: kéo–thả thẻ trên bảng kanban mượt, phản hồi tức thời.
+- React Router: điều hướng giữa các màn hình khách hàng, pipeline, báo cáo.
+
+**Máy chủ (backend)**
+
+- NestJS + TypeScript: tách module rõ ràng theo nghiệp vụ (khách hàng, cơ hội, công việc, báo cáo, tích hợp, AI).
+- PostgreSQL: cơ sở dữ liệu chính; Prisma quản lý schema và migration.
+- Redis: hàng đợi tác vụ nền và bộ nhớ đệm cho báo cáo.
+- BullMQ: xử lý nền import, webhook, email nhắc việc và chấm điểm AI, không chặn thao tác của người dùng.
+
+**Cập nhật trực tiếp**
+
+- Socket.IO: đẩy thay đổi bảng kanban và thông báo tới đúng người có quyền.
+- Streaming: trả dần kết quả trợ lý AI ngay khi máy chủ bắt đầu sinh câu trả lời.
+
+**Trợ lý AI**
+
+- Tích hợp qua lớp adapter: có thể thay nhà cung cấp mô hình mà không đổi nghiệp vụ.
+- Chỉ tóm tắt, soạn nháp và chấm điểm; người dùng quyết định trước khi gửi.
 
 ## 8. Liên hệ
 

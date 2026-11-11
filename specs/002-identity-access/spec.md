@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-identity-access`
 **Created**: 2026-11-08
-**Status**: Draft
+**Status**: Implemented (M1)
 **Input**: FR-01, FR-02; C3, C4, C5, C6; NFR-02; ADR-015
 
 ## User Scenarios & Testing

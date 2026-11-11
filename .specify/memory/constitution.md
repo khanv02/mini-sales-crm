@@ -1,8 +1,8 @@
 # Pulse CRM Constitution
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-08
+**Version**: 1.0.1 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-09
 
-Origin: `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1, sections 3 (C1–C9), 10 and 11.
+Origin: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1, sections 3 (C1–C9), 10 and 11.
 This document is the law of the project. When spec and code conflict, the spec wins. When the spec is
 ambiguous, resolve it with an ADR or a spec change request before coding.
 
@@ -191,6 +191,8 @@ stream.
   messages, email templates) is product content rather than documentation: it stays Vietnamese by default and is
   selected through `Accept-Language`. The root `README.md` is the single documented exception: it is the
   client-facing product introduction, stays Vietnamese, and must not contain internal artifacts (ADR/SCR/task IDs,
-  the SDD file index, environment variables, ports or limits).
+  the SDD file index, environment variables, ports or limits). The file `docs/Pulse CRM — Đặc tả sản phẩm
+  (Spec-Driven).md` is the original concept PRD (v0.1 reference archive) preserved in Vietnamese for historical
+  lineage; it is frozen, while the active executable SDD is maintained in English under `specs/` and `docs/`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-08
+**Version**: 1.0.1 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-09

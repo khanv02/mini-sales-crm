@@ -7,8 +7,8 @@ the same PR. Convention: `AC-FRxx-yy`; task IDs use per-feature ranges (see `spe
 
 | Source | AC | Feature | Main tasks | Test/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| FR-01 Register/login | AC-FR01-01..11 | 002 | T100–T113, T117–T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts` | Draft |
-| FR-02 Member management | AC-FR02-01..07 | 002 | T114–T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts` | Draft |
+| FR-01 Register/login | AC-FR01-01..11 | 002 | T100–T113, T117–T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts`, `frontend/src/features/auth/auth-provider.test.tsx` | Implemented |
+| FR-02 Member management | AC-FR02-01..07 | 002 | T114–T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts`, `test/unit/audit.service.spec.ts` | Implemented |
 | FR-03 Contacts | AC-FR03-01..08 | 003 | T200–T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts` | Draft |
 | FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209–T211, T222 | `test/integration/pipelines.spec.ts` | Draft |
 | FR-05 Deals/kanban | AC-FR05-01..10 | 003, 005 | T212–T217, T223–T224, T406 | `test/integration/deals.spec.ts`, `deals-concurrency.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
@@ -39,8 +39,8 @@ feature/task/test.
 | NFR-02 Security | AC-NFR02-01..04 | 001, 002, 003, 007 | T102, T115, T119, T603 | `test/integration/rbac.spec.ts`, `tenant-isolation.spec.ts`, security checklist | Draft |
 | NFR-03 Reliability | AC-NFR03-01..03 | 001, 006 | T010, T020, T501, T519 | `test/integration/health.spec.ts`, `test/unit/queue.spec.ts` | Draft |
 | NFR-04 Observability | AC-NFR04-01..02 | 001 | T009, T011 | `test/unit/logger.spec.ts`, Sentry smoke | Draft |
-| NFR-05 Data/migration | AC-NFR05-01..02 | 001 | T007, T016 | migration from empty DB; `scripts/backup.ps1` | Draft |
-| NFR-06 Delivery | AC-NFR06-01..02 | 001 | T005, T015, T017, T018 | `docs/quickstart.md`, `scripts/check-infra` | Draft |
+| NFR-05 Data/migration | AC-NFR05-01..02 | 001 | T007, T016 | migration from empty DB; `backend/scripts/backup.ps1` | Draft |
+| NFR-06 Delivery | AC-NFR06-01..02 | 001 | T005, T015, T017, T018 | `docs/quickstart.md`, `backend/scripts/check-infra` | Draft |
 | NFR-07 Quality | AC-NFR07-01..03 | 001 | T013, T014, T019 | CI workflow, coverage report, secret scan | Draft |
 
 ## 3. Endpoint → mandatory test matrix (C8)
@@ -108,6 +108,9 @@ extra ACs are annotated.
 
 ## 5. Status & gaps
 
+- [x] 001 Foundation (M0) is implemented: pnpm workspace (`backend/`, `frontend/`, `packages/shared/`), API health,
+      error shape, logging/Sentry, BullMQ base, Prisma migration + idempotent seed, web shell, CI and ops scripts.
+      Evidence: `backend/test/{unit,integration}`, `frontend/e2e/foundation.spec.ts`, `pnpm lint|typecheck|test|build`.
 - [x] FR-01…FR-19 have feature, AC, tasks and tests.
 - [x] NFR-01…NFR-07 have feature/task/test.
 - [ ] FR-20 deferred (ADR-009) — not counted in M3.

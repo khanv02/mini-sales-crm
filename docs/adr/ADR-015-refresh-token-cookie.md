@@ -1,6 +1,6 @@
 # ADR-015 — Refresh token in an HttpOnly cookie
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: FR-01, the question about token storage
 - **Related**: SCR-009

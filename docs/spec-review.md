@@ -1,6 +1,6 @@
 # Spec Critique & Decision Log
 
-**Reviewed document**: `Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
+**Reviewed document**: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
 **Date**: 2026-11-08
 **Reviewer**: AI (as requested by section 12 of the spec)
 **Status**: Proposal — needs human sign-off before M1 coding starts
@@ -284,6 +284,8 @@ edit.
 | SCR-013 | Audit redaction, append-only, no secret/PII in logs | C4, security | Audit service | Applied in SDD |
 | SCR-014 | Cursor pagination, UUID v4, ISO UTC, org timezone | API consistency | Whole API | Applied in SDD |
 | SCR-015 | Add webhook-source management + notification endpoints | FR-09/FR-11 lacked APIs | API, RBAC | Applied in SDD; Pending spec |
+| SCR-016 | Remove SDD links and internal details from README; confine to quickstart | Constitution compliance; keep README client-facing | 001 tasks/spec | Applied in SDD |
+| SCR-017 | Accept ADR-006..015; document original concept PRD as frozen v0.1 reference | Establish legal baseline before M1; clarify language policy | ADRs, constitution, AGENTS.md, SDD index | Applied in SDD |
 
 ## 6. Out of scope / deferred
 

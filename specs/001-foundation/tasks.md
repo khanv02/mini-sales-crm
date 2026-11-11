@@ -6,37 +6,39 @@
 
 ## Phase 1 — Setup
 
-- [ ] **T001** Initialise the pnpm workspace: `package.json`, `pnpm-workspace.yaml`, `.nvmrc`, `.editorconfig`,
-      `.gitignore`, `.gitattributes`; root scripts `dev`, `build`, `lint`, `typecheck`, `test`, `test:unit`,
-      `test:integration`, `test:e2e`, `test:perf`, `eval:score`, `infra:check`, `db:*`. These are exactly the
-      aliases used by `docs/quickstart.md`, `docs/testing-strategy.md` and CI (T014).
-- [ ] **T002** [P] Scaffold `apps/api` NestJS strict TS, ESLint/Prettier/Jest, `src/main.ts`, `app.module.ts`.
-- [ ] **T003** [P] Scaffold `apps/web` React+Vite+TS, Tailwind, shadcn/ui, TanStack Query, React Router, Vitest.
-- [ ] **T004** [P] Scaffold `packages/shared`: tsconfig, zod, types, constants; exported via the package name.
-- [ ] **T005** Docker Compose `infra/docker-compose.yml`: postgres:16, redis:7, mailpit; healthcheck; volume.
-- [ ] **T006** `.env.example` + `apps/api/src/common/config/env.schema.ts` zod; fail-fast; env parse test.
+- [x] **T001** Initialise the pnpm workspace: `package.json`, `pnpm-workspace.yaml`, `.gitignore`; root scripts
+      `dev`, `build`, `lint`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `test:perf`,
+      `eval:score`, `infra:check`, `db:*`. These are exactly the aliases used by `docs/quickstart.md`,
+      `docs/testing-strategy.md` and CI (T014). Each package owns its `tsconfig.json`; Node 22 is pinned by the
+      root `engines` field, so no `.nvmrc`/`.editorconfig`/`.gitattributes` is kept at the repo root.
+- [x] **T002** [P] Scaffold `backend` NestJS strict TS, ESLint/Prettier/Jest, `src/main.ts`, `app.module.ts`.
+- [x] **T003** [P] Scaffold `frontend` React+Vite+TS, Tailwind, shadcn/ui, TanStack Query, React Router, Vitest.
+- [x] **T004** [P] Scaffold `packages/shared`: tsconfig, zod, types, constants; exported via the package name.
+- [x] **T005** Docker Compose `backend/infra/docker-compose.yml`: postgres:16, redis:7, mailpit; healthcheck; volume.
+- [x] **T006** `.env.example` + `backend/src/common/config/env.ts` zod; fail-fast; env parse test.
 
 ## Phase 2 — Foundational
 
-- [ ] **T007** Prisma init `prisma/schema.prisma`; migration `0001_init` (organizations with `currency/timezone`,
-      users, refresh_tokens, **audit_logs**, extensions pg_trgm/unaccent/pgcrypto); `prisma/seed.ts` idempotent:
+- [x] **T007** Prisma init `backend/prisma/schema.prisma`; migration `0001_init` (organizations with `currency/timezone`,
+      users, refresh_tokens, **audit_logs**, extensions pg_trgm/unaccent/pgcrypto); `backend/prisma/seed.ts` idempotent:
       2 orgs + Admin/Manager/Sales users (the pipeline is deferred to 003); running it twice creates no duplicates.
-- [ ] **T008** [P] `common/errors`: `AppError`, error codes, global exception filter, Prisma mapping; test the
+- [x] **T008** [P] `common/errors`: `AppError`, error codes, global exception filter, Prisma mapping; test the
       `{code,message,details,requestId}` shape.
-- [ ] **T009** [P] `common/logging`: pino + AsyncLocalStorage requestId, redaction; test log fields.
-- [ ] **T010** [P] `common/health`: `/health/live`, `/health/ready` (DB/Redis), graceful shutdown; test ready 503
+- [x] **T009** [P] `common/logging`: pino + AsyncLocalStorage requestId, redaction; test log fields.
+- [x] **T010** [P] `common/health`: `/health/live`, `/health/ready` (DB/Redis), graceful shutdown; test ready 503
       when Redis/DB fails.
-- [ ] **T011** [P] Sentry init (API/web) from env; 5xx filter; test that no stack leaks.
-- [ ] **T012** [P] Swagger `/api/docs`; set the global prefix `/api/v1`; validation pipe.
-- [ ] **T013** Test harness: `apps/api/test/setup/{env,db}.ts`, org/user factories, login helper; coverage config.
-- [ ] **T014** CI `.github/workflows/ci.yml`: install/lint/typecheck/unit/integration/build/coverage; postgres and
+- [x] **T011** [P] Sentry init (API/web) from env; 5xx filter; test that no stack leaks.
+- [x] **T012** [P] Swagger `/api/docs`; set the global prefix `/api/v1`; validation pipe.
+- [x] **T013** Test harness: `backend/test/setup/{env,db}.ts`, org/user factories, login helper; coverage config.
+- [x] **T014** CI `.github/workflows/ci.yml`: install/lint/typecheck/unit/integration/build/coverage; postgres and
       redis services; pnpm cache; **secret scan (gitleaks) fails on `.env`/secret**.
-- [ ] **T015** [P] Web shell: providers, router, layout, API client, error boundary, login placeholder.
-- [ ] **T016** Scripts `scripts/check-infra.ps1`, `scripts/backup.ps1`, `scripts/restore.ps1`; manual test.
-- [ ] **T017** [P] `README.md` + `docs/quickstart.md`; SDD links; troubleshooting for common failures.
-- [ ] **T018** Verify a fresh clone: delete volumes, run the quickstart, health, lint/typecheck/test/build.
-- [ ] **T019** [P] Update `docs/traceability.md`; confirm the constitution/ADR index; PR checklist.
-- [ ] **T020** `common/queue`: BullMQ module + Redis connection, queue factory, worker bootstrap, default
+- [x] **T015** [P] Web shell: providers, router, layout, API client, error boundary, login placeholder.
+- [x] **T016** Scripts `backend/scripts/check-infra.ps1`, `backend/scripts/backup.ps1`, `backend/scripts/restore.ps1`; manual test.
+- [x] **T017** [P] `README.md` (client-facing product copy only, no SDD links or internals) + `docs/quickstart.md`
+      (technical setup with SDD links); troubleshooting for common failures.
+- [x] **T018** Verify a fresh clone: delete volumes, run the quickstart, health, lint/typecheck/test/build.
+- [x] **T019** [P] Update `docs/traceability.md`; confirm the constitution/ADR index; PR checklist.
+- [x] **T020** `common/queue`: BullMQ module + Redis connection, queue factory, worker bootstrap, default
       retry/DLQ, graceful shutdown; config test. Features 004/006/008 declare their own queues on top of this base.
 
 ## Dependencies

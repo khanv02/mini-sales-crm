@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-foundation`
 **Created**: 2026-11-08
-**Status**: Draft — ready for review
+**Status**: Implemented (M0)
 **Input**: M0 in spec v0.1; NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; C1–C9
 
 ## User Scenarios & Testing
@@ -81,13 +81,13 @@ An empty DB runs migrations to build the schema; the seed is idempotent; a minim
    re-running changes nothing.
 2. **AC-M0-12** Given the seed has already run, When running it again, Then no duplicate org/user/pipeline is
    created; exit code 0.
-3. **AC-M0-13** Given existing data, When running `scripts/backup.ps1`, Then a backup file is produced and
+3. **AC-M0-13** Given existing data, When running `backend/scripts/backup.ps1`, Then a backup file is produced and
    restoring it into a temporary DB succeeds (manual test).
 
 ### Edge Cases
 
 - Docker not running → a clear instruction, not a stack trace.
-- Ports 3000/5173 taken → the README explains how to change them.
+- Ports 3000/5173 taken → documented in `docs/quickstart.md` section 8 (the README stays product-only).
 - Windows paths/CRLF → PowerShell scripts; no bash dependency.
 - Redis down while the API still starts → `/health/live` 200, `/health/ready` 503.
 - Perf seed accidentally enabled in production → blocked by `NODE_ENV=production` plus `ALLOW_SEED=false`
@@ -98,8 +98,8 @@ An empty DB runs migrations to build the schema; the seed is idempotent; a minim
 
 ### Functional Requirements
 
-- **FR-M0.1**: The repo is a pnpm workspace with `apps/api`, `apps/web`, `packages/shared`, `prisma/`, `infra/`,
-  `docs/`, `specs/`.
+- **FR-M0.1**: The repo is a pnpm workspace with `backend/` (API + Prisma), `frontend/`, `packages/shared/`,
+  `infra/`, `docs/`, `specs/`.
 - **FR-M0.2**: NestJS API with TypeScript strict, prefix `/api/v1`, Swagger at `/api/docs` (dev).
 - **FR-M0.3**: Web app with React + Vite + TS, Tailwind + shadcn/ui, TanStack Query, React Router.
 - **FR-M0.4**: Docker Compose with PostgreSQL 16, Redis 7, Mailpit; healthchecks; durable volumes.
@@ -109,7 +109,7 @@ An empty DB runs migrations to build the schema; the seed is idempotent; a minim
 - **FR-M0.8**: pino JSON logs with requestId; Sentry for 5xx; redaction.
 - **FR-M0.9**: GitHub Actions CI: lint, typecheck, unit, integration (PG/Redis), build, coverage.
 - **FR-M0.10**: Test harness: dedicated test DB, factories, login helper, coverage config.
-- **FR-M0.11**: `scripts/check-infra` verifies DB/Redis; the README/quickstart works.
+- **FR-M0.11**: `backend/scripts/check-infra` verifies DB/Redis; the README/quickstart works.
 - **FR-M0.12**: Unified error filter `{code,message,details?,requestId}`.
 
 ### Key Entities

@@ -1,6 +1,6 @@
 # ADR-013 — Contact search with `pg_trgm` + `unaccent`
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-08
 - **Source**: FR-03, section 6
 - **Related**: NFR-01

@@ -2,77 +2,79 @@
 
 **Input**: `specs/005-realtime-notifications/`
 **Prerequisites**: 003, 004, plan.md, spec.md
-**Tests**: Bắt buộc. Test RBAC room và E2E 2 context là điều kiện merge.
+**Tests**: Mandatory. RBAC room tests and the 2-context E2E are merge conditions.
 
 ## Phase 1 — Setup
 
-- [ ] **T400** `apps/api/src/modules/realtime/realtime.gateway.ts` + `ws-auth.middleware.ts`: JWT handshake;
+- [ ] **T400** `backend/src/modules/realtime/realtime.gateway.ts` + `ws-auth.middleware.ts`: JWT handshake;
       join `user:{id}`, `org:{id}:managers` (Manager/Admin), `org:{id}:system`; unit test auth/rooms.
-- [ ] **T401** [P] `common/events/realtime-publisher.ts`: resolve rooms theo event; interface; test mapping.
+- [ ] **T401** [P] `common/events/realtime-publisher.ts`: resolve rooms per event; interface; mapping test.
 - [ ] **T402** [P] `packages/shared/src/events.ts`: envelope/payload zod; export types.
-- [ ] **T403** Redis adapter (optional, cấu hình sẵn) + graceful shutdown; health socket.
+- [ ] **T403** Redis adapter (optional, preconfigured) + graceful shutdown; socket health.
 
 ## Phase 2 — US1/2 Deal realtime (P1)
 
 ### Tests first
 
-- [ ] **T404** `apps/api/test/integration/realtime.spec.ts`: connect token sai/hết hạn; Sales không join
-      managers; Manager join; Sales B không nhận deal A; owner nhận; event sau commit.
-- [ ] **T405** Test emit lỗi không làm fail HTTP; event version cũ bị client bỏ qua (unit client helper).
+- [ ] **T404** `backend/test/integration/realtime.spec.ts`: connect with wrong/expired token; Sales do not join
+      managers; Manager joins; Sales B does not receive deal A; owner receives; event after commit.
+- [ ] **T405** Test that an emit failure does not fail HTTP; an old event version is ignored by the client (client
+      helper unit test).
 
 ### Implementation
 
-- [ ] **T406** `modules/deals/deal-events.publisher.ts`: publish `deal.moved`/`deal.assigned` sau commit;
-      payload tối giản; owner cũ/mới + managers.
-- [ ] **T407** `modules/notifications`: dùng service 004; thêm tạo `DEAL_ASSIGNED`, emit
-      `notification.created`; endpoint list/read/read-all.
-- [ ] **T408** `notification.controller.ts` + tests role/tenant; cursor/unread.
+- [ ] **T406** `modules/deals/deal-events.publisher.ts`: publish `deal.moved`/`deal.assigned` after commit;
+      minimal payload; old/new owner + managers.
+- [ ] **T407** `modules/notifications`: use the 004 service; add creation of `DEAL_ASSIGNED`, emit
+      `notification.created`; list/read/read-all endpoints.
+- [ ] **T408** `notification.controller.ts` + role/tenant tests; cursor/unread.
 
 ## Phase 3 — US3 Task/notification (P2)
 
 ### Tests first
 
-- [ ] **T409** `test/integration/notifications.spec.ts`: list/filter/read/read-all, người khác 404, tenant.
+- [ ] **T409** `test/integration/notifications.spec.ts`: list/filter/read/read-all, another user 404, tenant.
 - [ ] **T410** `test/unit/realtime-publisher.spec.ts`: task.due → assignee; import.completed → creator+
       managers; webhook.failed → managers.
 
 ### Implementation
 
-- [ ] **T411** Nối scheduler 004: tạo notification → emit `task.due`/`notification.created`; dedupe.
-- [ ] **T412** Frontend: toast/invalidate cho `import.completed`/`webhook.failed` bằng mock payload
-      (emit thật thuộc 006 T507/T513).
+- [ ] **T411** Wire the 004 scheduler: create notification → emit `task.due`/`notification.created`; dedupe.
+- [ ] **T412** Frontend: toast/invalidate for `import.completed`/`webhook.failed` with a mock payload
+      (real emit belongs to 006 T507/T513).
 
 ## Phase 4 — Frontend & E2E
 
-- [ ] **T413** [P] `apps/web/src/lib/socket.ts` + `SocketProvider`: connect/reconnect, token refresh,
-      connection state, invalidate query.
+- [ ] **T413** [P] `frontend/src/lib/socket.ts` + `SocketProvider`: connect/reconnect, token refresh,
+      connection state, query invalidation.
 - [ ] **T414** [P] Notification bell/dropdown/page: unread, mark read, read-all, toast.
-- [ ] **T415** Kanban realtime patch: apply `deal.moved` nếu version mới; nếu lệch → invalidate.
-- [ ] **T416** `apps/web/e2e/kanban-realtime.spec.ts`: 2 context, A move, B/Manager thấy ≤ 1s (p95 20 lần).
-- [ ] **T417** `apps/web/e2e/reconnect.spec.ts`: offline/online → refetch, không mất state.
+- [ ] **T415** Kanban realtime patch: apply `deal.moved` if the version is newer; if it diverges → invalidate.
+- [ ] **T416** `frontend/e2e/kanban-realtime.spec.ts`: 2 contexts, A moves, B/Manager see it ≤ 1s (p95 over 20
+      runs).
+- [ ] **T417** `frontend/e2e/reconnect.spec.ts`: offline/online → refetch, no state loss.
 
 ## Phase 5 — Verification
 
-- [ ] **T418** Chạy full integration + E2E; kiểm tra không rò event cho Sales; log/metric.
-- [ ] **T419** Cập nhật `docs/events.md`, traceability, ADR-012 status; PR checklist.
+- [ ] **T418** Run full integration + E2E; check no event leaks to Sales; log/metric.
+- [ ] **T419** Update `docs/events.md`, traceability, ADR-012 status; PR checklist.
 
 ## Dependencies
 
-- T400–T403 trước publisher.
-- T404–T408 cần deal events 003.
-- T409–T412 cần notification 004.
-- T413–T417 sau API.
-- 006 dùng publisher cho import/webhook event.
+- T400–T403 before the publisher.
+- T404–T408 need deal events from 003.
+- T409–T412 need notifications from 004.
+- T413–T417 after the API.
+- 006 uses the publisher for import/webhook events.
 
 ## MVP checkpoint
 
-Sau T408: deal move/assign realtime đúng quyền. Sau T416: AC < 1s pass.
+After T408: deal move/assign realtime respects permissions. After T416: AC < 1s passes.
 
 ## Notes
 
-- Không broadcast org; payload tối giản (ADR-012).
-- At-most-once; reconnect refetch; không replay.
-- Nếu nhiều instance, bật Redis adapter; test 1 instance MVP.
+- No org broadcast; minimal payload (ADR-012).
+- At-most-once; reconnect refetch; no replay.
+- If there are several instances, enable the Redis adapter; the MVP tests one instance.
 
 ## Traceability (task → AC)
 

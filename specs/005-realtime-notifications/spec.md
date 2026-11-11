@@ -7,119 +7,125 @@
 
 ## User Scenarios & Testing
 
-### US-1 — Kết nối realtime an toàn (Priority: P1)
+### US-1 — Secure realtime connection (Priority: P1)
 
-User đăng nhập mở socket; server xác thực JWT và cho vào đúng room theo user/role/org.
+A signed-in user opens a socket; the server verifies the JWT and places the client in the correct room by
+user/role/org.
 
-**Vì sao P1**: Nếu room sai, toàn bộ FR-09 sai và có thể lộ dữ liệu.
+**Why P1**: If the room is wrong, all of FR-09 is wrong and data can leak.
 
-**Kiểm thử độc lập**: Kết nối với token hợp lệ/sai; kiểm tra room; thử join room org khác.
+**Independent test**: Connect with a valid/invalid token; check the room; try to join another org's room.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR09-01** Given access token hợp lệ, When kết nối Socket.IO, Then server join `user:{userId}`;
-   Manager/Admin join thêm `org:{orgId}:managers`; Sales không join managers.
-2. **AC-FR09-02** Given token thiếu/sai/hết hạn, When kết nối, Then `connect_error` code
-   `UNAUTHENTICATED`; không join room, không nhận event.
-3. **AC-FR09-03** Given Sales cố gắng join room org khác/room manager, When emit join, Then bị bỏ qua hoặc
-   disconnect; không nhận event ngoài quyền.
+1. **AC-FR09-01** Given a valid access token, When connecting to Socket.IO, Then the server joins
+   `user:{userId}`; Manager/Admin also join `org:{orgId}:managers`; Sales do not join managers.
+2. **AC-FR09-02** Given a missing/invalid/expired token, When connecting, Then `connect_error` code
+   `UNAUTHENTICATED`; no room join, no events received.
+3. **AC-FR09-03** Given a Sales user tries to join another org's room/a manager room, When emitting join,
+   Then it is ignored or the client is disconnected; no events beyond their permission are received.
 
 ---
 
 ### US-2 — Deal realtime (Priority: P1)
 
-Khi deal move/assign, người có quyền thấy cập nhật trong < 1 giây; người không có quyền không nhận.
+When a deal is moved/assigned, users with permission see the update in < 1 second; users without permission
+receive nothing.
 
-**Vì sao P1**: AC chính FR-05/FR-09; trải nghiệm kanban cộng tác.
+**Why P1**: Main AC of FR-05/FR-09; collaborative kanban experience.
 
-**Kiểm thử độc lập**: 2 browser context; A move; B/Manager nhận; Sales C không nhận; đo thời gian.
+**Independent test**: 2 browser contexts; A moves; B/Manager receive; Sales C does not; measure the time.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR09-04** Given deal move thành công, When transaction commit, Then phát `deal.moved` tới owner hiện
-   tại, owner trước đó (nếu khác) và managers; payload tối giản; không phát nếu transaction rollback.
-2. **AC-FR09-05** Given Sales B không sở hữu deal, When Sales A move, Then B không nhận event; Manager nhận.
-3. **AC-FR09-06** Given deal đổi owner, When assign, Then owner cũ + owner mới + managers nhận
-   `deal.assigned`; notification `DEAL_ASSIGNED` được tạo cho owner mới.
-4. **AC-FR09-07** Given event phát lỗi (socket/server), When move thành công, Then HTTP vẫn 200; lỗi chỉ log;
-   DB/audit không rollback.
-5. **AC-FR09-08** Given client nhận event có `version` cũ hơn state, When xử lý, Then bỏ qua; nếu lệch nhiều,
-   refetch deal/board; không crash.
+1. **AC-FR09-04** Given a successful deal move, When the transaction commits, Then emit `deal.moved` to the
+   current owner, the previous owner (if different) and managers; minimal payload; no emit if the transaction
+   rolls back.
+2. **AC-FR09-05** Given Sales B does not own the deal, When Sales A moves it, Then B receives no event; the
+   Manager does.
+3. **AC-FR09-06** Given the deal owner changes, When assigning, Then the old owner + new owner + managers
+   receive `deal.assigned`; a `DEAL_ASSIGNED` notification is created for the new owner.
+4. **AC-FR09-07** Given event emission fails (socket/server), When the move succeeds, Then HTTP is still 200;
+   the error is only logged; DB/audit do not roll back.
+5. **AC-FR09-08** Given the client receives an event with an older `version` than its state, When handling
+   it, Then ignore it; if it diverges a lot, refetch the deal/board; no crash.
 
 ---
 
 ### US-3 — Task & notification center (Priority: P2)
 
-Task đến hạn/quá hạn phát realtime và lưu notification; user đọc/đánh dấu đã đọc.
+Due/overdue tasks emit realtime and store a notification; the user reads/marks as read.
 
-**Vì sao P2**: Cần cho FR-07/FR-09; có thể dùng polling tạm nếu realtime chậm.
+**Why P2**: Needed for FR-07/FR-09; polling can be used temporarily if realtime is slow.
 
-**Kiểm thử độc lập**: Tạo task quá hạn; scheduler chạy; kiểm tra event + notification list/read.
+**Independent test**: Create an overdue task; the scheduler runs; check the event + notification list/read.
 
 **Acceptance Scenarios**:
 
-1. **AC-FR09-09** Given task đến hạn/quá hạn, When scheduler xử lý, Then tạo notification (dedupe) và phát
-   `task.due` tới assignee; không phát cho người khác.
-2. **AC-FR09-10** Given user có notification, When `GET /notifications?unread=true`, Then chỉ notification của
-   mình, mới nhất trước, cursor; `PATCH /notifications/:id/read` idempotent; `POST /notifications/read-all`.
-3. **AC-FR09-11** Given notification người khác/org khác, When đánh dấu đọc, Then `404`; không đổi DB.
-4. **AC-FR09-12** Given socket mất kết nối, When reconnect, Then client invalidate/refetch deals/tasks/
-   notifications; không cần replay event; UI hiển thị trạng thái kết nối.
+1. **AC-FR09-09** Given a due/overdue task, When the scheduler processes it, Then create a notification
+   (dedupe) and emit `task.due` to the assignee; do not emit to anyone else.
+2. **AC-FR09-10** Given a user has notifications, When `GET /notifications?unread=true`, Then only their own
+   notifications, newest first, cursor; `PATCH /notifications/:id/read` idempotent;
+   `POST /notifications/read-all`.
+3. **AC-FR09-11** Given another user's/another org's notification, When marking it read, Then `404`; no DB
+   change.
+4. **AC-FR09-12** Given the socket disconnects, When reconnecting, Then the client invalidates/refetches
+   deals/tasks/notifications; no event replay needed; the UI shows the connection status.
 
 ### Edge Cases
 
-- User mở nhiều tab → tất cả nhận event; đóng tab không ảnh hưởng tab khác.
-- User bị deactivate/đổi role khi đang kết nối → disconnect/reconnect để áp quyền mới.
-- Event đến trước khi HTTP response → client vẫn xử lý idempotent theo version/eventId.
-- Manager/Admin cũng là owner → chỉ nhận một event (dedupe theo eventId/socket).
-- Nhiều worker phát event trùng → client dedupe eventId; server cố gắng phát một lần.
-- Notification payload lớn → giới hạn 4KB, chỉ ID/type.
-- Redis adapter cho Socket.IO nếu scale nhiều instance; MVP một instance, thiết kế sẵn.
+- A user opens several tabs → all receive events; closing a tab does not affect the others.
+- A user is deactivated/changed role while connected → disconnect/reconnect to apply the new permissions.
+- An event arrives before the HTTP response → the client still handles it idempotently by version/eventId.
+- Manager/Admin is also the owner → receives only one event (dedupe by eventId/socket).
+- Several workers emit duplicate events → the client dedupes eventId; the server tries to emit once.
+- Large notification payload → limited to 4KB, IDs/type only.
+- Redis adapter for Socket.IO if scaling to several instances; MVP is one instance, designed for it.
 
 ## Requirements
 
 ### Functional Requirements
 
-- **FR-09.1**: Socket.IO namespace mặc định, auth middleware JWT; room theo ADR-012; không room org chung.
-- **FR-09.2**: Phát `deal.moved`, `deal.assigned`, `task.due`, `notification.created`, `import.completed`,
-  `webhook.failed` theo `docs/events.md`.
-- **FR-09.3**: Event phát **sau commit**; lỗi emit không ảnh hưởng nghiệp vụ; at-most-once.
-- **FR-09.4**: Notification DB: list/filter/unread, read, read-all; dedupe_key unique; RBAC/tenant.
-- **FR-09.5**: Task scheduler tạo notification + event; dedupe theo task/bucket; email do 006 xử lý.
-- **FR-09.6**: Client reconnect → invalidate query; hiển thị trạng thái; không replay.
-- **FR-09.7**: Payload tối giản, không title/value/email; ≤ 4KB.
+- **FR-09.1**: Default Socket.IO namespace, JWT auth middleware; rooms per ADR-012; no shared org room.
+- **FR-09.2**: Emit `deal.moved`, `deal.assigned`, `task.due`, `notification.created`, `import.completed`,
+  `webhook.failed` per `docs/events.md`.
+- **FR-09.3**: Events are emitted **after commit**; emit errors do not affect the business flow; at-most-once.
+- **FR-09.4**: Notification DB: list/filter/unread, read, read-all; unique dedupe_key; RBAC/tenant.
+- **FR-09.5**: The task scheduler creates notification + event; dedupe by task/bucket; email is handled by 006.
+- **FR-09.6**: Client reconnect → invalidate queries; show status; no replay.
+- **FR-09.7**: Minimal payload, no title/value/email; ≤ 4KB.
 - **FR-09.8**: Test RBAC room, E2E 2 browser, event failure isolation.
 
 ### Key Entities
 
-- Notification (mục 4.9), Deal/Activity (nguồn event). Event contract: `docs/events.md`.
+- Notification (section 4.9), Deal/Activity (event source). Event contract: `docs/events.md`.
 
 ## Success Criteria
 
-- **SC-001**: p95 từ HTTP 200 đến DOM client khác cập nhật ≤ 1000ms (20 lần, local).
-- **SC-002**: 0 event deal lọt tới Sales không sở hữu (test + review).
-- **SC-003**: 100% notification có dedupe; scheduler chạy 10 lần không trùng.
-- **SC-004**: Reconnect resync đúng trong < 2s.
+- **SC-001**: p95 from HTTP 200 to the other client's DOM updating ≤ 1000ms (20 runs, local).
+- **SC-002**: 0 deal events leaking to Sales who do not own them (test + review).
+- **SC-003**: 100% of notifications have dedupe; 10 scheduler runs produce no duplicates.
+- **SC-004**: Reconnect resyncs correctly within < 2s.
 
 ## Assumptions
 
-- Một instance API ở MVP; nếu scale, thêm Redis adapter cho Socket.IO.
-- Client dùng TanStack Query; event chỉ invalidate/patch, không thay cache toàn bộ.
-- Notification center là UI đơn giản (dropdown/trang).
-- Email nhắc việc thuộc 006; 005 chỉ tạo notification + event.
-- User online nhận realtime; user offline thấy notification khi đăng nhập lại.
+- One API instance in the MVP; if scaling, add a Redis adapter for Socket.IO.
+- The client uses TanStack Query; events only invalidate/patch, never replace the whole cache.
+- The notification center is a simple UI (dropdown/page).
+- Reminder email belongs to 006; 005 only creates notification + event.
+- Online users receive realtime; offline users see notifications when they sign in again.
 
 ## Out of Scope
 
-- Push notification mobile/web, email trong feature này.
+- Push notification mobile/web, email in this feature.
 - Presence/typing indicator, chat.
-- Notification preference theo loại (có thể thêm sau).
+- Notification preference by type (may be added later).
 - Event replay/durable stream.
-- Multi-instance Socket.IO adapter (thiết kế sẵn, chưa làm).
+- Multi-instance Socket.IO adapter (designed, not built).
 
 ## Traceability
 
-| Nguồn | AC | Task |
+| Source | AC | Task |
 | --- | --- | --- |
 | FR-09 | AC-FR09-01..12 | T400–T419 |
 | FR-05 realtime | AC-FR05-03..05 | T406 |

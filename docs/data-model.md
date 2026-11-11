@@ -430,7 +430,7 @@ Planned migration order:
 > `audit_logs` must exist from `0001_init` because C4 requires auditing from the very first mutation in 002;
 > 007 only reads it, adds indexes and handles retention.
 
-The seed (`prisma/seed.ts`) must be idempotent:
+The seed (`backend/prisma/seed.ts`) must be idempotent:
 
 - 2 orgs (`Acme`, `Globex`), each with Admin/Manager/2 Sales; test password `Password123!`.
 - 1 pipeline “Sales Pipeline” per org with New/Qualified/Proposal/Won/Lost.
