@@ -36,8 +36,8 @@
 
 ### Tests first
 
-- [x] **T110** `auth.spec.ts`: login success/wrong, lockout 5/15m (fake clock/Redis), refresh rotate, reuse
-      revokes the family, expired, inactive, logout, `/auth/me`.
+- [x] **T110** `auth.spec.ts`: login success/wrong, lockout 5/15m (fake clock/Redis), refresh rotate, only one
+      of two concurrent refreshes wins, reuse revokes the family, expired, inactive, logout, `/auth/me`.
 - [x] **T111** Access token claims/role tests; refresh cookie vs body; CORS/Origin (when configured).
 
 ### Implementation
@@ -61,8 +61,8 @@
 
 ## Phase 5 — Polish
 
-- [x] **T118** [P] Frontend auth: login/register forms, auth context, token refresh interceptor, protected
-      routes, logout.
+- [x] **T118** [P] Frontend auth: login/register forms, auth context, token refresh interceptor (single-flight
+      refresh shared by parallel 401s), protected routes, logout.
 - [x] **T119** [P] Security/docs: redaction test, Swagger, `docs/traceability.md`, ADR-015 status.
 
 ## Dependencies

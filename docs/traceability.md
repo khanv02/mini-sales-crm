@@ -7,7 +7,7 @@ the same PR. Convention: `AC-FRxx-yy`; task IDs use per-feature ranges (see `spe
 
 | Source | AC | Feature | Main tasks | Test/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| FR-01 Register/login | AC-FR01-01..11 | 002 | T100–T113, T117–T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts` | Implemented |
+| FR-01 Register/login | AC-FR01-01..11 | 002 | T100–T113, T117–T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts`, `frontend/src/features/auth/auth-provider.test.tsx` | Implemented |
 | FR-02 Member management | AC-FR02-01..07 | 002 | T114–T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts`, `test/unit/audit.service.spec.ts` | Implemented |
 | FR-03 Contacts | AC-FR03-01..08 | 003 | T200–T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts` | Draft |
 | FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209–T211, T222 | `test/integration/pipelines.spec.ts` | Draft |
