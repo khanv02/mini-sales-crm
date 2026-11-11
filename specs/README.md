@@ -40,7 +40,7 @@ independently demoable slice.
 | # | Feature | Source | Milestone | Depends on | Status |
 | --- | --- | --- | --- | --- | --- |
 | 001 | Foundation | M0 | M0 | - | Implemented, M0 gates green |
-| 002 | Identity & Access | FR-01, FR-02 | M1 | 001 | Draft |
+| 002 | Identity & Access | FR-01, FR-02 | M1 | 001 | Implemented, M1 gates green |
 | 003 | Contacts, Pipeline & Deals | FR-03, FR-04, FR-05, FR-06 | M1 | 002 | Draft |
 | 004 | Activities, Tasks & Dashboard | FR-07, FR-08 | M1 | 003 | Draft |
 | 005 | Realtime & Notifications | FR-09 | M2 | 003, 004 | Draft |

@@ -1,4 +1,4 @@
-﻿# Traceability Matrix
+# Traceability Matrix
 
 This matrix links the source spec, feature specs and tests. When an AC is added or changed, update this file in
 the same PR. Convention: `AC-FRxx-yy`; task IDs use per-feature ranges (see `specs/README.md`).
@@ -7,8 +7,8 @@ the same PR. Convention: `AC-FRxx-yy`; task IDs use per-feature ranges (see `spe
 
 | Source | AC | Feature | Main tasks | Test/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| FR-01 Register/login | AC-FR01-01..11 | 002 | T100â€“T113, T117â€“T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts` | Draft |
-| FR-02 Member management | AC-FR02-01..07 | 002 | T114â€“T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts` | Draft |
+| FR-01 Register/login | AC-FR01-01..11 | 002 | T100â€“T113, T117â€“T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts` | Implemented |
+| FR-02 Member management | AC-FR02-01..07 | 002 | T114â€“T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts`, `test/unit/audit.service.spec.ts` | Implemented |
 | FR-03 Contacts | AC-FR03-01..08 | 003 | T200â€“T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts` | Draft |
 | FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209â€“T211, T222 | `test/integration/pipelines.spec.ts` | Draft |
 | FR-05 Deals/kanban | AC-FR05-01..10 | 003, 005 | T212â€“T217, T223â€“T224, T406 | `test/integration/deals.spec.ts`, `deals-concurrency.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
