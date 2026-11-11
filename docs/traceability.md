@@ -7,30 +7,30 @@ the same PR. Convention: `AC-FRxx-yy`; task IDs use per-feature ranges (see `spe
 
 | Source | AC | Feature | Main tasks | Test/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| FR-01 Register/login | AC-FR01-01..11 | 002 | T100â€“T113, T117â€“T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts` | Implemented |
-| FR-02 Member management | AC-FR02-01..07 | 002 | T114â€“T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts`, `test/unit/audit.service.spec.ts` | Implemented |
-| FR-03 Contacts | AC-FR03-01..08 | 003 | T200â€“T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts` | Draft |
-| FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209â€“T211, T222 | `test/integration/pipelines.spec.ts` | Draft |
-| FR-05 Deals/kanban | AC-FR05-01..10 | 003, 005 | T212â€“T217, T223â€“T224, T406 | `test/integration/deals.spec.ts`, `deals-concurrency.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
-| FR-06 Win/loss | AC-FR06-01..05 | 003 | T218â€“T220, T224 | `test/integration/deals-win-loss.spec.ts` | Draft |
-| FR-07 Activities/reminders | AC-FR07-01..10 | 004, 005 | T300â€“T310, T316â€“T317, T319, T410â€“T411 | `test/integration/activities.spec.ts`, `tasks.spec.ts`, `realtime.spec.ts` | Draft |
-| FR-08 Dashboard | AC-FR08-01..09 | 004, 007 | T311â€“T315, T318â€“T319 | `test/integration/reports.spec.ts`, `test/perf/reports.perf.ts` | Draft |
-| FR-09 Realtime | AC-FR09-01..12 | 005 | T400â€“T419 | `test/integration/realtime.spec.ts`, `notifications.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
-| FR-10 CSV import | AC-FR10-01..08 | 006 | T500â€“T508, T519â€“T520 | `test/integration/imports.spec.ts`, `test/unit/import-worker.spec.ts` | Draft |
-| FR-11 Webhook | AC-FR11-01..09 | 006 | T500, T509â€“T515, T519â€“T520 | `test/integration/webhooks.spec.ts`, `test/unit/webhook-worker.spec.ts` | Draft |
-| FR-12 Task reminder email | AC-FR12-01..06 | 006 | T516â€“T520 | `test/integration/reminders.spec.ts`, `test/unit/mailer.spec.ts` | Draft |
-| FR-13 Audit log | AC-FR13-01..05 | 007 | T600â€“T601, T606, T608 | `test/integration/audit.spec.ts` | Draft |
-| FR-14 CSV export | AC-FR14-01..05 | 007 | T602, T606â€“T608 | `test/integration/exports.spec.ts` | Draft |
-| FR-15 Rate limit/cache | AC-FR15-01..07 | 007 | T603â€“T607 | `test/integration/rate-limit.spec.ts`, `cache.spec.ts` | Draft |
-| FR-16 AI summary | AC-FR16-01..07 | 008 | T700â€“T708, T718 | `test/integration/ai-summary.spec.ts`, `test/unit/ai-prompt.spec.ts` | Draft |
-| FR-17 AI email draft | AC-FR17-01..04 | 008 | T709â€“T710, T718 | `test/integration/ai-email-draft.spec.ts` | Draft |
-| FR-18 AI lead score | AC-FR18-01..06 | 008 | T711â€“T715, T718 | `test/integration/ai-score.spec.ts`, `evals/score-stability.ts` | Draft |
-| FR-19 AI cost/quota | AC-FR19-01..07 | 008 | T703, T714, T716â€“T718 | `test/integration/ai-quota.spec.ts`, `ai-cache.spec.ts` | Draft |
-| FR-20 RAG (optional) | â€” | 008 | Not implemented | `ADR-009` | Deferred |
+| FR-01 Register/login | AC-FR01-01..11 | 002 | T100–T113, T117–T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts` | Implemented |
+| FR-02 Member management | AC-FR02-01..07 | 002 | T114–T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts`, `test/unit/audit.service.spec.ts` | Implemented |
+| FR-03 Contacts | AC-FR03-01..08 | 003 | T200–T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts` | Draft |
+| FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209–T211, T222 | `test/integration/pipelines.spec.ts` | Draft |
+| FR-05 Deals/kanban | AC-FR05-01..10 | 003, 005 | T212–T217, T223–T224, T406 | `test/integration/deals.spec.ts`, `deals-concurrency.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
+| FR-06 Win/loss | AC-FR06-01..05 | 003 | T218–T220, T224 | `test/integration/deals-win-loss.spec.ts` | Draft |
+| FR-07 Activities/reminders | AC-FR07-01..10 | 004, 005 | T300–T310, T316–T317, T319, T410–T411 | `test/integration/activities.spec.ts`, `tasks.spec.ts`, `realtime.spec.ts` | Draft |
+| FR-08 Dashboard | AC-FR08-01..09 | 004, 007 | T311–T315, T318–T319 | `test/integration/reports.spec.ts`, `test/perf/reports.perf.ts` | Draft |
+| FR-09 Realtime | AC-FR09-01..12 | 005 | T400–T419 | `test/integration/realtime.spec.ts`, `notifications.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
+| FR-10 CSV import | AC-FR10-01..08 | 006 | T500–T508, T519–T520 | `test/integration/imports.spec.ts`, `test/unit/import-worker.spec.ts` | Draft |
+| FR-11 Webhook | AC-FR11-01..09 | 006 | T500, T509–T515, T519–T520 | `test/integration/webhooks.spec.ts`, `test/unit/webhook-worker.spec.ts` | Draft |
+| FR-12 Task reminder email | AC-FR12-01..06 | 006 | T516–T520 | `test/integration/reminders.spec.ts`, `test/unit/mailer.spec.ts` | Draft |
+| FR-13 Audit log | AC-FR13-01..05 | 007 | T600–T601, T606, T608 | `test/integration/audit.spec.ts` | Draft |
+| FR-14 CSV export | AC-FR14-01..05 | 007 | T602, T606–T608 | `test/integration/exports.spec.ts` | Draft |
+| FR-15 Rate limit/cache | AC-FR15-01..07 | 007 | T603–T607 | `test/integration/rate-limit.spec.ts`, `cache.spec.ts` | Draft |
+| FR-16 AI summary | AC-FR16-01..07 | 008 | T700–T708, T718 | `test/integration/ai-summary.spec.ts`, `test/unit/ai-prompt.spec.ts` | Draft |
+| FR-17 AI email draft | AC-FR17-01..04 | 008 | T709–T710, T718 | `test/integration/ai-email-draft.spec.ts` | Draft |
+| FR-18 AI lead score | AC-FR18-01..06 | 008 | T711–T715, T718 | `test/integration/ai-score.spec.ts`, `evals/score-stability.ts` | Draft |
+| FR-19 AI cost/quota | AC-FR19-01..07 | 008 | T703, T714, T716–T718 | `test/integration/ai-quota.spec.ts`, `ai-cache.spec.ts` | Draft |
+| FR-20 RAG (optional) | — | 008 | Not implemented | `ADR-009` | Deferred |
 
 ## 2. Non-functional requirements
 
-The AC definitions for NFR-01â€¦NFR-07 live in [`docs/nfr.md`](nfr.md); the table below only maps them to
+The AC definitions for NFR-01…NFR-07 live in [`docs/nfr.md`](nfr.md); the table below only maps them to
 feature/task/test.
 
 | Source | AC | Feature | Main tasks | Test/evidence | Status |
@@ -43,7 +43,7 @@ feature/task/test.
 | NFR-06 Delivery | AC-NFR06-01..02 | 001 | T005, T015, T017, T018 | `docs/quickstart.md`, `backend/scripts/check-infra` | Draft |
 | NFR-07 Quality | AC-NFR07-01..03 | 001 | T013, T014, T019 | CI workflow, coverage report, secret scan | Draft |
 
-## 3. Endpoint â†’ mandatory test matrix (C8)
+## 3. Endpoint → mandatory test matrix (C8)
 
 Every endpoint must have at least: happy path, validation failure, lower role, different tenant. Endpoints with
 extra ACs are annotated.
@@ -95,25 +95,25 @@ extra ACs are annotated.
 
 | Topic | AC | Test |
 | --- | --- | --- |
-| Tenant isolation | AC-NFR02-04 | Every integration file: create org B, use token B to call org A resources â†’ 404 |
-| Audit in the same transaction | AC-FR05-03, AC-FR06-05 | Rollback test: failure after the update â†’ no audit row, data unchanged |
+| Tenant isolation | AC-NFR02-04 | Every integration file: create org B, use token B to call org A resources → 404 |
+| Audit in the same transaction | AC-FR05-03, AC-FR06-05 | Rollback test: failure after the update → no audit row, data unchanged |
 | Optimistic lock | AC-FR05-04..05 | Two parallel requests with the same version: one 200, one 409 |
 | Webhook idempotency | AC-FR11-04 | Send the same key twice: 1 contact, 1 event |
 | Import idempotency | AC-FR10-05 | Same file hash twice: same job / no duplicate contact |
 | Realtime RBAC | AC-FR09-05 | Sales B never receives Sales A's deal events |
-| Cache invalidation | AC-FR15-05 | Move a deal â†’ the summary no longer returns the old number |
-| AI quota | AC-FR19-02 | Over the limit â†’ 429, provider not called |
+| Cache invalidation | AC-FR15-05 | Move a deal → the summary no longer returns the old number |
+| AI quota | AC-FR19-02 | Over the limit → 429, provider not called |
 | CSV injection | AC-FR14-03 | A cell containing `=cmd` is escaped |
-| Refresh token reuse | AC-FR01-08 | Reusing a rotated token â†’ the whole family is revoked |
+| Refresh token reuse | AC-FR01-08 | Reusing a rotated token → the whole family is revoked |
 
 ## 5. Status & gaps
 
 - [x] 001 Foundation (M0) is implemented: pnpm workspace (`backend/`, `frontend/`, `packages/shared/`), API health,
       error shape, logging/Sentry, BullMQ base, Prisma migration + idempotent seed, web shell, CI and ops scripts.
       Evidence: `backend/test/{unit,integration}`, `frontend/e2e/foundation.spec.ts`, `pnpm lint|typecheck|test|build`.
-- [x] FR-01â€¦FR-19 have feature, AC, tasks and tests.
-- [x] NFR-01â€¦NFR-07 have feature/task/test.
-- [ ] FR-20 deferred (ADR-009) â€” not counted in M3.
+- [x] FR-01…FR-19 have feature, AC, tasks and tests.
+- [x] NFR-01…NFR-07 have feature/task/test.
+- [ ] FR-20 deferred (ADR-009) — not counted in M3.
 - [ ] No automated performance test in CI yet (nightly/manual); to be added after M1.
-- [ ] No automated security test (ZAP) yet â€” manual checklist only at M2.
+- [ ] No automated security test (ZAP) yet — manual checklist only at M2.
 - [ ] No automated LLM eval in CI yet; run manually per `evals/`.

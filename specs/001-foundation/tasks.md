@@ -1,10 +1,10 @@
-﻿# Tasks: Foundation (M0)
+# Tasks: Foundation (M0)
 
 **Input**: `specs/001-foundation/`
 **Prerequisites**: plan.md, spec.md
 **Tests**: Mandatory per C8. Write tests first for health/error/config; scaffold-only tasks need no separate tests.
 
-## Phase 1 â€” Setup
+## Phase 1 — Setup
 
 - [x] **T001** Initialise the pnpm workspace: `package.json`, `pnpm-workspace.yaml`, `.gitignore`; root scripts
       `dev`, `build`, `lint`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `test:perf`,
@@ -17,7 +17,7 @@
 - [x] **T005** Docker Compose `backend/infra/docker-compose.yml`: postgres:16, redis:7, mailpit; healthcheck; volume.
 - [x] **T006** `.env.example` + `backend/src/common/config/env.ts` zod; fail-fast; env parse test.
 
-## Phase 2 â€” Foundational
+## Phase 2 — Foundational
 
 - [x] **T007** Prisma init `backend/prisma/schema.prisma`; migration `0001_init` (organizations with `currency/timezone`,
       users, refresh_tokens, **audit_logs**, extensions pg_trgm/unaccent/pgcrypto); `backend/prisma/seed.ts` idempotent:
@@ -43,11 +43,11 @@
 
 ## Dependencies
 
-- T002â€“T004 after T001.
-- T005â€“T006 after T001; T007 after T005/T006.
-- T008â€“T012 after T002; T013 after T007; T014 after T002/T013; T015 after T003.
+- T002–T004 after T001.
+- T005–T006 after T001; T007 after T005/T006.
+- T008–T012 after T002; T013 after T007; T014 after T002/T013; T015 after T003.
 - T020 after T002/T006; 004/006/008 use T020.
-- T016â€“T019 after the phases above are done.
+- T016–T019 after the phases above are done.
 
 ## MVP checkpoint
 
@@ -59,13 +59,13 @@ After T014: API + web + DB/Redis run, CI green. After T018: the M0 DoD is met (T
 - The first migration contains foundation tables only; business tables arrive in 003/004.
 - If Prisma cannot express a partial index, write SQL in the migration and test from an empty DB.
 
-## Traceability (task â†’ AC)
+## Traceability (task → AC)
 
 | AC | Task |
 | --- | --- |
-| AC-M0-01..03 | T001â€“T007, T015, T018 |
+| AC-M0-01..03 | T001–T007, T015, T018 |
 | AC-M0-04..06 | T013, T014, T019 |
-| AC-M0-07..09 | T006, T009â€“T011 |
+| AC-M0-07..09 | T006, T009–T011 |
 | AC-M0-11..13 | T007, T016 |
 | AC-NFR03-01..03 | T010, T020 |
 | AC-NFR04-01..02 | T009, T011 |

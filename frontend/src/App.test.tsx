@@ -131,7 +131,7 @@ describe('authentication flow (T118)', () => {
 
     expect(await screen.findByTestId('current-user')).toHaveTextContent('Admin Acme');
     expect(screen.getByRole('button', { name: 'Đăng xuất' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Tổng quan' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tổng quan' })).toBeInTheDocument();
 
     const loginCall = fetchMock.mock.calls.find(([input]) => String(input).includes('/auth/login'));
     expect(loginCall?.[1]).toMatchObject({ method: 'POST', credentials: 'include' });

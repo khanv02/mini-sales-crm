@@ -36,18 +36,26 @@ async function readError(response: Response): Promise<ApiClientError> {
   );
 }
 
-/** Plain request used by public endpoints (health) and by the auth endpoints. */
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+function send(path: string, init: RequestInit, token?: string | null): Promise<Response> {
+  const headers = new Headers(init.headers);
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
+  }
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  return fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
+    headers,
     credentials: 'include',
   });
+}
 
+async function readBody<T>(response: Response): Promise<T> {
   if (!response.ok) {
     throw await readError(response);
   }
@@ -55,6 +63,11 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     return undefined as T;
   }
   return (await response.json()) as T;
+}
+
+/** Plain request used by public endpoints (health) and by the auth endpoints. */
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return readBody<T>(await send(path, init));
 }
 
 export interface AuthAccessor {
@@ -74,34 +87,18 @@ export function configureAuth(accessor: AuthAccessor | null): void {
 /**
  * Authenticated request: attaches the current access token and, on a single
  * 401, refreshes the session once and retries (T118 token refresh interceptor).
+ * `AuthProvider` de-duplicates concurrent refresh calls, so parallel 401s share
+ * one rotation instead of tripping reuse detection.
  */
 export async function apiFetchAuth<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const send = (token: string | null): Promise<Response> =>
-    fetch(`${API_BASE_URL}${path}`, {
-      ...init,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...init.headers,
-      },
-      credentials: 'include',
-    });
-
-  let response = await send(authAccessor?.getAccessToken() ?? null);
+  let response = await send(path, init, authAccessor?.getAccessToken() ?? null);
 
   if (response.status === 401 && authAccessor) {
     const refreshed = await authAccessor.refreshAccessToken();
     if (refreshed) {
-      response = await send(refreshed);
+      response = await send(path, init, refreshed);
     }
   }
 
-  if (!response.ok) {
-    throw await readError(response);
-  }
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return (await response.json()) as T;
+  return readBody<T>(response);
 }

@@ -8,28 +8,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const tokenRef = useRef<string | null>(null);
   const bootstrapped = useRef(false);
+  const refreshInFlight = useRef<Promise<string | null> | null>(null);
+  const sessionEpoch = useRef(0);
 
   const applySession = useCallback((session: AuthResponse) => {
+    sessionEpoch.current += 1;
     tokenRef.current = session.accessToken;
     setUser(session.user);
     setStatus('authenticated');
   }, []);
 
   const clearSession = useCallback(() => {
+    sessionEpoch.current += 1;
     tokenRef.current = null;
     setUser(null);
     setStatus('anonymous');
   }, []);
 
-  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-    try {
-      const session = await apiFetch<AuthResponse>('/api/v1/auth/refresh', { method: 'POST' });
-      applySession(session);
-      return session.accessToken;
-    } catch {
-      clearSession();
-      return null;
+  /**
+   * Single-flight refresh: the bootstrap call and every 401 retry share one
+   * rotation, so concurrent requests cannot rotate the same token twice (which
+   * the API treats as reuse and answers by revoking the whole family).
+   */
+  const refreshAccessToken = useCallback((): Promise<string | null> => {
+    if (refreshInFlight.current) {
+      return refreshInFlight.current;
     }
+
+    const epoch = sessionEpoch.current;
+    const request = (async () => {
+      try {
+        const session = await apiFetch<AuthResponse>('/api/v1/auth/refresh', { method: 'POST' });
+        // A login/logout that happened while the refresh was in flight wins.
+        if (epoch !== sessionEpoch.current) {
+          return null;
+        }
+        applySession(session);
+        return session.accessToken;
+      } catch {
+        if (epoch === sessionEpoch.current) {
+          clearSession();
+        }
+        return null;
+      }
+    })().finally(() => {
+      refreshInFlight.current = null;
+    });
+
+    refreshInFlight.current = request;
+    return request;
   }, [applySession, clearSession]);
 
   // Registered during render on purpose: children may start fetching before the

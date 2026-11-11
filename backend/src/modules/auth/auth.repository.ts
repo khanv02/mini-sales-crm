@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, type Organization, type RefreshToken, type User } from '@prisma/client';
+import { Prisma, type Organization, type RefreshToken, type User, type UserRole } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 /** A Prisma client or an interactive transaction client. */
@@ -48,8 +48,14 @@ export class AuthRepository {
 
   createUser(
     client: PrismaLike,
-    data: { orgId: string; email: string; passwordHash: string; name: string; role?: 'ADMIN' | 'MANAGER' | 'SALES' },
-    ): Promise<User> {
+    data: {
+      orgId: string;
+      email: string;
+      passwordHash: string;
+      name: string;
+      role?: UserRole;
+    },
+  ): Promise<User> {
     return client.user.create({ data });
   }
 
@@ -74,17 +80,29 @@ export class AuthRepository {
   }
 
   /**
-   * Rotation (FR-01.4): the replacement is inserted and the previous token is
-   * revoked with `replacedBy` pointing at it, so a later reuse of the old token
-   * is detectable as "already rotated".
+   * Rotation (FR-01.4): claim the previous token and insert its replacement in
+   * one transaction. When another request already rotated or revoked it, the
+   * claim updates zero rows and this returns `null`, so two concurrent refreshes
+   * can never both succeed (AC-FR01-08).
    */
-  async rotateRefreshToken(client: PrismaLike, input: RotateRefreshTokenInput): Promise<RefreshToken> {
-    const created = await this.createRefreshToken(client, input);
-    await client.refreshToken.update({
-      where: { id: input.previousTokenId },
-      data: { revokedAt: new Date(), replacedById: created.id },
+  async rotateRefreshToken(input: RotateRefreshTokenInput): Promise<RefreshToken | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.refreshToken.updateMany({
+        where: { id: input.previousTokenId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+
+      if (claimed.count === 0) {
+        return null;
+      }
+
+      const created = await this.createRefreshToken(tx, input);
+      await tx.refreshToken.update({
+        where: { id: input.previousTokenId },
+        data: { replacedById: created.id },
+      });
+      return created;
     });
-    return created;
   }
 
   /** Revokes every live token of a family; returns how many rows changed. */

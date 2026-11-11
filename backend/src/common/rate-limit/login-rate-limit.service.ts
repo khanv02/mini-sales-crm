@@ -26,6 +26,14 @@ export class LoginRateLimitService {
     return `auth:login:fail:${email.toLowerCase()}:${ip}`;
   }
 
+  private unavailable(): AppError {
+    return new AppError(
+      ERROR_CODES.SERVICE_UNAVAILABLE,
+      503,
+      'Security checks are temporarily unavailable. Please try again.',
+    );
+  }
+
   async assertAllowed(key: LoginAttemptKey): Promise<void> {
     const client = this.redis.getClient();
     let failures: number;
@@ -39,11 +47,7 @@ export class LoginRateLimitService {
       failures = count ? Number(count) : 0;
       ttl = remaining && remaining > 0 ? remaining : LOGIN_WINDOW_SECONDS;
     } catch {
-      throw new AppError(
-        ERROR_CODES.SERVICE_UNAVAILABLE,
-        503,
-        'Security checks are temporarily unavailable. Please try again.',
-      );
+      throw this.unavailable();
     }
 
     if (failures >= LOGIN_MAX_FAILURES) {
@@ -64,11 +68,7 @@ export class LoginRateLimitService {
         await client.expire(storageKey, LOGIN_WINDOW_SECONDS);
       }
     } catch {
-      throw new AppError(
-        ERROR_CODES.SERVICE_UNAVAILABLE,
-        503,
-        'Security checks are temporarily unavailable. Please try again.',
-      );
+      throw this.unavailable();
     }
   }
 
@@ -77,11 +77,7 @@ export class LoginRateLimitService {
     try {
       await this.redis.getClient().del(this.key(key));
     } catch {
-      throw new AppError(
-        ERROR_CODES.SERVICE_UNAVAILABLE,
-        503,
-        'Security checks are temporarily unavailable. Please try again.',
-      );
+      throw this.unavailable();
     }
   }
 }

@@ -257,6 +257,30 @@ describe('auth endpoints (integration)', () => {
     expect(afterFamilyRevocation.body.code).toBe('REFRESH_TOKEN_REVOKED');
   });
 
+  it('allows only one of two concurrent refreshes and revokes the family (AC-FR01-08)', async () => {
+    const session = await registerAndLogin();
+
+    const responses = await Promise.all([
+      request(app.getHttpServer()).post('/api/v1/auth/refresh').set('Cookie', session.cookie),
+      request(app.getHttpServer()).post('/api/v1/auth/refresh').set('Cookie', session.cookie),
+    ]);
+
+    expect(responses.map((item) => item.status).sort()).toEqual([200, 401]);
+
+    const rejected = responses.find((item) => item.status === 401);
+    expect(rejected?.body.code).toBe('TOKEN_REUSED');
+
+    const accepted = responses.find((item) => item.status === 200);
+    expect(accepted).toBeDefined();
+    const winnerCookie = cookieHeader(setCookieHeader(accepted!));
+
+    const afterRevocation = await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', winnerCookie);
+    expect(afterRevocation.status).toBe(401);
+    expect(afterRevocation.body.code).toBe('REFRESH_TOKEN_REVOKED');
+  });
+
   it('accepts a refresh token in the body for non-browser clients', async () => {
     const session = await registerAndLogin();
     const token = cookieValue(session.cookie);

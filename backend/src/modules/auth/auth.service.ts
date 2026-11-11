@@ -153,7 +153,7 @@ export class AuthService {
     }
 
     const nextToken = this.tokens.issueRefreshToken();
-    await this.repository.rotateRefreshToken(this.prisma, {
+    const rotated = await this.repository.rotateRefreshToken({
       previousTokenId: existing.id,
       userId: existing.userId,
       familyId: existing.familyId,
@@ -163,14 +163,24 @@ export class AuthService {
       ip: meta.ip ?? null,
     });
 
+    if (!rotated) {
+      // Another request won the race (or a logout revoked the token): revoke the
+      // family and report reuse instead of letting two refreshes both succeed.
+      await this.repository.revokeFamily(existing.familyId);
+      const current = await this.repository.findRefreshTokenByHash(tokenHash);
+      if (current?.replacedById) {
+        throw new AppError(
+          ERROR_CODES.TOKEN_REUSED,
+          401,
+          'This session was already rotated. Please sign in again.',
+        );
+      }
+      throw new AppError(ERROR_CODES.REFRESH_TOKEN_REVOKED, 401, 'This session has been signed out.');
+    }
+
     const access = this.tokens.signAccessToken(existing.user);
     return {
-      response: {
-        accessToken: access.token,
-        tokenType: 'Bearer',
-        expiresIn: access.expiresIn,
-        user: toAuthUser(existing.user),
-      },
+      response: this.sessionResponse(existing.user, access.token, access.expiresIn),
       refreshToken: nextToken,
     };
   }
@@ -192,6 +202,15 @@ export class AuthService {
     return toAuthUser(user);
   }
 
+  private sessionResponse(user: User, accessToken: string, expiresIn: number): AuthResponse {
+    return {
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn,
+      user: toAuthUser(user),
+    };
+  }
+
   private async issueSession(user: User, familyId: string, meta: RequestMeta): Promise<IssuedSession> {
     const access = this.tokens.signAccessToken(user);
     const refreshToken = this.tokens.issueRefreshToken();
@@ -206,12 +225,7 @@ export class AuthService {
     });
 
     return {
-      response: {
-        accessToken: access.token,
-        tokenType: 'Bearer',
-        expiresIn: access.expiresIn,
-        user: toAuthUser(user),
-      },
+      response: this.sessionResponse(user, access.token, access.expiresIn),
       refreshToken,
     };
   }

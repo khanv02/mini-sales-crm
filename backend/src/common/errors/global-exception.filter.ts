@@ -3,7 +3,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import { Prisma } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { Request, Response } from 'express';
-import { AppError, isAppError } from './app-error';
+import { isAppError } from './app-error';
 import { fromAppError, fromHttpStatus, PRISMA_MAPPINGS, type NormalizedError } from './error-mappings';
 import { getRequestContext } from '../logging/request-context';
 import { captureException } from '../sentry/sentry';
@@ -102,5 +102,3 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     response.status(normalized.status).json(body);
   }
 }
-
-export { AppError };

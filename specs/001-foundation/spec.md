@@ -1,13 +1,13 @@
-﻿# Feature Specification: Foundation (M0)
+# Feature Specification: Foundation (M0)
 
 **Feature Branch**: `001-foundation`
 **Created**: 2026-11-08
-**Status**: Draft â€” ready for review
-**Input**: M0 in spec v0.1; NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; C1â€“C9
+**Status**: Implemented (M0)
+**Input**: M0 in spec v0.1; NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; C1–C9
 
 ## User Scenarios & Testing
 
-### US-1 â€” Run the project from a clone (Priority: P1)
+### US-1 — Run the project from a clone (Priority: P1)
 
 A newcomer clones the repo, follows the README and has the app running in a few commands without asking the author.
 
@@ -28,7 +28,7 @@ app and call health.
 
 ---
 
-### US-2 â€” CI blocks regressions (Priority: P1)
+### US-2 — CI blocks regressions (Priority: P1)
 
 Every PR runs lint, typecheck, unit, integration and build; nothing merges while CI is red.
 
@@ -45,7 +45,7 @@ Every PR runs lint, typecheck, unit, integration and build; nothing merges while
 
 ---
 
-### US-3 â€” Safe observability & configuration (Priority: P1)
+### US-3 — Safe observability & configuration (Priority: P1)
 
 Dev/ops see JSON logs with requestId, 5xx errors reach Sentry, and the app fails fast when env vars are missing.
 
@@ -67,7 +67,7 @@ not start. Trigger a 500; Sentry receives it (or its mock does).
 
 ---
 
-### US-4 â€” Reproducible migration & seed (Priority: P2)
+### US-4 — Reproducible migration & seed (Priority: P2)
 
 An empty DB runs migrations to build the schema; the seed is idempotent; a minimal backup/restore script exists.
 
@@ -86,13 +86,13 @@ An empty DB runs migrations to build the schema; the seed is idempotent; a minim
 
 ### Edge Cases
 
-- Docker not running â†’ a clear instruction, not a stack trace.
-- Ports 3000/5173 taken â†’ documented in `docs/quickstart.md` section 8 (the README stays product-only).
-- Windows paths/CRLF â†’ PowerShell scripts; no bash dependency.
-- Redis down while the API still starts â†’ `/health/live` 200, `/health/ready` 503.
-- Perf seed accidentally enabled in production â†’ blocked by `NODE_ENV=production` plus `ALLOW_SEED=false`
+- Docker not running → a clear instruction, not a stack trace.
+- Ports 3000/5173 taken → documented in `docs/quickstart.md` section 8 (the README stays product-only).
+- Windows paths/CRLF → PowerShell scripts; no bash dependency.
+- Redis down while the API still starts → `/health/live` 200, `/health/ready` 503.
+- Perf seed accidentally enabled in production → blocked by `NODE_ENV=production` plus `ALLOW_SEED=false`
   (default); the perf dataset additionally requires `SEED_PERF=true`.
-- Migration failing half-way â†’ transaction/rollback; never a half-applied schema.
+- Migration failing half-way → transaction/rollback; never a half-applied schema.
 
 ## Requirements
 
@@ -119,7 +119,7 @@ foundation for feature 002) plus the extensions `pg_trgm`, `unaccent`, `pgcrypto
 
 ## Success Criteria
 
-- **SC-001**: A newcomer clones and runs it within â‰¤ 15 minutes, without asking.
+- **SC-001**: A newcomer clones and runs it within ≤ 15 minutes, without asking.
 - **SC-002**: CI responds in < 10 minutes for an average PR.
 - **SC-003**: 100% of merged PRs have green CI; 0 secrets committed.
 - **SC-004**: `/health/ready` responds in < 500ms while dependencies are healthy.
@@ -147,8 +147,8 @@ foundation for feature 002) plus the extensions `pg_trgm`, `unaccent`, `pgcrypto
 | M0, NFR-04 | AC-M0-07, AC-M0-09 | T009, T011 |
 | M0 | AC-M0-08 | T006 |
 | M0, NFR-05 | AC-M0-11..13 | T007, T016 |
-| M0, NFR-06 | AC-M0-01, AC-M0-03 | T001â€“T006, T015, T017, T018 |
+| M0, NFR-06 | AC-M0-01, AC-M0-03 | T001–T006, T015, T017, T018 |
 | M0, NFR-07 | AC-M0-04..06 | T013, T014, T019 |
-| M0 | AC-M0-01..13 | T001â€“T020 |
+| M0 | AC-M0-01..13 | T001–T020 |
 
-AC-NFR03-01â€¦AC-NFR07-03 are defined in [`docs/nfr.md`](../../docs/nfr.md); the table above lists the M0 scenarios.
+AC-NFR03-01…AC-NFR07-03 are defined in [`docs/nfr.md`](../../docs/nfr.md); the table above lists the M0 scenarios.
