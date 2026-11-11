@@ -1,13 +1,29 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../features/auth/auth-context';
 import { HealthIndicator } from '../features/health/health-indicator';
+import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 
-const navigation = [
-  { label: 'Tổng quan', to: '/' },
-  { label: 'Đăng nhập', to: '/login' },
-];
+const publicNavigation = [{ label: 'Tổng quan', to: '/' }];
 
 export function Layout() {
+  const { user, status, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const navigation =
+    status === 'authenticated'
+      ? [...publicNavigation, { label: 'Tài khoản', to: '/account' }]
+      : [
+          ...publicNavigation,
+          { label: 'Đăng nhập', to: '/login' },
+          { label: 'Đăng ký', to: '/register' },
+        ];
+
+  async function handleLogout(): Promise<void> {
+    await logout();
+    navigate('/login', { replace: true });
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card">
@@ -34,7 +50,19 @@ export function Layout() {
               ))}
             </nav>
           </div>
-          <HealthIndicator />
+          <div className="flex items-center gap-4">
+            <HealthIndicator />
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground" data-testid="current-user">
+                  {user.name}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Đăng xuất
+                </Button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">

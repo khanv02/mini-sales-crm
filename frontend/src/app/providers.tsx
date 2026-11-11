@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorBoundary } from '../components/error-boundary';
+import { AuthProvider } from '../features/auth/auth-provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,7 +17,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>{children}</BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>{children}</AuthProvider>
+        </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
   );
