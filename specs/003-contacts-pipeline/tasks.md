@@ -6,25 +6,25 @@
 
 ## Phase 1 — Schema & shared
 
-- [ ] **T200** Prisma/migration `0002_crm_core`: contacts, pipelines, stages, deals (including `closed_at`);
+- [x] **T200** Prisma/migration `0002_crm_core`: contacts, pipelines, stages, deals (including `closed_at`);
       composite FK; check constraints; trigram index; partial unique email; update data-model.
-- [ ] **T201** [P] `packages/shared/src/schemas/{contact,pipeline,deal}.ts`; cursor/filter/sort types.
-- [ ] **T202** [P] Factories `test/factories/{contact,pipeline,deal}.ts`; seed default pipeline.
-- [ ] **T203** [P] `common/events/domain-event-bus.ts`; `AuditService` helpers for the 3 entities; unit test.
+- [x] **T201** [P] `packages/shared/src/schemas/{contact,pipeline,deal}.ts`; cursor/filter/sort types.
+- [x] **T202** [P] Factories `test/factories/{contact,pipeline,deal}.ts`; seed default pipeline.
+- [x] **T203** [P] `common/events/domain-event-bus.ts`; `AuditService` helpers for the 3 entities; unit test.
 
 ## Phase 2 — US1 Contacts (P1)
 
 ### Tests first
 
-- [ ] **T204** `backend/test/integration/contacts.spec.ts`: create/list/get/update/delete, search, filter,
+- [x] **T204** `backend/test/integration/contacts.spec.ts`: create/list/get/update/delete, search, filter,
       pagination, duplicate email, soft delete, Sales owner, Manager/Admin all, tenant.
-- [ ] **T205** `backend/test/perf/contacts-search.perf.ts`: seed 10k, p95 < 300ms.
+- [x] **T205** `backend/test/perf/contacts-search.perf.ts`: seed 10k, p95 < 300ms.
 
 ### Implementation
 
-- [ ] **T206** `modules/contacts/contact.repository.ts`: org-scoped CRUD; search trigram/unaccent; cursor.
-- [ ] **T207** `contact.service.ts` + `contact.controller.ts`: validation, scope, audit, duplicate mapping.
-- [ ] **T208** `backend/test/unit/contact-search.spec.ts`; EXPLAIN check; fix the index if it is a seq scan.
+- [x] **T206** `modules/contacts/contact.repository.ts`: org-scoped CRUD; search trigram/unaccent; cursor.
+- [x] **T207** `contact.service.ts` + `contact.controller.ts`: validation, scope, audit, duplicate mapping.
+- [x] **T208** `backend/test/unit/contact-search.spec.ts`; EXPLAIN check; fix the index if it is a seq scan.
 
 ## Phase 3 — US2 Pipeline (P2)
 

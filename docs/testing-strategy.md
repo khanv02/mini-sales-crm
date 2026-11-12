@@ -129,9 +129,10 @@ PostgreSQL/Redis.
 ## 7. Performance (NFR-01)
 
 - Seed: 10,000 contacts, 5,000 deals, 20,000 activities, 2 orgs.
-- Scripts: `backend/test/perf/seed-perf.ts` (deterministic seed), `run-perf.ts` (runner) and per-suite scenario
-  files such as `contacts-search.perf.ts` (003 T205) and `reports.perf.ts` (004 T312); results are written to
-  `docs/perf/` (see `docs/nfr.md` NFR-01).
+- Suites: `backend/test/perf/*.perf.ts` — each scenario seeds deterministically and is executed by
+  `test/jest-perf.config.ts` through `pnpm test:perf` (ts-jest is required for Nest decorator metadata); examples
+  `contacts-search.perf.ts` (003 T205) and `reports.perf.ts` (004 T312). Results are written to `docs/perf/`
+  (see `docs/nfr.md` NFR-01).
 - Measure p50/p95/p99 for:
   - `GET /contacts?search=...&limit=50`
   - `GET /deals?pipelineId=...`
