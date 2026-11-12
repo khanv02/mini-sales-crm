@@ -19,5 +19,13 @@ export const apiErrorSchema = z.object({
 /** Query-string boolean (`?active=false`) that only accepts the literals true/false. */
 export const booleanQuerySchema = z.enum(['true', 'false']).transform((value) => value === 'true');
 
+/** Date-only string (`YYYY-MM-DD`), used by query filters and date fields. */
+export const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use the YYYY-MM-DD format.');
+
+/** True when a PATCH body carries at least one field. */
+export function hasDefinedField(value: Record<string, unknown>): boolean {
+  return Object.values(value).some((field) => field !== undefined);
+}
+
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type ApiErrorSchema = z.infer<typeof apiErrorSchema>;

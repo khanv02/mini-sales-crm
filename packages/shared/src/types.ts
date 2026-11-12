@@ -48,3 +48,70 @@ export interface UserListResponse {
   hasMore: boolean;
 }
 
+export type DealStatus = 'OPEN' | 'WON' | 'LOST';
+
+/** Contact as exposed by the API (soft-deleted rows are never returned). */
+export interface Contact {
+  id: string;
+  orgId: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  source: string | null;
+  ownerId: string | null;
+  deletedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactListResponse {
+  data: Contact[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface Stage {
+  id: string;
+  orgId: string;
+  pipelineId: string;
+  name: string;
+  position: number;
+  isWon: boolean;
+  isLost: boolean;
+}
+
+export interface Pipeline {
+  id: string;
+  orgId: string;
+  name: string;
+  stages: Stage[];
+}
+
+/** Deal as exposed by the API; `position` is the fractional kanban position. */
+export interface Deal {
+  id: string;
+  orgId: string;
+  contactId: string;
+  pipelineId: string;
+  stageId: string;
+  title: string;
+  value: number;
+  currency: string;
+  ownerId: string;
+  expectedClose: string | null;
+  status: DealStatus;
+  lostReason: string | null;
+  position: number;
+  version: number;
+  closedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DealListResponse {
+  data: Deal[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+

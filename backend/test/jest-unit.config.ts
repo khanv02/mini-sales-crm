@@ -15,6 +15,7 @@ const config: Config = {
     'src/common/config/env.ts',
     'src/common/queue/queue.config.ts',
     'src/common/audit/audit.service.ts',
+    'src/common/events/domain-event-bus.ts',
     'src/common/auth/principal.service.ts',
     'src/common/auth/roles.guard.ts',
     'src/common/auth/jwt-auth.guard.ts',

@@ -59,12 +59,27 @@ export function redactSnapshot(value: unknown): Prisma.InputJsonValue | undefine
 
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
+/** Feature-specific actions from `specs/003-contacts-pipeline/plan.md`. */
+export type ContactAuditAction = 'CONTACT_CREATED' | 'CONTACT_UPDATED' | 'CONTACT_DELETED';
+export type PipelineAuditAction = 'PIPELINE_CREATED' | 'PIPELINE_UPDATED' | 'PIPELINE_DELETED';
+export type StageAuditAction = 'STAGE_CREATED' | 'STAGE_UPDATED' | 'STAGE_DELETED';
+export type DealAuditAction =
+  | 'DEAL_CREATED'
+  | 'DEAL_UPDATED'
+  | 'DEAL_MOVED'
+  | 'DEAL_ASSIGNED'
+  | 'DEAL_WON'
+  | 'DEAL_LOST'
+  | 'DEAL_REOPENED';
+
+export type EntityAuditEntry<A extends string> = Omit<AuditEntry, 'action' | 'entity'> & { action: A };
+
 export interface AuditEntry {
   orgId: string;
   actorId?: string | null;
   entity: string;
   entityId: string;
-  action: AuditAction;
+  action: AuditAction | ContactAuditAction | PipelineAuditAction | StageAuditAction | DealAuditAction;
   before?: unknown;
   after?: unknown;
   ip?: string | null;
@@ -91,5 +106,34 @@ export class AuditService {
         ip: entry.ip ?? null,
       },
     });
+  }
+
+  /** FR-03: contact mutations, entity `Contact`. */
+  async recordContact(
+    tx: Prisma.TransactionClient,
+    entry: EntityAuditEntry<ContactAuditAction>,
+  ): Promise<void> {
+    await this.record(tx, { ...entry, entity: 'Contact' });
+  }
+
+  /** FR-04: pipeline mutations, entity `Pipeline`. */
+  async recordPipeline(
+    tx: Prisma.TransactionClient,
+    entry: EntityAuditEntry<PipelineAuditAction>,
+  ): Promise<void> {
+    await this.record(tx, { ...entry, entity: 'Pipeline' });
+  }
+
+  /** FR-04: stage mutations, entity `Stage`. */
+  async recordStage(
+    tx: Prisma.TransactionClient,
+    entry: EntityAuditEntry<StageAuditAction>,
+  ): Promise<void> {
+    await this.record(tx, { ...entry, entity: 'Stage' });
+  }
+
+  /** FR-05/FR-06: deal mutations, entity `Deal`. */
+  async recordDeal(tx: Prisma.TransactionClient, entry: EntityAuditEntry<DealAuditAction>): Promise<void> {
+    await this.record(tx, { ...entry, entity: 'Deal' });
   }
 }
