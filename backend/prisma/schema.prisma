@@ -21,6 +21,18 @@ enum DealStatus {
   LOST
 }
 
+enum ActivityType {
+  NOTE
+  CALL
+  EMAIL
+  TASK
+}
+
+enum NotificationType {
+  TASK_DUE
+  TASK_OVERDUE
+}
+
 model Organization {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
@@ -35,6 +47,8 @@ model Organization {
   pipelines Pipeline[]
   deals     Deal[]
   stages    Stage[]
+  activities Activity[]
+  notifications Notification[]
 
   @@map("organizations")
 }
@@ -55,6 +69,9 @@ model User {
   auditLogs     AuditLog[]     @relation("AuditActor")
   contacts      Contact[]      @relation("ContactOwner")
   deals         Deal[]         @relation("DealOwner")
+  authoredActivities  Activity[]   @relation("ActivityAuthor")
+  assignedActivities  Activity[]   @relation("ActivityAssignee")
+  notifications       Notification[]
 
   @@unique([orgId, id])
   @@index([orgId, role, active])
@@ -187,6 +204,7 @@ model Deal {
   pipeline     Pipeline     @relation(fields: [orgId, pipelineId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
   stage        Stage        @relation(fields: [orgId, pipelineId, stageId], references: [orgId, pipelineId, id], onDelete: Restrict, onUpdate: Cascade)
   owner        User         @relation("DealOwner", fields: [orgId, ownerId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  activities   Activity[]
 
   @@unique([orgId, id])
   @@index([orgId, stageId, position, id])
@@ -195,4 +213,46 @@ model Deal {
   @@index([orgId, expectedClose])
   @@index([orgId, contactId])
   @@map("deals")
+}
+
+/// Tasks are activities of type TASK (ADR-010); `GET /tasks` is a projection.
+model Activity {
+  id         String       @id @default(uuid()) @db.Uuid
+  orgId      String       @map("org_id") @db.Uuid
+  dealId     String       @map("deal_id") @db.Uuid
+  type       ActivityType
+  content    String
+  dueAt      DateTime?    @map("due_at") @db.Timestamptz(6)
+  doneAt     DateTime?    @map("done_at") @db.Timestamptz(6)
+  assigneeId String?      @map("assignee_id") @db.Uuid
+  createdBy  String       @map("created_by") @db.Uuid
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deal         Deal         @relation(fields: [orgId, dealId], references: [orgId, id], onDelete: Cascade, onUpdate: Cascade)
+  assignee     User?        @relation("ActivityAssignee", fields: [orgId, assigneeId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  author       User         @relation("ActivityAuthor", fields: [orgId, createdBy], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([orgId, id])
+  @@index([orgId, dealId, createdAt(sort: Desc)])
+  @@map("activities")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  orgId     String           @map("org_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  payload   Json
+  dedupeKey String?          @map("dedupe_key")
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user         User         @relation(fields: [orgId, userId], references: [orgId, id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([orgId, id])
+  @@index([orgId, userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
 }

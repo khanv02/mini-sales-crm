@@ -6,6 +6,7 @@ import jwt, { type SignOptions } from 'jsonwebtoken';
 import { loadEnv } from '../../src/common/config/env';
 import { prisma } from './prisma';
 
+export { createActivity, createTask } from './activity';
 export { createContact } from './contact';
 export { createDeal } from './deal';
 export { createPipeline, createStage } from './pipeline';
@@ -87,7 +88,7 @@ export async function resetRateLimits(): Promise<void> {
 /** Remove all business/auth rows between tests. */
 export async function resetDatabase(): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE audit_logs, deals, stages, pipelines, contacts, refresh_tokens, users, organizations RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE audit_logs, notifications, activities, deals, stages, pipelines, contacts, refresh_tokens, users, organizations RESTART IDENTITY CASCADE',
   );
 }
 

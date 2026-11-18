@@ -22,6 +22,9 @@ export const booleanQuerySchema = z.enum(['true', 'false']).transform((value) =>
 /** Date-only string (`YYYY-MM-DD`), used by query filters and date fields. */
 export const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use the YYYY-MM-DD format.');
 
+/** ISO-8601 timestamp with an explicit offset, e.g. `2026-11-18T09:00:00Z` or `2026-11-18T16:00:00+07:00`. */
+export const isoDateTimeSchema = z.string().datetime({ offset: true });
+
 /** True when a PATCH body carries at least one field. */
 export function hasDefinedField(value: Record<string, unknown>): boolean {
   return Object.values(value).some((field) => field !== undefined);

@@ -245,6 +245,7 @@ Indexes:
 Checks:
 
 ```sql
+check (char_length(content) between 1 and 10000)
 check (type <> 'TASK' or (due_at is not null and assignee_id is not null))
 check (type =  'TASK' or done_at is null)
 ```
@@ -426,7 +427,7 @@ Migration order:
 1. `0001_init` (applied): extensions `pg_trgm`, `unaccent`, `pgcrypto`; organizations (currency/timezone), users, refresh_tokens, **audit_logs**; indexes.
 2. `0002_crm_core` (applied): contacts, pipelines, stages, deals (including `closed_at`); composite FKs; check constraints; indexes.
    - `contact_search` (applied, ADR-013 fix): `pulse_unaccent`/`pulse_contact_search` helpers and the GIN trigram expression index; replaces the three per-column trigram indexes.
-3. `0003_workflow`: activities, notifications; indexes.
+3. `0003_workflow` (applied): activities, notifications; check constraints, overdue partial index, notification dedupe partial unique index.
 4. `0004_integrations`: webhook_sources/events, import_jobs.
 5. `0005_governance_ai`: ai_usage, ai_results; indexes.
 
@@ -440,6 +441,8 @@ The seed (`backend/prisma/seed.ts`) must be idempotent:
 
 - 2 orgs (`Acme`, `Globex`), each with Admin/Manager/2 Sales; test password `Password123!`.
 - 1 pipeline “Sales Pipeline” per org with New/Qualified/Proposal/Won/Lost.
+- 1 demo contact per org plus 3 demo deals (OPEN, WON, LOST) owned by its first Sales, so the kanban and the
+  feature 004 dashboard can be demoed right after seeding.
 - Perf dataset: 10,000 contacts, 5,000 deals, 20,000 activities; deterministic (fixed faker seed).
 - Never used in production: guarded by `NODE_ENV=production` plus `ALLOW_SEED`; the perf dataset additionally
   requires `SEED_PERF=true` (see `docs/quickstart.md` section 4).
