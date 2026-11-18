@@ -41,7 +41,7 @@ independently demoable slice.
 | --- | --- | --- | --- | --- | --- |
 | 001 | Foundation | M0 | M0 | - | Implemented, M0 gates green |
 | 002 | Identity & Access | FR-01, FR-02 | M1 | 001 | Implemented, M1 gates green |
-| 003 | Contacts, Pipeline & Deals | FR-03, FR-04, FR-05, FR-06 | M1 | 002 | Draft |
+| 003 | Contacts, Pipeline & Deals | FR-03, FR-04, FR-05, FR-06 | M1 | 002 | In progress (contacts, pipeline and deals backends done; frontend T221–T226 open) |
 | 004 | Activities, Tasks & Dashboard | FR-07, FR-08 | M1 | 003 | Draft |
 | 005 | Realtime & Notifications | FR-09 | M2 | 003, 004 | Draft |
 | 006 | Integrations (Import, Webhook, Email) | FR-10, FR-11, FR-12 | M2 | 002, 003, 004, 007 | Draft |
@@ -129,7 +129,7 @@ A feature is only done when:
 
 Details: `docs/checklists/feature-dod.md`.
 
-## 6. Approved decisions & pending spec updates
+## 6. Approved decisions & applied SCRs
 
 The following architectural decisions have been **Accepted** (recorded in `docs/adr/`):
 
@@ -144,5 +144,6 @@ The following architectural decisions have been **Accepted** (recorded in `docs/
 9. `ADR-014`: fractional position for kanban ordering (FR-05, M1).
 10. `ADR-015`: refresh token in an HttpOnly cookie, access token in the body (FR-01, M1).
 
-The pending SCRs in `docs/spec-review.md` (SCR-003, SCR-007, SCR-008, SCR-015) remain to be folded into spec v0.2
-during the regular milestone convergence. Implementation proceeds per the accepted ADRs and feature specs.
+The SCRs in `docs/spec-review.md` are applied in the SDD. The original concept PRD stays frozen as a v0.1
+reference (SCR-017), so they are not merged back into it; `specs/` and `docs/` are the living source of truth.
+Implementation proceeds per the accepted ADRs and feature specs.

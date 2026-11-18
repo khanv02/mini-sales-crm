@@ -3,14 +3,15 @@
 **Reviewed document**: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1
 **Date**: 2026-11-08
 **Reviewer**: AI (as requested by section 12 of the spec)
-**Status**: Proposal — needs human sign-off before M1 coding starts
+**Status**: Applied — the decisions below are folded into the SDD and M1 implementation is in progress
 
 Purpose: surface ambiguities, contradictions, edge cases and security risks **before any code is written**, and
 record the decisions already applied in this SDD. Large decisions have their own ADR; smaller changes live in the
 SCR table.
 
-> Rule: while an item below is unapproved, the related code must not start. The source spec remains the source of
-> truth; the SCRs must be merged into spec v0.2.
+> Rule: an item marked **Pending** must be settled before the code it affects starts. The original concept PRD is
+> frozen (SCR-017); the living source of truth is `specs/` and `docs/`, so SCRs are applied there rather than merged
+> back into the PRD.
 
 ## 1. Critical findings (P0 — must be fixed before coding)
 
@@ -242,16 +243,16 @@ Vietnamese correctly; limit 100,000 rows per export; stream so nothing is held f
 secrets/audit rows; fixed prompt template with CRM content placed inside delimiters and treated as untrusted;
 the model may not call tools. Recorded in `ADR-009`/the feature 008 plan.
 
-## 3. Open questions in the source spec
+## 3. Settled questions from the source spec
 
-| ID | Question | Proposed decision | ADR |
+| ID | Question | Decision | ADR |
 | --- | --- | --- | --- |
 | Q1 | Prisma or Drizzle? | **Prisma** — type-safe, clear migrations, widely used; slightly less flexible with raw SQL but sufficient. | ADR-006 |
 | Q2 | Socket.IO or SSE for realtime? | **Socket.IO** for kanban/notifications; **SSE** only for AI streaming (one-way). | ADR-007 |
 | Q3 | Real email or a fake mailer? | **Mailpit in dev/test**; provider adapter; no real email until an operations decision is made. | ADR-008 |
 | Q4 | Do we build FR-20 (RAG)? | **Defer** beyond M3; keep the schema ready for pgvector, implement only with separate approval. | ADR-009 |
 
-## 4. New questions to settle
+## 4. Additional questions and their SDD defaults
 
 | ID | Question | SDD default | Impact if changed |
 | --- | --- | --- | --- |
@@ -264,26 +265,25 @@ the model may not call tools. Recorded in `ADR-009`/the feature 008 plan.
 
 ## 5. Spec Change Requests (SCR)
 
-Status: **Applied in SDD** = already reflected in spec/plan/tasks; **Pending** = the source spec still needs the
-edit.
+Status: **Applied in SDD** = already reflected in spec/plan/tasks. The original concept PRD is frozen (SCR-017), so no SCR is merged back into it.
 
 | ID | Change | Reason | Impact | Status |
 | --- | --- | --- | --- | --- |
 | SCR-001 | Add `stages.org_id`; composite FK `(org_id, id)` for business tables | C3, tenant-leak prevention | Schema, repositories, tests | Applied in SDD |
 | SCR-002 | Add `deals.closed_at`, `organizations.currency`; check constraint on status/lost_reason/closed_at | Accurate FR-06/FR-08 | Schema, reports | Applied in SDD |
-| SCR-003 | Replace `webhook_sources.secret_hash` with `secret_ciphertext`, `secret_last4`, `rotated_at` | HMAC needs the original secret | Schema, API, security | Applied in SDD; Pending spec |
+| SCR-003 | Replace `webhook_sources.secret_hash` with `secret_ciphertext`, `secret_last4`, `rotated_at` | HMAC needs the original secret | Schema, API, security | Applied in SDD (PRD frozen, SCR-017) |
 | SCR-004 | Task is an activity with `type='task'`, no separate `tasks` table | Avoid a duplicated model | `/tasks` API, queries | Applied in SDD |
 | SCR-005 | Add `ai_results`; extend `ai_usage` | FR-18 history, FR-19 cache/cost | Schema, AI service | Applied in SDD |
 | SCR-006 | Add `import_jobs.file_hash/created_by/started_at/finished_at/error_report_key`; `webhook_events.attempts/last_error/processed_at` | Idempotency/retry | Schema, workers | Applied in SDD |
-| SCR-007 | Add `notifications.dedupe_key`; notification endpoints | FR-09, anti-spam | Schema, API | Applied in SDD; Pending spec |
-| SCR-008 | Realtime rooms by role/user, no org broadcast | RBAC, Sales privacy | Gateway, events | Applied in SDD; Pending spec |
+| SCR-007 | Add `notifications.dedupe_key`; notification endpoints | FR-09, anti-spam | Schema, API | Applied in SDD (PRD frozen, SCR-017) |
+| SCR-008 | Realtime rooms by role/user, no org broadcast | RBAC, Sales privacy | Gateway, events | Applied in SDD (PRD frozen, SCR-017) |
 | SCR-009 | Refresh token via HttpOnly cookie; access token in the body | Reduce XSS | Auth API, web | Applied in SDD |
 | SCR-010 | Search with `pg_trgm` + `unaccent` instead of default full-text | Vietnamese, p95 | Indexes, queries | Applied in SDD |
 | SCR-011 | Define dashboard formulas + filters | FR-08 must be verifiable | Report service/UI | Applied in SDD |
 | SCR-012 | Fix default AI quotas + usage/score endpoints | FR-18/FR-19 | AI module, env | Applied in SDD |
 | SCR-013 | Audit redaction, append-only, no secret/PII in logs | C4, security | Audit service | Applied in SDD |
 | SCR-014 | Cursor pagination, UUID v4, ISO UTC, org timezone | API consistency | Whole API | Applied in SDD |
-| SCR-015 | Add webhook-source management + notification endpoints | FR-09/FR-11 lacked APIs | API, RBAC | Applied in SDD; Pending spec |
+| SCR-015 | Add webhook-source management + notification endpoints | FR-09/FR-11 lacked APIs | API, RBAC | Applied in SDD (PRD frozen, SCR-017) |
 | SCR-016 | Remove SDD links and internal details from README; confine to quickstart | Constitution compliance; keep README client-facing | 001 tasks/spec | Applied in SDD |
 | SCR-017 | Accept ADR-006..015; document original concept PRD as frozen v0.1 reference | Establish legal baseline before M1; clarify language policy | ADRs, constitution, AGENTS.md, SDD index | Applied in SDD |
 

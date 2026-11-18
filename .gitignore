@@ -79,3 +79,6 @@ desktop.ini
 .tmp-verify/
 .perch/
 .session-log.md
+
+# Generated architecture documentation (not an SDD source of truth)
+docs/system-design.md

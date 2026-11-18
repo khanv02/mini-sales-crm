@@ -94,7 +94,8 @@ sending; stop Mailpit.
 4. **AC-FR12-04** Given an inactive assignee or one without an email, When reminding, Then skip the email, log;
    do not fail the scheduler.
 5. **AC-FR12-05** Given an overdue task, When the scheduler runs, Then the email is sent once for the
-   `task:{id}:overdue` bucket; no repeats every minute.6. **AC-FR12-06** Given Admin of org B, When viewing an email/log of org A, Then there is no endpoint/nothing is
+   `task:{id}:overdue` bucket; no repeats every minute.
+6. **AC-FR12-06** Given Admin of org B, When viewing an email/log of org A, Then there is no endpoint/nothing is
    visible; the job only uses org A data.
 
 ### Edge Cases

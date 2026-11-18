@@ -10,10 +10,18 @@
 Pulse CRM — a small, multi-tenant CRM built spec-first: contacts, pipeline/deals, activities, tasks and
 dashboard, realtime notifications, import/webhook/email, governance layers, and AI assist.
 
-**Current state**: M0 foundation (feature 001) is implemented: pnpm workspace with `backend/` (NestJS API,
-Prisma schema/migrations/seed, health, errors, logging, queue base), `frontend/` (React + Vite shell) and
-`packages/shared`. CRM features from M1 onward remain specification-only, so do not invent files, code paths,
-endpoints, tables, events or dependencies that the SDD does not describe.
+**Current state**: features 001 (foundation) and 002 (identity & access) are implemented and their gates are
+green: pnpm workspace with `backend/` (NestJS API, Prisma schema/migrations/seed, health, errors, logging,
+queue base, auth, users), `frontend/` (React + Vite shell with sign-in and account pages) and
+`packages/shared`. Feature 003 (contacts, pipeline & deals) is implemented end-to-end: the contacts, pipeline and
+deals backends pass their integration suites (T200–T220, 79/79 tests) and the contacts UI (T221), pipeline admin
+UI (T222), kanban board (T223), deal form with win/loss (T224), core-flow E2E (T225) and perf/docs (T226) are
+done. Feature 004 (activities, tasks & dashboard) has started: T300 applied migration `0003_workflow`
+(`activities`, `notifications`), T301 added the shared activity/task/report schemas, T302 added the test factories,
+fake clock and audit helpers, and T303/T304 wrote the activities integration and validation tests (red until T305
+implements the module); its endpoints, scheduler, dashboard and UI are still pending. Features 005–008
+remain specification-only, so do not invent files, code paths, endpoints, tables, events or dependencies that the
+SDD does not describe.
 
 Where to look:
 
@@ -85,14 +93,49 @@ Where to look:
 
 ## 4. Git and branching workflow
 
-- **Branch naming conventions**:
-  - `feature/<id>-<short-description>`: Feature work tied to SDD milestones (e.g., `feature/001-foundation`, `feature/003-contacts-pipeline`).
-  - `hotfix/<issue>-<short-description>`: Urgent fixes addressing regressions or defects in released code.
-  - `chore/<short-description>`: Tooling, dependency, and configuration maintenance.
-  - `docs/<short-description>`: Documentation, spec refinement, and governance updates.
-- **Commit discipline**: Small, atomic commits with concise conventional messages (`feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`). Never embed task/ticket IDs in the subject (e.g., use `docs: update api conventions` instead of `docs(T017): ...` or `feat(FR-05): ...`). Keep subjects clean, concise, and visually appealing.
-- **Push policy**: **NEVER automatically push to remote repositories.** All commits remain local. Pushing to remote is permitted only when the user explicitly instructs the agent to push.
-- **Session log & ticket tracking**: Record task/ticket details, requirement IDs, and step-by-step changes in `.session-log.md` at the repo root after each session. This file is git-ignored and never committed; it serves as a private, concise scratchpad for the human reviewer.
+### 4.1 Branch model
+
+| Branch | Purpose | Branches from | Merges into | Direct commits |
+| --- | --- | --- | --- | --- |
+| `main` | Production-ready code; every commit is releasable and tagged | - | - | No (protected) |
+| `develop` | Integration line for the next milestone; CI stays green | `main` | `main` through a release PR | No (protected) |
+| `feature/<id>-<short-description>` | One SDD feature or vertical slice, e.g. `feature/003-contacts-pipeline` | `develop` | `develop` | Yes |
+| `release/<x.y.z>` | Optional stabilisation window before a version ships | `develop` | `main`, then back into `develop` | Fixes only |
+| `hotfix/<issue>-<short-description>` | Urgent fix for a defect already in production | `main` | `main` (patch tag), then `main` back into `develop` | Yes |
+| `chore/<short-description>` | Tooling, dependencies, CI and configuration maintenance | `develop` | `develop` | Yes |
+| `docs/<short-description>` | Documentation, spec refinement and governance updates | `develop` | `develop` | Yes |
+
+Flow: feature/chore/docs branch → PR into `develop` → `release/x.y.z` (or a `develop` → `main` release PR) →
+tag `vX.Y.Z` on `main` → merge `main` back into `develop`. A hotfix enters through `main`, gets a patch tag, and
+is merged back into `develop` so the fix is never lost.
+
+Branch rules:
+
+- One branch per SDD feature (or one coherent task group); never mix two features in one branch.
+- Always branch from an up-to-date base, keep the branch short-lived, and delete it after the merge.
+- Do not commit directly to `main` or `develop`; both are protected and only accept merges. Never force-push a
+  shared branch.
+- A feature branch may depend on another unmerged feature only when the SDD states the dependency (for example
+  004 needs 003); branch off that feature and rebase once the base lands.
+- Release tags follow `v<major>.<minor>.<patch>` and are created on `main` only, after the gates are green.
+
+### 4.2 Commit discipline
+
+Small, atomic commits with concise conventional messages (`feat:`, `fix:`, `docs:`, `chore:`, `test:`,
+`refactor:`). Never embed task/ticket IDs in the subject (use `docs: update api conventions`, not
+`docs(T017): ...` or `feat(FR-05): ...`); name the `FR-xx`/`AC-xx`/`Txxx` in the body instead. One logical change
+per commit, and the tree must build at every commit.
+
+### 4.3 Push policy
+
+**NEVER automatically push to remote repositories.** All commits remain local. Pushing to remote is permitted only
+when the user explicitly instructs the agent to push.
+
+### 4.4 Session log & ticket tracking
+
+Record task/ticket details, requirement IDs, and step-by-step changes in `.session-log.md` at the repo root after
+each session. This file is git-ignored and never committed; it serves as a private, concise scratchpad for the
+human reviewer.
 
 ## 5. Standard report format for task outputs
 

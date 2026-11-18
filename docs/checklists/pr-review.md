@@ -3,7 +3,7 @@
 ## Scope
 
 - [ ] The PR is small and covers one feature/task group; no large refactor mixed in.
-- [ ] Title/commits carry `FR-xx`/`Txxx`.
+- [ ] The PR body names the `FR-xx`/`AC-xx` and `Txxx`; the commit subject stays clean.
 - [ ] Description states which ACs are covered, how they are tested, schema/API impact and rollback.
 - [ ] No dead code and no TODO without a reason.
 

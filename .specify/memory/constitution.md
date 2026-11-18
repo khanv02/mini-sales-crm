@@ -1,6 +1,6 @@
 # Pulse CRM Constitution
 
-**Version**: 1.0.1 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-09
+**Version**: 1.0.2 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-12
 
 Origin: `docs/Pulse CRM — Đặc tả sản phẩm (Spec-Driven).md` v0.1, sections 3 (C1–C9), 10 and 11.
 This document is the law of the project. When spec and code conflict, the spec wins. When the spec is
@@ -174,8 +174,8 @@ stream.
 5. **Implement**: code per task; small commits; update the task checklist.
 6. **Verify**: run tests/CI; check each AC; update traceability; demo.
 
-**Branch**: `###-feature-name` (for example `003-contacts-pipeline`).
-**Commit**: `feat(FR-05): move deal with optimistic lock`.
+**Branch**: `feature/<id>-<short-description>` (for example `feature/003-contacts-pipeline`).
+**Commit**: `feat: move deal with optimistic lock` — the subject stays clean; put `FR-05`/`T217` in the body.
 **PR**: one feature slice or one related task group; never mix a large refactor with a feature.
 
 ## Governance
@@ -195,4 +195,4 @@ stream.
   (Spec-Driven).md` is the original concept PRD (v0.1 reference archive) preserved in Vietnamese for historical
   lineage; it is frozen, while the active executable SDD is maintained in English under `specs/` and `docs/`.
 
-**Version**: 1.0.1 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-09
+**Version**: 1.0.2 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-12

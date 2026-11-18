@@ -7,7 +7,7 @@ Goal: from clone to a running app in **a few commands**, satisfying NFR-06 and t
 | Tool | Version |
 | --- | --- |
 | Node.js | 22 LTS |
-| pnpm | 9+ |
+| pnpm | 10.32.1 (pinned in `package.json`) |
 | Docker Desktop | 4+ (Compose v2) |
 | Git | 2.40+ |
 

@@ -9,12 +9,12 @@ the same PR. Convention: `AC-FRxx-yy`; task IDs use per-feature ranges (see `spe
 | --- | --- | --- | --- | --- | --- |
 | FR-01 Register/login | AC-FR01-01..11 | 002 | T100–T113, T117–T119 | `test/integration/auth.spec.ts`, `test/unit/token.service.spec.ts`, `test/unit/auth.guard.spec.ts`, `test/unit/login-rate-limit.service.spec.ts`, `frontend/src/features/auth/auth-provider.test.tsx` | Implemented |
 | FR-02 Member management | AC-FR02-01..07 | 002 | T114–T117, T119 | `test/integration/users.spec.ts`, `test/integration/rbac.spec.ts`, `test/unit/audit.service.spec.ts` | Implemented |
-| FR-03 Contacts | AC-FR03-01..08 | 003 | T200–T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts` | Draft |
-| FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209–T211, T222 | `test/integration/pipelines.spec.ts` | Draft |
-| FR-05 Deals/kanban | AC-FR05-01..10 | 003, 005 | T212–T217, T223–T224, T406 | `test/integration/deals.spec.ts`, `deals-concurrency.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
-| FR-06 Win/loss | AC-FR06-01..05 | 003 | T218–T220, T224 | `test/integration/deals-win-loss.spec.ts` | Draft |
-| FR-07 Activities/reminders | AC-FR07-01..10 | 004, 005 | T300–T310, T316–T317, T319, T410–T411 | `test/integration/activities.spec.ts`, `tasks.spec.ts`, `realtime.spec.ts` | Draft |
-| FR-08 Dashboard | AC-FR08-01..09 | 004, 007 | T311–T315, T318–T319 | `test/integration/reports.spec.ts`, `test/perf/reports.perf.ts` | Draft |
+| FR-03 Contacts | AC-FR03-01..08 | 003 | T200–T208, T221, T226 | `test/integration/contacts.spec.ts`, `test/perf/contacts-search.perf.ts`, `frontend/src/features/contacts/contacts-page.test.tsx`, `docs/perf/2026-11-17-feature-003.md` | Implemented (backend, 12/12 integration tests pass; contacts UI at `/contacts`, 7/7 unit tests pass; 10k perf p95 ≤ 111.2ms) |
+| FR-04 Pipeline/stage | AC-FR04-01..07 | 003 | T209–T211, T222 | `test/integration/pipelines.spec.ts`, `frontend/src/features/pipelines/pipelines-page.test.tsx` | Implemented (backend, 10/10 integration tests pass; admin UI at `/pipelines`, 9/9 unit tests pass) |
+| FR-05 Deals/kanban | AC-FR05-01..10 | 003, 005 | T212–T217, T223–T226, T406 | `test/integration/deals.spec.ts`, `deals-concurrency.spec.ts`, `test/unit/position.spec.ts`, `test/perf/deals-board.perf.ts`, `frontend/src/features/deals/deals-page.test.tsx`, `e2e/core-flow.spec.ts`, `e2e/kanban-realtime.spec.ts` | Implemented (backend, 15/15 integration tests pass; kanban + deal form at `/deals`, 12/12 unit tests pass; core-flow E2E passes; 5k board p95 38.0ms, move p95 86.7ms) |
+| FR-06 Win/loss | AC-FR06-01..05 | 003 | T218–T220, T224–T225 | `test/integration/deals-win-loss.spec.ts`, `frontend/src/features/deals/deals-page.test.tsx`, `lost-reason-dialog.tsx`, `e2e/core-flow.spec.ts` | Implemented (backend, 5/5 integration tests pass; UI requires a lost reason, won move needs none; core-flow E2E covers the won move) |
+| FR-07 Activities/reminders | AC-FR07-01..10 | 004, 005 | T300–T310, T316–T317, T319, T410–T411 | `test/integration/activities.spec.ts`, `tasks.spec.ts`, `realtime.spec.ts` | Draft (T300 `0003_workflow`, T301 shared schemas, T302 helpers, T303/T304 activities tests written and red pending T305) |
+| FR-08 Dashboard | AC-FR08-01..09 | 004, 007 | T301, T311–T315, T318–T319 | `test/integration/reports.spec.ts`, `test/perf/reports.perf.ts` | Draft (T301 report query schema in place; endpoint and tests pending) |
 | FR-09 Realtime | AC-FR09-01..12 | 005 | T400–T419 | `test/integration/realtime.spec.ts`, `notifications.spec.ts`, `e2e/kanban-realtime.spec.ts` | Draft |
 | FR-10 CSV import | AC-FR10-01..08 | 006 | T500–T508, T519–T520 | `test/integration/imports.spec.ts`, `test/unit/import-worker.spec.ts` | Draft |
 | FR-11 Webhook | AC-FR11-01..09 | 006 | T500, T509–T515, T519–T520 | `test/integration/webhooks.spec.ts`, `test/unit/webhook-worker.spec.ts` | Draft |
@@ -35,7 +35,7 @@ feature/task/test.
 
 | Source | AC | Feature | Main tasks | Test/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| NFR-01 Read performance | AC-NFR01-01..02 | 003, 004, 007 | T205, T226, T312, T607 | `test/perf/*.perf.ts`, p50/p95/p99 report | Draft |
+| NFR-01 Read performance | AC-NFR01-01..02 | 003, 004, 007 | T205, T226, T312, T607 | `test/perf/*.perf.ts`, `docs/perf/2026-11-17-feature-003.md` | Implemented for 003 (contacts 10k p95 ≤ 111.2ms; deals 5k board 38.0ms, move 86.7ms); 004/007 scenarios pending |
 | NFR-02 Security | AC-NFR02-01..04 | 001, 002, 003, 007 | T102, T115, T119, T603 | `test/integration/rbac.spec.ts`, `tenant-isolation.spec.ts`, security checklist | Draft |
 | NFR-03 Reliability | AC-NFR03-01..03 | 001, 006 | T010, T020, T501, T519 | `test/integration/health.spec.ts`, `test/unit/queue.spec.ts` | Draft |
 | NFR-04 Observability | AC-NFR04-01..02 | 001 | T009, T011 | `test/unit/logger.spec.ts`, Sentry smoke | Draft |
