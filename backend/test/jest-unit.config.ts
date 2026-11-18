@@ -25,6 +25,7 @@ const config: Config = {
     'src/common/rate-limit/login-rate-limit.service.ts',
     'src/common/security/password.service.ts',
     'src/common/validation/zod-validation.pipe.ts',
+    'src/modules/deals/position.service.ts',
   ],
   coverageDirectory: '<rootDir>/coverage',
   coverageReporters: ['text', 'lcov'],

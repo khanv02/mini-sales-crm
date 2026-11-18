@@ -30,53 +30,53 @@
 
 ### Tests first
 
-- [ ] **T209** `backend/test/integration/pipelines.spec.ts`: CRUD pipeline/stage, reorder, delete guards,
+- [x] **T209** `backend/test/integration/pipelines.spec.ts`: CRUD pipeline/stage, reorder, delete guards,
       won/lost invariant, name duplicate, role/tenant.
 
 ### Implementation
 
-- [ ] **T210** `modules/pipeline/{pipeline.repository,pipeline.service,pipeline.controller}.ts`: transaction
+- [x] **T210** `modules/pipeline/{pipeline.repository,pipeline.service,pipeline.controller}.ts`: transaction
       reorder; guards 409; audit.
-- [ ] **T211** Integration fix + `pipelines.spec.ts` pass; frontend API hooks.
+- [x] **T211** Integration fix + `pipelines.spec.ts` pass (10/10). The frontend pipeline hooks ship with T222.
 
 ## Phase 4 — US3 Deals & Kanban (P1)
 
 ### Tests first
 
-- [ ] **T212** `backend/test/integration/deals.spec.ts`: create/list/get/update, validation, RBAC/tenant,
-      audit, assign.
-- [ ] **T213** `backend/test/integration/deals-concurrency.spec.ts`: two parallel moves same version →
+- [x] **T212** `backend/test/integration/deals.spec.ts`: create/list/get/update, validation, RBAC/tenant,
+      audit, assign (8 tests).
+- [x] **T213** `backend/test/integration/deals-concurrency.spec.ts`: two parallel moves same version →
       one 200/one 409; audit 1; board correct.
-- [ ] **T214** `backend/test/unit/position.spec.ts`: insert head/middle/end, 100 inserts, rebalance.
+- [x] **T214** `backend/test/unit/position.spec.ts`: insert head/middle/end, 100 inserts, rebalance.
 
 ### Implementation
 
-- [ ] **T215** `modules/deals/deal.repository.ts`: org/pipeline/stage joins; versioned update; board query.
-- [ ] **T216** `modules/deals/position.service.ts`: midpoint/rebalance; clamp; transaction.
-- [ ] **T217** `deal.service.ts` + `deal.controller.ts`: create/move/assign; lost validation; audit; publish
+- [x] **T215** `modules/deals/deal.repository.ts`: org/pipeline/stage joins; versioned update; board query.
+- [x] **T216** `modules/deals/position.service.ts`: midpoint/rebalance; clamp; transaction.
+- [x] **T217** `deal.service.ts` + `deal.controller.ts`: create/move/assign; lost validation; audit; publish
       `deal.moved/assigned` after commit.
 
 ## Phase 5 — US4 Win/Loss (P2)
 
 ### Tests first
 
-- [ ] **T218** `backend/test/integration/deals-win-loss.spec.ts`: won, lost require reason, reopen, closed_at,
-      report consistency, audit.
+- [x] **T218** `backend/test/integration/deals-win-loss.spec.ts`: won, lost require reason, reopen, closed_at,
+      report consistency, audit (5 tests).
 
 ### Implementation
 
-- [ ] **T219** `deal.service`: derive status/closed_at; clear lost_reason; DB check alignment.
-- [ ] **T220** Integration pass; seed WON/LOST data for 004.
+- [x] **T219** `deal.service`: derive status/closed_at; clear lost_reason; DB check alignment.
+- [x] **T220** Integration pass (79/79); seed WON/LOST demo data for 004.
 
 ## Phase 6 — Frontend & E2E
 
-- [ ] **T221** [P] `frontend/src/features/contacts`: list/search/filter/create/edit/delete, pagination.
-- [ ] **T222** [P] `frontend/src/features/pipelines`: admin stage editor, dnd reorder, won/lost, delete guard.
-- [ ] **T223** `frontend/src/features/deals/KanbanBoard.tsx`: dnd-kit, optimistic move, 409 rollback/toast,
+- [x] **T221** [P] `frontend/src/features/contacts`: list/search/filter/create/edit/delete, pagination.
+- [x] **T222** [P] `frontend/src/features/pipelines`: admin stage editor, dnd reorder, won/lost, delete guard.
+- [x] **T223** `frontend/src/features/deals/KanbanBoard.tsx`: dnd-kit, optimistic move, 409 rollback/toast,
       assign menu.
-- [ ] **T224** Deal drawer/form: create/edit, win/loss modal, validation, currency format.
-- [ ] **T225** `frontend/e2e/core-flow.spec.ts`: login → contact → deal → move → won.
-- [ ] **T226** [P] Perf + docs: run 10k/5k, record; update traceability; PR checklist.
+- [x] **T224** Deal drawer/form: create/edit, win/loss modal, validation, currency format.
+- [x] **T225** `frontend/e2e/core-flow.spec.ts`: login → contact → deal → move → won.
+- [x] **T226** [P] Perf + docs: run 10k/5k, record; update traceability; PR checklist.
 
 ## Dependencies
 

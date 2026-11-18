@@ -12,6 +12,8 @@ import { RedisModule } from './common/redis/redis.module';
 import { SecurityModule } from './common/security/security.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
+import { DealsModule } from './modules/deals/deals.module';
+import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({})
@@ -32,6 +34,8 @@ export class AppModule {
         AuthModule,
         UsersModule,
         ContactsModule,
+        PipelineModule,
+        DealsModule,
         HealthModule,
       ],
     };

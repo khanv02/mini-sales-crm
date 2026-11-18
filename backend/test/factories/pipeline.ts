@@ -31,12 +31,12 @@ export async function createPipeline(input: {
 }): Promise<PipelineWithStages> {
   return prisma.pipeline.create({
     data: {
-      orgId: input.orgId,
+      organization: { connect: { id: input.orgId } },
       name: input.name ?? `Pipeline ${randomUUID().slice(0, 8)}`,
       stages: input.stages?.length
         ? {
             create: input.stages.map((stage, index) => ({
-              orgId: input.orgId,
+              organization: { connect: { id: input.orgId } },
               name: stage.name ?? `Stage ${index + 1}`,
               position: stage.position ?? index + 1,
               isWon: stage.isWon ?? false,
