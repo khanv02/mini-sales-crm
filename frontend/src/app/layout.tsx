@@ -12,7 +12,13 @@ export function Layout() {
 
   const navigation =
     status === 'authenticated'
-      ? [...publicNavigation, { label: 'Tài khoản', to: '/account' }]
+      ? [
+          ...publicNavigation,
+          { label: 'Khách hàng', to: '/contacts' },
+          { label: 'Quy trình', to: '/pipelines' },
+          { label: 'Cơ hội', to: '/deals' },
+          { label: 'Tài khoản', to: '/account' },
+        ]
       : [
           ...publicNavigation,
           { label: 'Đăng nhập', to: '/login' },

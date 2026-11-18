@@ -19,6 +19,7 @@
     "test:unit:cov": "jest --config test/jest-unit.config.ts --coverage",
     "pretest:integration": "pnpm --filter @pulse/shared build",
     "test:integration": "jest --config test/jest-integration.config.ts --runInBand",
+    "test:perf": "jest --config test/jest-perf.config.ts --runInBand",
     "test": "pnpm test:unit && pnpm test:integration",
     "db:generate": "prisma generate",
     "db:migrate": "node scripts/run-with-env.mjs pnpm exec prisma migrate deploy",

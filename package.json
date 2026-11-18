@@ -19,7 +19,7 @@
     "test:integration": "pnpm --filter @pulse/shared build && pnpm --filter api test:integration",
     "test:cov": "pnpm --filter @pulse/shared build && pnpm --filter api test:unit:cov",
     "test:e2e": "pnpm --filter web test:e2e",
-    "test:perf": "node backend/scripts/manual-only.mjs test:perf",
+    "test:perf": "pnpm --filter @pulse/shared build && pnpm --filter api test:perf",
     "eval:score": "node backend/scripts/manual-only.mjs eval:score",
     "infra:check": "powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/check-infra.ps1",
     "db:generate": "pnpm --filter api db:generate",

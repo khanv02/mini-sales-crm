@@ -113,4 +113,45 @@ describe('AuditService', () => {
     expect(payload.actorId).toBeNull();
     expect(payload.after).toEqual({ email: 'new@acme.test', password: '[REDACTED]' });
   });
+
+  it('maps feature-specific actions to their entity', async () => {
+    const tx = fakeTx();
+
+    await audit.recordContact(tx as never, {
+      orgId: 'org-1',
+      actorId: 'user-1',
+      entityId: 'contact-1',
+      action: 'CONTACT_CREATED',
+      after: { name: 'Acme' },
+    });
+    await audit.recordPipeline(tx as never, {
+      orgId: 'org-1',
+      actorId: 'user-1',
+      entityId: 'pipeline-1',
+      action: 'PIPELINE_CREATED',
+    });
+    await audit.recordStage(tx as never, {
+      orgId: 'org-1',
+      actorId: 'user-1',
+      entityId: 'stage-1',
+      action: 'STAGE_UPDATED',
+      before: { position: 1 },
+      after: { position: 2 },
+    });
+    await audit.recordDeal(tx as never, {
+      orgId: 'org-1',
+      actorId: 'user-1',
+      entityId: 'deal-1',
+      action: 'DEAL_MOVED',
+      before: { stageId: 'stage-1' },
+      after: { stageId: 'stage-2' },
+    });
+
+    expect(tx.auditLog.create.mock.calls.map((call) => call[0].data)).toEqual([
+      expect.objectContaining({ entity: 'Contact', entityId: 'contact-1', action: 'CONTACT_CREATED' }),
+      expect.objectContaining({ entity: 'Pipeline', entityId: 'pipeline-1', action: 'PIPELINE_CREATED' }),
+      expect.objectContaining({ entity: 'Stage', entityId: 'stage-1', action: 'STAGE_UPDATED' }),
+      expect.objectContaining({ entity: 'Deal', entityId: 'deal-1', action: 'DEAL_MOVED' }),
+    ]);
+  });
 });

@@ -9,6 +9,17 @@ describe('cursor helpers', () => {
     expect(decodeCursor(cursor)).toEqual({ id: 'user-1', createdAt });
   });
 
+  it('round-trips an optional sort value for name-ordered lists', () => {
+    const createdAt = new Date('2026-04-01T10:20:30.000Z');
+    const cursor = encodeCursor({ id: 'contact-1', createdAt, sortValue: 'nguyễn văn an' });
+
+    expect(decodeCursor(cursor)).toEqual({
+      id: 'contact-1',
+      createdAt,
+      sortValue: 'nguyễn văn an',
+    });
+  });
+
   it('produces an opaque base64url value', () => {
     const cursor = encodeCursor({ id: 'user-1', createdAt: new Date() });
     expect(cursor).toMatch(/^[A-Za-z0-9_-]+$/);

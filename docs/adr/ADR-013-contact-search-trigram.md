@@ -47,3 +47,16 @@ Use trigram:
 - **`tsvector` full-text**: poor for Vietnamese and substring search.
 - **Unindexed `LIKE`**: full scan, cannot meet p95.
 - **Elasticsearch/Meilisearch**: extra infrastructure, unnecessary.
+
+## Implementation note (2026-11-12)
+
+`unaccent(text)` is STABLE in PostgreSQL 16.15 (verified through `pg_proc.provolatile`), so it cannot back an
+index expression. A generated `search_text` column would work, but Prisma does not model generated columns and
+the next `migrate dev` would try to drop it. The `contact_search` migration therefore:
+
+- wraps `public.unaccent` in the IMMUTABLE `pulse_unaccent(text)` helper;
+- adds `pulse_contact_search(name, email, company)` = `lower(pulse_unaccent(name || ' ' || email || ' ' || company))`;
+- indexes that expression with `gin_trgm_ops` and drops the three per-column trigram indexes from `0002`.
+
+The repository filters on the same expression, so the planner can use the index. `EXPLAIN (ANALYZE, BUFFERS)`
+shows a bitmap index scan for selective terms (1,000 of 10,000 rows: ~11ms including the sort).

@@ -1,17 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorBoundary } from '../components/error-boundary';
 import { AuthProvider } from '../features/auth/auth-provider';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import { queryClient } from '../lib/query-client';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (

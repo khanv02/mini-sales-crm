@@ -146,7 +146,9 @@ Constraints/indexes:
   still allowing the email to be reused after a delete.
 - `unique (org_id, id)`.
 - `index (org_id, owner_id)`, `index (org_id, deleted_at)`.
-- GIN trigram: `lower(name)`, `lower(coalesce(email,''))`, `lower(coalesce(company,''))`.
+- GIN trigram over the normalised expression `pulse_contact_search(name, email, company)` (lower + unaccent);
+  `unaccent` is STABLE, so the expression is wrapped in the IMMUTABLE helpers created by `contact_search`
+  (ADR-013 implementation note).
 
 ### 4.5 `pipelines`
 
@@ -243,6 +245,7 @@ Indexes:
 Checks:
 
 ```sql
+check (char_length(content) between 1 and 10000)
 check (type <> 'TASK' or (due_at is not null and assignee_id is not null))
 check (type =  'TASK' or done_at is null)
 ```
@@ -419,13 +422,17 @@ Index: `(org_id, feature, input_hash, created_at desc)` — cache; `(org_id, ent
 
 ## 6. Migration & seed
 
-Planned migration order:
+Migration order:
 
-1. `0001_init`: extensions `pg_trgm`, `unaccent`, `pgcrypto`; organizations (currency/timezone), users, refresh_tokens, **audit_logs**; indexes.
-2. `0002_crm_core`: contacts, pipelines, stages, deals (including `closed_at`); composite FKs; check constraints; indexes.
-3. `0003_workflow`: activities, notifications; indexes.
+1. `0001_init` (applied): extensions `pg_trgm`, `unaccent`, `pgcrypto`; organizations (currency/timezone), users, refresh_tokens, **audit_logs**; indexes.
+2. `0002_crm_core` (applied): contacts, pipelines, stages, deals (including `closed_at`); composite FKs; check constraints; indexes.
+   - `contact_search` (applied, ADR-013 fix): `pulse_unaccent`/`pulse_contact_search` helpers and the GIN trigram expression index; replaces the three per-column trigram indexes.
+3. `0003_workflow` (applied): activities, notifications; check constraints, overdue partial index, notification dedupe partial unique index.
 4. `0004_integrations`: webhook_sources/events, import_jobs.
 5. `0005_governance_ai`: ai_usage, ai_results; indexes.
+
+> Functional indexes (`lower(...)`), partial unique indexes and check constraints that Prisma cannot express are
+> written by hand in the migration SQL.
 
 > `audit_logs` must exist from `0001_init` because C4 requires auditing from the very first mutation in 002;
 > 007 only reads it, adds indexes and handles retention.
@@ -434,6 +441,8 @@ The seed (`backend/prisma/seed.ts`) must be idempotent:
 
 - 2 orgs (`Acme`, `Globex`), each with Admin/Manager/2 Sales; test password `Password123!`.
 - 1 pipeline “Sales Pipeline” per org with New/Qualified/Proposal/Won/Lost.
+- 1 demo contact per org plus 3 demo deals (OPEN, WON, LOST) owned by its first Sales, so the kanban and the
+  feature 004 dashboard can be demoed right after seeding.
 - Perf dataset: 10,000 contacts, 5,000 deals, 20,000 activities; deterministic (fixed faker seed).
 - Never used in production: guarded by `NODE_ENV=production` plus `ALLOW_SEED`; the perf dataset additionally
   requires `SEED_PERF=true` (see `docs/quickstart.md` section 4).
@@ -454,7 +463,8 @@ The seed (`backend/prisma/seed.ts`) must be idempotent:
 - The kanban reads by `(org_id, stage_id, position, id)` — no full-table sort.
 - Win rate/forecast filter on `status, closed_at` / `expected_close`.
 - Overdue tasks use a small partial index that only contains open tasks.
-- Trigram serves Vietnamese `ILIKE '%term%'`; 10k rows easily reach p95 < 300ms.
+- Trigram serves Vietnamese `ILIKE '%term%'`; 10k rows easily reach p95 < 300ms. Contacts search uses one GIN
+  index over the normalised `pulse_contact_search(name, email, company)` expression.
 - Webhook idempotency is a unique index, so conflicts are handled by the DB (race-safe).
 - Audit indexes serve FR-13 by entity/time/actor.
 - AI quota indexes on `(org_id, created_at)` and `(org_id, user_id, created_at)`.

@@ -4,15 +4,33 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-  extensions   = [pg_trgm, unaccent, pgcrypto]
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm, unaccent, pgcrypto]
 }
 
 enum UserRole {
   ADMIN
   MANAGER
   SALES
+}
+
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+enum ActivityType {
+  NOTE
+  CALL
+  EMAIL
+  TASK
+}
+
+enum NotificationType {
+  TASK_DUE
+  TASK_OVERDUE
 }
 
 model Organization {
@@ -25,6 +43,12 @@ model Organization {
 
   users     User[]
   auditLogs AuditLog[]
+  contacts  Contact[]
+  pipelines Pipeline[]
+  deals     Deal[]
+  stages    Stage[]
+  activities Activity[]
+  notifications Notification[]
 
   @@map("organizations")
 }
@@ -43,6 +67,11 @@ model User {
   organization  Organization   @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]     @relation("AuditActor")
+  contacts      Contact[]      @relation("ContactOwner")
+  deals         Deal[]         @relation("DealOwner")
+  authoredActivities  Activity[]   @relation("ActivityAuthor")
+  assignedActivities  Activity[]   @relation("ActivityAssignee")
+  notifications       Notification[]
 
   @@unique([orgId, id])
   @@index([orgId, role, active])
@@ -91,4 +120,139 @@ model AuditLog {
   @@index([orgId, entity, entityId, createdAt(sort: Desc)])
   @@index([orgId, actorId, createdAt(sort: Desc)])
   @@map("audit_logs")
+}
+
+model Contact {
+  id        String    @id @default(uuid()) @db.Uuid
+  orgId     String    @map("org_id") @db.Uuid
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  source    String?
+  ownerId   String?   @map("owner_id") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  owner        User?        @relation("ContactOwner", fields: [orgId, ownerId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  deals        Deal[]
+
+  @@unique([orgId, id])
+  @@index([orgId, ownerId])
+  @@index([orgId, deletedAt])
+  @@map("contacts")
+}
+
+model Pipeline {
+  id        String   @id @default(uuid()) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  stages       Stage[]
+  deals        Deal[]
+
+  @@unique([orgId, id])
+  @@map("pipelines")
+}
+
+model Stage {
+  id         String   @id @default(uuid()) @db.Uuid
+  orgId      String   @map("org_id") @db.Uuid
+  pipelineId String   @map("pipeline_id") @db.Uuid
+  name       String
+  position   Decimal  @db.Decimal(20, 10)
+  isWon      Boolean  @default(false) @map("is_won")
+  isLost     Boolean  @default(false) @map("is_lost")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  pipeline     Pipeline     @relation(fields: [orgId, pipelineId], references: [orgId, id], onDelete: Cascade, onUpdate: Cascade)
+  deals        Deal[]
+
+  @@unique([orgId, pipelineId, id])
+  @@unique([orgId, id])
+  @@index([orgId, pipelineId, position])
+  @@map("stages")
+}
+
+model Deal {
+  id            String     @id @default(uuid()) @db.Uuid
+  orgId         String     @map("org_id") @db.Uuid
+  contactId     String     @map("contact_id") @db.Uuid
+  pipelineId    String     @map("pipeline_id") @db.Uuid
+  stageId       String     @map("stage_id") @db.Uuid
+  title         String
+  value         Decimal    @default(0) @db.Decimal(14, 2)
+  currency      String     @db.Char(3)
+  ownerId       String     @map("owner_id") @db.Uuid
+  expectedClose DateTime?  @map("expected_close") @db.Date
+  status        DealStatus @default(OPEN)
+  lostReason    String?    @map("lost_reason")
+  position      Decimal    @db.Decimal(20, 10)
+  version       Int        @default(1)
+  closedAt      DateTime?  @map("closed_at") @db.Timestamptz(6)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  contact      Contact      @relation(fields: [orgId, contactId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  pipeline     Pipeline     @relation(fields: [orgId, pipelineId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  stage        Stage        @relation(fields: [orgId, pipelineId, stageId], references: [orgId, pipelineId, id], onDelete: Restrict, onUpdate: Cascade)
+  owner        User         @relation("DealOwner", fields: [orgId, ownerId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  activities   Activity[]
+
+  @@unique([orgId, id])
+  @@index([orgId, stageId, position, id])
+  @@index([orgId, ownerId])
+  @@index([orgId, status, closedAt])
+  @@index([orgId, expectedClose])
+  @@index([orgId, contactId])
+  @@map("deals")
+}
+
+/// Tasks are activities of type TASK (ADR-010); `GET /tasks` is a projection.
+model Activity {
+  id         String       @id @default(uuid()) @db.Uuid
+  orgId      String       @map("org_id") @db.Uuid
+  dealId     String       @map("deal_id") @db.Uuid
+  type       ActivityType
+  content    String
+  dueAt      DateTime?    @map("due_at") @db.Timestamptz(6)
+  doneAt     DateTime?    @map("done_at") @db.Timestamptz(6)
+  assigneeId String?      @map("assignee_id") @db.Uuid
+  createdBy  String       @map("created_by") @db.Uuid
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deal         Deal         @relation(fields: [orgId, dealId], references: [orgId, id], onDelete: Cascade, onUpdate: Cascade)
+  assignee     User?        @relation("ActivityAssignee", fields: [orgId, assigneeId], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+  author       User         @relation("ActivityAuthor", fields: [orgId, createdBy], references: [orgId, id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([orgId, id])
+  @@index([orgId, dealId, createdAt(sort: Desc)])
+  @@map("activities")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  orgId     String           @map("org_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  payload   Json
+  dedupeKey String?          @map("dedupe_key")
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user         User         @relation(fields: [orgId, userId], references: [orgId, id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([orgId, id])
+  @@index([orgId, userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
 }

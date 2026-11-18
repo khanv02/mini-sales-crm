@@ -6,18 +6,18 @@
 
 ## Phase 1 — Schema & shared
 
-- [ ] **T300** Prisma/migration `0003_workflow`: `activities`, `notifications`; partial index overdue;
+- [x] **T300** Prisma/migration `0003_workflow`: `activities`, `notifications`; partial index overdue;
       update data-model. (`deals.closed_at` in `0002_crm_core`; org currency/timezone in `0001_init`.)
-- [ ] **T301** [P] Shared schemas: activity create/update, task filter, report query/filters.
-- [ ] **T302** [P] Factories activity/task; fake clock helper; audit helper.
+- [x] **T301** [P] Shared schemas: activity create/update, task filter, report query/filters.
+- [x] **T302** [P] Factories activity/task; fake clock helper; audit helper.
 
 ## Phase 2 — US1 Activities (P1)
 
 ### Tests first
 
-- [ ] **T303** `backend/test/integration/activities.spec.ts`: note/call/email create, timeline order,
+- [x] **T303** `backend/test/integration/activities.spec.ts`: note/call/email create, timeline order,
       pagination, update, Sales own/Manager all, tenant, audit.
-- [ ] **T304** Validation test: empty/too long content, wrong type, deal in another org.
+- [x] **T304** Validation test: empty/too long content, wrong type, deal in another org.
 
 ### Implementation
 
