@@ -2,12 +2,19 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
 
+# Least privilege: the pipeline only needs to read the repository.
+permissions:
+  contents: read
+
+# One run per ref: a new push to a PR cancels the previous run, main/develop runs are never cancelled.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_ENV: test
@@ -25,64 +32,56 @@ env:
   SEED_PERF: 'false'
 
 jobs:
-  quality:
-    name: Lint, typecheck, tests, build
+  static:
+    name: Lint, typecheck and build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: pulse
-          POSTGRES_USER: pulse
-          POSTGRES_PASSWORD: pulse
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U pulse -d pulse"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # `postinstall` already generates the Prisma client; the explicit step keeps the failure obvious.
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:generate
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test:cov
-      - run: pnpm db:migrate
-      - run: pnpm test:integration
       - run: pnpm build
 
-  secret-scan:
-    name: Secret scan
+  unit:
+    name: Unit tests and coverage
+    needs: static
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .github/.gitleaks.toml
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # API unit suite with the 70% service-layer threshold (docs/testing-strategy.md 9-10).
+      - run: pnpm test:cov
+      # Web unit suite (Vitest) must not be skipped: it is part of `pnpm test:unit`.
+      - run: pnpm --filter web test:unit
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: api-coverage
+          path: backend/coverage/
+          retention-days: 7
+          if-no-files-found: ignore
 
-  e2e:
-    name: Playwright E2E
-    needs: quality
+  integration:
+    name: Integration tests
+    needs: static
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:16-alpine
@@ -107,22 +106,84 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm db:generate
+      # The Jest global setup applies `prisma migrate deploy` before the first suite.
+      - run: pnpm test:integration
+
+  e2e:
+    name: Playwright E2E
+    needs: [unit, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: pulse
+          POSTGRES_USER: pulse
+          POSTGRES_PASSWORD: pulse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pulse -d pulse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
         working-directory: frontend
       - run: pnpm db:migrate
       - run: pnpm db:seed
+      # Build the workspace package once; both dev servers would otherwise race on its `predev` build.
+      - run: pnpm --filter @pulse/shared build
+      # Playwright starts and stops the API and web dev servers itself (frontend/playwright.config.ts).
       - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
+      - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: playwright-report
-          path: frontend/playwright-report/
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
           retention-days: 7
+          if-no-files-found: ignore
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .github/.gitleaks.toml
+          # Findings fail the job through the exit code; pull-request comments need a write token
+          # that fork pull requests never receive, so keep the job read-only.
+          GITLEAKS_ENABLE_COMMENTS: 'false'
