@@ -41,6 +41,7 @@ export interface ContactUpdateData {
   phone?: string | null;
   company?: string | null;
   source?: string | null;
+  ownerId?: string | null;
 }
 
 interface ContactRow extends Contact {

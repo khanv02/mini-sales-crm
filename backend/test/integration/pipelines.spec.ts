@@ -163,7 +163,13 @@ describe('pipelines (integration)', () => {
     const team = await seedTeam();
     const pipeline = await createPipelineRequest(team.admin.authorization, {
       name: 'Pipeline',
-      stages: [{ name: 'First' }, { name: 'Second' }, { name: 'Third' }],
+      stages: [
+        { name: 'First' },
+        { name: 'Second' },
+        { name: 'Third' },
+        { name: 'Won', isWon: true },
+        { name: 'Lost', isLost: true },
+      ],
     });
     const [, second, third] = pipeline.body.stages as Array<{ id: string; name: string }>;
 
@@ -178,6 +184,8 @@ describe('pipelines (integration)', () => {
       'Second',
       'First',
       'Third',
+      'Won',
+      'Lost',
     ]);
 
     const reorderAudit = await prisma.auditLog.findFirst({
@@ -226,13 +234,15 @@ describe('pipelines (integration)', () => {
     const team = await seedTeam();
     const pipeline = await createPipelineRequest(team.admin.authorization, {
       name: 'Lifecycle',
-      stages: [{ name: 'Open' }, { name: 'Won' }, { name: 'Lost' }, { name: 'Archived' }],
+      stages: [
+        { name: 'Open' },
+        { name: 'Archived' },
+        { name: 'Won', isWon: true },
+        { name: 'Lost', isLost: true },
+      ],
     });
-    const [open, won, lost, archived] = pipeline.body.stages as Array<{ id: string }>;
-
-    const setWon = await updateStageRequest(team.admin.authorization, won.id, { isWon: true });
-    expect(setWon.status).toBe(200);
-    expect(setWon.body.isWon).toBe(true);
+    expect(pipeline.status).toBe(201);
+    const [open, archived, won, lost] = pipeline.body.stages as Array<{ id: string }>;
 
     const secondWon = await updateStageRequest(team.admin.authorization, archived.id, { isWon: true });
     expect(secondWon.status).toBe(409);
@@ -245,11 +255,13 @@ describe('pipelines (integration)', () => {
       isWon: true,
     });
 
-    const setLost = await updateStageRequest(team.admin.authorization, lost.id, { isLost: true });
-    expect(setLost.status).toBe(200);
     const secondLost = await updateStageRequest(team.admin.authorization, open.id, { isLost: true });
     expect(secondLost.status).toBe(409);
     expect(secondLost.body.code).toBe('LOST_STAGE_REQUIRED');
+
+    const unsetLost = await updateStageRequest(team.admin.authorization, lost.id, { isLost: false });
+    expect(unsetLost.status).toBe(409);
+    expect(unsetLost.body.code).toBe('LOST_STAGE_REQUIRED');
 
     const createdWon = await createStageRequest(team.admin.authorization, pipeline.body.id as string, {
       name: 'Duplicate Won',
@@ -424,14 +436,48 @@ describe('pipelines (integration)', () => {
     await expect(prisma.auditLog.count({ where: { entityId: stage.id } })).resolves.toBe(0);
   });
 
+  it('requires a won and a lost stage when a pipeline is created (G4)', async () => {
+    const team = await seedTeam();
+
+    const noTerminal = await createPipelineRequest(team.admin.authorization, {
+      name: 'No Terminal',
+      stages: [{ name: 'Open' }, { name: 'Qualified' }],
+    });
+    expect(noTerminal.status).toBe(409);
+    expect(noTerminal.body.code).toBe('WON_STAGE_REQUIRED');
+    await expect(prisma.pipeline.count({ where: { name: 'No Terminal' } })).resolves.toBe(0);
+
+    const noLost = await createPipelineRequest(team.admin.authorization, {
+      name: 'No Lost',
+      stages: [{ name: 'Open' }, { name: 'Won', isWon: true }],
+    });
+    expect(noLost.status).toBe(409);
+    expect(noLost.body.code).toBe('LOST_STAGE_REQUIRED');
+    await expect(prisma.pipeline.count({ where: { name: 'No Lost' } })).resolves.toBe(0);
+
+    const noStages = await createPipelineRequest(team.admin.authorization, { name: 'Bare' });
+    expect(noStages.status).toBe(409);
+    expect(noStages.body.code).toBe('WON_STAGE_REQUIRED');
+
+    const complete = await createPipelineRequest(team.admin.authorization, {
+      name: 'Complete',
+      stages: [{ name: 'Open' }, { name: 'Won', isWon: true }, { name: 'Lost', isLost: true }],
+    });
+    expect(complete.status).toBe(201);
+  });
+
   it('maps duplicate pipeline and stage names to 409 case-insensitively (AC-FR04-01, AC-FR04-02)', async () => {
     const team = await seedTeam();
     const pipeline = await createPipelineRequest(team.admin.authorization, {
       name: 'Duplicates',
-      stages: [{ name: 'Open' }],
+      stages: [{ name: 'Open' }, { name: 'Won', isWon: true }, { name: 'Lost', isLost: true }],
     });
+    expect(pipeline.status).toBe(201);
 
-    const duplicatePipeline = await createPipelineRequest(team.admin.authorization, { name: 'duplicates' });
+    const duplicatePipeline = await createPipelineRequest(team.admin.authorization, {
+      name: 'duplicates',
+      stages: [{ name: 'Open' }, { name: 'Won', isWon: true }, { name: 'Lost', isLost: true }],
+    });
     expect(duplicatePipeline.status).toBe(409);
     expect(duplicatePipeline.body.code).toBe('PIPELINE_NAME_DUPLICATED');
 
@@ -443,7 +489,12 @@ describe('pipelines (integration)', () => {
 
     const duplicateInPayload = await createPipelineRequest(team.admin.authorization, {
       name: 'Payload Duplicates',
-      stages: [{ name: 'Same' }, { name: 'same' }],
+      stages: [
+        { name: 'Same' },
+        { name: 'same' },
+        { name: 'Won', isWon: true },
+        { name: 'Lost', isLost: true },
+      ],
     });
     expect(duplicateInPayload.status).toBe(409);
     expect(duplicateInPayload.body.code).toBe('STAGE_NAME_DUPLICATED');

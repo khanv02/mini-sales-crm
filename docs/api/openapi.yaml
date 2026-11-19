@@ -226,7 +226,13 @@ paths:
           schema: { type: string, maxLength: 100 }
         - name: ownerId
           in: query
-          schema: { type: string, format: uuid }
+          description: Filter by owner. `unassigned` lists contacts nobody owns (Manager/Admin only).
+          schema:
+            oneOf:
+              - type: string
+                format: uuid
+              - type: string
+                enum: [unassigned]
         - name: source
           in: query
           schema: { type: string, maxLength: 50 }
@@ -1221,6 +1227,10 @@ components:
         phone: { type: [string, 'null'], maxLength: 30 }
         company: { type: [string, 'null'], maxLength: 200 }
         source: { type: [string, 'null'], maxLength: 50 }
+        ownerId:
+          type: [string, 'null']
+          format: uuid
+          description: Reassign or unassign the contact. Manager/Admin only; Sales receive 403.
     ContactList:
       type: object
       required: [data, hasMore]
@@ -1243,6 +1253,9 @@ components:
     PipelineCreate:
       type: object
       required: [name]
+      description: >-
+        `stages` must contain exactly one won and exactly one lost stage, otherwise the request is
+        rejected with `409 WON_STAGE_REQUIRED` or `409 LOST_STAGE_REQUIRED`.
       properties:
         name: { type: string, minLength: 1, maxLength: 80 }
         stages:

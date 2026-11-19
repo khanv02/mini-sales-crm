@@ -81,6 +81,7 @@ export class PipelineService {
   ): Promise<PipelineResponse> {
     this.assertStageNamesUnique(body.stages ?? []);
     this.assertSingleTerminalStage(body.stages ?? []);
+    this.assertTerminalStagesPresent(body.stages ?? []);
 
     const stages: StageCreateData[] = (body.stages ?? []).map((stage, index) => ({
       name: stage.name,
@@ -312,6 +313,19 @@ export class PipelineService {
       throw wonStageRequired();
     }
     if (stages.filter((stage) => stage.isLost).length > 1) {
+      throw lostStageRequired();
+    }
+  }
+
+  /**
+   * A pipeline is unusable without a won and a lost stage: no deal in it can ever be closed. The
+   * database enforces "at most one", so the "at least one" half lives here (G4).
+   */
+  private assertTerminalStagesPresent(stages: Array<{ isWon?: boolean; isLost?: boolean }>): void {
+    if (!stages.some((stage) => stage.isWon)) {
+      throw wonStageRequired();
+    }
+    if (!stages.some((stage) => stage.isLost)) {
       throw lostStageRequired();
     }
   }

@@ -31,10 +31,10 @@ Legend: `Yes` allowed; `No` 403; `Own` own data only; `public` no authentication
 | `GET /users` | Yes | No | No | Admin |
 | `POST /users` | Yes | No | No | Admin |
 | `PATCH /users/:id` | Yes | No | No | role/active; last-admin guard |
-| `GET /contacts` | Yes | Yes | Own | Sales see only owned contacts |
+| `GET /contacts` | Yes | Yes | Own | Sales see only owned contacts; `ownerId=unassigned` lists unowned rows (Manager/Admin) |
 | `POST /contacts` | Yes | Yes | Yes | Sales owner = self |
 | `GET /contacts/:id` | Yes | Yes | Own | 404 when not owned |
-| `PATCH /contacts/:id` | Yes | Yes | Own | ownership cannot be moved to someone else |
+| `PATCH /contacts/:id` | Yes | Yes | Own | Sales may not move ownership (`403`); Manager/Admin may reassign or unassign |
 | `DELETE /contacts/:id` | Yes | Yes | Own | soft delete |
 | `GET /pipelines` | Yes | Yes | Yes | read-only for Sales |
 | `POST /pipelines` | Yes | No | No | Admin |

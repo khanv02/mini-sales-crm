@@ -435,12 +435,78 @@ describe('contacts (integration)', () => {
     expect(duplicate.status).toBe(409);
     expect(duplicate.body.code).toBe('CONTACT_EMAIL_EXISTS');
 
-    const ownerIgnored = await request(app.getHttpServer())
+    const ownerRejected = await request(app.getHttpServer())
       .patch(`${CONTACTS}/${takenId}`)
       .set('Authorization', team.salesA.authorization)
       .send({ name: 'Still Mine', ownerId: team.salesB.id });
-    expect(ownerIgnored.status).toBe(200);
-    expect(ownerIgnored.body.ownerId).toBe(team.salesA.id);
+    expect(ownerRejected.status).toBe(403);
+    expect(ownerRejected.body.code).toBe('FORBIDDEN');
+
+    const unchanged = await request(app.getHttpServer())
+      .get(`${CONTACTS}/${takenId}`)
+      .set('Authorization', team.salesA.authorization);
+    expect(unchanged.body.ownerId).toBe(team.salesA.id);
+  });
+
+  it('lets Manager/Admin reassign a contact and unassign it, but rejects an invalid owner (G2)', async () => {
+    const team = await seedTeam();
+    const contact = await createContact({
+      orgId: team.orgId,
+      ownerId: team.salesA.id,
+      name: 'Reassign me',
+    });
+
+    const moved = await request(app.getHttpServer())
+      .patch(`${CONTACTS}/${contact.id}`)
+      .set('Authorization', team.manager.authorization)
+      .send({ ownerId: team.salesB.id });
+    expect(moved.status).toBe(200);
+    expect(moved.body.ownerId).toBe(team.salesB.id);
+
+    const audits = await prisma.auditLog.findMany({
+      where: { entity: 'Contact', entityId: contact.id, action: 'CONTACT_UPDATED' },
+      orderBy: { id: 'desc' },
+    });
+    expect(audits).toHaveLength(1);
+    expect(audits[0]?.before).toMatchObject({ ownerId: team.salesA.id });
+    expect(audits[0]?.after).toMatchObject({ ownerId: team.salesB.id });
+
+    const unassigned = await request(app.getHttpServer())
+      .patch(`${CONTACTS}/${contact.id}`)
+      .set('Authorization', team.admin.authorization)
+      .send({ ownerId: null });
+    expect(unassigned.status).toBe(200);
+    expect(unassigned.body.ownerId).toBeNull();
+
+    const inactive = await createUser({ orgId: team.orgId, role: UserRole.SALES, active: false });
+    const invalid = await request(app.getHttpServer())
+      .patch(`${CONTACTS}/${contact.id}`)
+      .set('Authorization', team.manager.authorization)
+      .send({ ownerId: inactive.id });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.code).toBe('INVALID_OWNER');
+
+    const foreign = await request(app.getHttpServer())
+      .patch(`${CONTACTS}/${contact.id}`)
+      .set('Authorization', team.manager.authorization)
+      .send({ ownerId: team.otherAdmin.id });
+    expect(foreign.status).toBe(400);
+    expect(foreign.body.code).toBe('INVALID_OWNER');
+  });
+
+  it('lists only unassigned contacts through ownerId=unassigned (G3)', async () => {
+    const team = await seedTeam();
+    const owned = await createContact({ orgId: team.orgId, ownerId: team.salesA.id, name: 'Owned' });
+    const unassigned = await createContact({ orgId: team.orgId, ownerId: null, name: 'Unassigned' });
+
+    const managerView = await listContacts(team.manager.authorization, '?ownerId=unassigned');
+    expect(managerView.status).toBe(200);
+    expect(managerView.body.data.map((row: { id: string }) => row.id)).toEqual([unassigned.id]);
+    expect(managerView.body.data.map((row: { id: string }) => row.id)).not.toContain(owned.id);
+
+    const salesView = await listContacts(team.salesA.authorization, '?ownerId=unassigned');
+    expect(salesView.status).toBe(200);
+    expect(salesView.body.data.map((row: { id: string }) => row.id)).toEqual([owned.id]);
   });
 
   it('hides another Sales contact and another org contact as 404 without touching the row (AC-FR03-04, AC-FR03-08)', async () => {

@@ -50,7 +50,7 @@ export class ContactsService {
   async list(actor: AuthenticatedUser, query: ContactListQuery): Promise<ContactListResponse> {
     const search = query.search?.trim();
     const range = this.resolveRange(query.createdFrom, query.createdTo);
-    const ownerId = actor.role === 'SALES' ? actor.userId : query.ownerId;
+    const ownerId = this.resolveListOwner(actor, query.ownerId);
 
     const page = await this.contacts.list(actor.orgId, {
       ownerId,
@@ -124,6 +124,9 @@ export class ContactsService {
     if (body.phone !== undefined) changes.phone = body.phone;
     if (body.company !== undefined) changes.company = body.company;
     if (body.source !== undefined) changes.source = body.source;
+    if (body.ownerId !== undefined) {
+      changes.ownerId = await this.resolveReassignOwner(actor, body.ownerId);
+    }
 
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -191,6 +194,52 @@ export class ContactsService {
   /** Sales are always restricted to their own rows; Manager/Admin see the whole org. */
   private ownerScope(actor: AuthenticatedUser): string | undefined {
     return actor.role === 'SALES' ? actor.userId : undefined;
+  }
+
+  /**
+   * List owner filter. Sales are pinned to themselves. Manager/Admin may pass a user id, or
+   * `unassigned` to list contacts nobody owns.
+   */
+  private resolveListOwner(
+    actor: AuthenticatedUser,
+    requested?: string,
+  ): string | null | undefined {
+    if (actor.role === 'SALES') {
+      return actor.userId;
+    }
+    if (requested === 'unassigned') {
+      return null;
+    }
+    return requested;
+  }
+
+  /**
+   * Reassignment follows the permissions matrix: only Manager/Admin may move ownership, and the new
+   * owner must be an active member of the org. `null` unassigns the contact.
+   */
+  private async resolveReassignOwner(
+    actor: AuthenticatedUser,
+    requested: string | null,
+  ): Promise<string | null> {
+    if (actor.role === 'SALES') {
+      throw new AppError(
+        ERROR_CODES.FORBIDDEN,
+        403,
+        'Only a Manager or Admin can reassign a contact.',
+      );
+    }
+    if (requested === null) {
+      return null;
+    }
+    const owner = await this.contacts.findActiveOwner(this.prisma, actor.orgId, requested);
+    if (!owner) {
+      throw new AppError(
+        ERROR_CODES.INVALID_OWNER,
+        400,
+        'The owner must be an active member of your organization.',
+      );
+    }
+    return requested;
   }
 
   /**

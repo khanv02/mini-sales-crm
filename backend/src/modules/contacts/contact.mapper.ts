@@ -34,7 +34,7 @@ export function contactAuditSnapshot(
 
 /** Snapshot restricted to the fields a PATCH touched, used for the `before` side of the audit diff. */
 export function contactFieldSnapshot(
-  contact: Pick<ContactModel, 'name' | 'email' | 'phone' | 'company' | 'source'>,
+  contact: Pick<ContactModel, 'name' | 'email' | 'phone' | 'company' | 'source' | 'ownerId'>,
   fields: readonly string[],
 ): Record<string, unknown> {
   const snapshot: Record<string, unknown> = {};
