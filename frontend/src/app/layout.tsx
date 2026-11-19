@@ -17,6 +17,8 @@ export function Layout() {
           { label: 'Khách hàng', to: '/contacts' },
           { label: 'Quy trình', to: '/pipelines' },
           { label: 'Cơ hội', to: '/deals' },
+          { label: 'Công việc', to: '/tasks' },
+          { label: 'Báo cáo', to: '/dashboard' },
           { label: 'Tài khoản', to: '/account' },
         ]
       : [

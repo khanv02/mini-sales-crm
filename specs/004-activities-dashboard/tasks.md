@@ -21,45 +21,45 @@
 
 ### Implementation
 
-- [ ] **T305** `modules/activities/{repository,service,controller}.ts`: org-scoped; timeline query; audit;
+- [x] **T305** `modules/activities/{repository,service,controller}.ts`: org-scoped; timeline query; audit;
       map Prisma errors.
 
 ## Phase 3 — US2 Tasks & overdue (P1)
 
 ### Tests first
 
-- [ ] **T306** `backend/test/integration/tasks.spec.ts`: create task due/assignee, missing → 400, done,
+- [x] **T306** `backend/test/integration/tasks.spec.ts`: create task due/assignee, missing → 400, done,
       idempotent done, overdue filter, Manager filter assignee, tenant.
-- [ ] **T307** `backend/test/unit/task-scheduler.spec.ts`: due soon/overdue buckets, dedupe 10 runs, inactive.
+- [x] **T307** `backend/test/unit/task-scheduler.spec.ts`: due soon/overdue buckets, dedupe 10 runs, inactive.
 
 ### Implementation
 
-- [ ] **T308** `modules/tasks/task.controller.ts` + `activity.service` projection: `/tasks`, `PATCH /tasks/:id`.
-- [ ] **T309** `modules/notifications/notification.service.ts`: create/upsert dedupe; list/read/read-all
+- [x] **T308** `modules/tasks/task.controller.ts` + `activity.service` projection: `/tasks`, `PATCH /tasks/:id`.
+- [x] **T309** `modules/notifications/notification.service.ts`: create/upsert dedupe; list/read/read-all
       (internal service; 005 owns the controller/API).
-- [ ] **T310** `modules/tasks/task-reminder.scheduler.ts`: BullMQ repeatable every minute (base queue T020);
+- [x] **T310** `modules/tasks/task-reminder.scheduler.ts`: BullMQ repeatable every minute (base queue T020);
       create notifications; emit events through the EventBus (005).
 
 ## Phase 4 — US3 Dashboard (P2)
 
 ### Tests first
 
-- [ ] **T311** `backend/test/integration/reports.spec.ts`: newLeads, dealsByStage, pipelineValue, winRate,
+- [x] **T311** `backend/test/integration/reports.spec.ts`: newLeads, dealsByStage, pipelineValue, winRate,
       forecast, filters, empty, Sales scope, tenant, invalid range.
-- [ ] **T312** `backend/test/perf/reports.perf.ts`: 5k deals p95 < 300ms.
+- [x] **T312** `backend/test/perf/reports.perf.ts`: 5k deals p95 < 300ms.
 
 ### Implementation
 
-- [ ] **T313** `modules/reports/report.repository.ts`: aggregate SQL; indexes; timezone conversion.
-- [ ] **T314** `report.service.ts` + `report.controller.ts`: filters, role scope, metadata formulas, cache hook.
-- [ ] **T315** Integrate the cache interface (no-op in 004; implemented in 007); invalidate hook placeholder.
+- [x] **T313** `modules/reports/report.repository.ts`: aggregate SQL; indexes; timezone conversion.
+- [x] **T314** `report.service.ts` + `report.controller.ts`: filters, role scope, metadata formulas, cache hook.
+- [x] **T315** Integrate the cache interface (no-op in 004; implemented in 007); invalidate hook placeholder.
 
 ## Phase 5 — Frontend & verification
 
-- [ ] **T316** [P] `frontend/src/features/deals/Timeline.tsx`: tabs, add note/call, task form.
-- [ ] **T317** [P] `frontend/src/features/tasks`: tabs Open/Overdue/Done, mark done, overdue badge.
-- [ ] **T318** [P] `frontend/src/features/dashboard`: cards/charts/filters, currency, empty/loading.
-- [ ] **T319** `frontend/e2e/tasks-dashboard.spec.ts`: task overdue → list; dashboard figures; update
+- [x] **T316** [P] `frontend/src/features/deals/Timeline.tsx`: tabs, add note/call, task form.
+- [x] **T317** [P] `frontend/src/features/tasks`: tabs Open/Overdue/Done, mark done, overdue badge.
+- [x] **T318** [P] `frontend/src/features/dashboard`: cards/charts/filters, currency, empty/loading.
+- [x] **T319** `frontend/e2e/tasks-dashboard.spec.ts`: task overdue → list; dashboard figures; update
       traceability.
 
 ## Dependencies

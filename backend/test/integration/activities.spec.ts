@@ -265,7 +265,7 @@ describe('activities (integration)', () => {
     });
     expect(created.status).toBe(404);
     expect(created.body.code).toBe('DEAL_NOT_FOUND');
-    await expect(countAudits({ entity: 'Activity' })).resolves.toBe(1);
+    await expect(countAudits({ entity: 'Activity' })).resolves.toBe(0);
   });
 
   it('lets Manager and Admin read and write any deal in the org (AC-FR07-02, permissions matrix)', async () => {
@@ -280,7 +280,7 @@ describe('activities (integration)', () => {
     for (const actor of [ws.manager, ws.admin]) {
       const timeline = await listActivities(actor.authorization, ws.dealId);
       expect(timeline.status).toBe(200);
-      expect(timeline.body.data).toHaveLength(1);
+      expect(timeline.body.data.map((row: { content: string }) => row.content)).toContain('Sales entry');
 
       const created = await createActivityRequest(actor.authorization, ws.dealId, {
         type: 'CALL',

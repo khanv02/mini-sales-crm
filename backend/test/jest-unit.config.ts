@@ -26,6 +26,8 @@ const config: Config = {
     'src/common/security/password.service.ts',
     'src/common/validation/zod-validation.pipe.ts',
     'src/modules/deals/position.service.ts',
+    'src/modules/tasks/task-reminder.repository.ts',
+    'src/modules/tasks/task-reminder.scheduler.ts',
   ],
   coverageDirectory: '<rootDir>/coverage',
   coverageReporters: ['text', 'lcov'],

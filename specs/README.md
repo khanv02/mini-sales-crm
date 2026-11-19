@@ -42,7 +42,7 @@ independently demoable slice.
 | 001 | Foundation | M0 | M0 | - | Implemented, M0 gates green |
 | 002 | Identity & Access | FR-01, FR-02 | M1 | 001 | Implemented, M1 gates green |
 | 003 | Contacts, Pipeline & Deals | FR-03, FR-04, FR-05, FR-06 | M1 | 002 | In progress (contacts, pipeline and deals backends done; frontend T221–T226 open) |
-| 004 | Activities, Tasks & Dashboard | FR-07, FR-08 | M1 | 003 | Draft |
+| 004 | Activities, Tasks & Dashboard | FR-07, FR-08 | M1 | 003 | Implemented (T300–T319: activities, task projection, notification service, reminder scheduler, dashboard reports and the timeline/tasks/dashboard UI; backend 110/110 integration, frontend 55/55 unit, E2E 3/3) |
 | 005 | Realtime & Notifications | FR-09 | M2 | 003, 004 | Draft |
 | 006 | Integrations (Import, Webhook, Email) | FR-10, FR-11, FR-12 | M2 | 002, 003, 004, 007 | Draft |
 | 007 | Governance (Audit, Export, Rate limit, Cache) | FR-13, FR-14, FR-15 | M2 | 003, 004 | Draft |

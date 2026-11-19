@@ -16,12 +16,22 @@ queue base, auth, users), `frontend/` (React + Vite shell with sign-in and accou
 `packages/shared`. Feature 003 (contacts, pipeline & deals) is implemented end-to-end: the contacts, pipeline and
 deals backends pass their integration suites (T200–T220, 79/79 tests) and the contacts UI (T221), pipeline admin
 UI (T222), kanban board (T223), deal form with win/loss (T224), core-flow E2E (T225) and perf/docs (T226) are
-done. Feature 004 (activities, tasks & dashboard) has started: T300 applied migration `0003_workflow`
+done. Feature 004 (activities, tasks & dashboard) is implemented: T300 applied migration `0003_workflow`
 (`activities`, `notifications`), T301 added the shared activity/task/report schemas, T302 added the test factories,
-fake clock and audit helpers, and T303/T304 wrote the activities integration and validation tests (red until T305
-implements the module); its endpoints, scheduler, dashboard and UI are still pending. Features 005–008
-remain specification-only, so do not invent files, code paths, endpoints, tables, events or dependencies that the
-SDD does not describe.
+fake clock and audit helpers, T303/T304 wrote the activities integration and validation tests, T305 implemented the
+activities module (deal timeline, create, edit, audit), T306–T308 added the task projection (`GET /tasks`,
+`PATCH /tasks/:id`, idempotent done), T309 added the internal notification service (dedupe upsert, list/read/read-all)
+and T310 added the BullMQ reminder scheduler (`reminders` queue, `scan-task-reminders` every minute, `TASK_DUE`/
+`TASK_OVERDUE` with dedupe keys and `task.due`/`notification.created` events). The dashboard reports are done
+(T311 reports integration suite, T312 5k-deal perf, T313 aggregate SQL, T314 service/controller, T315 no-op cache
+seam): `GET /reports/summary` resolves `from`/`to` as inclusive days in the org timezone (default current month,
+max 366 days), applies SCR-011 formulas, forces Sales to their own owner scope and returns `cached: false` until
+007 swaps in Redis. The frontend closes the feature: T316 added the deal timeline dialog (type tabs, note/call
+composer, task form), T317 the `/tasks` page (Open/Overdue/Done tabs, overdue badge, optimistic mark-done), T318 the
+`/dashboard` page (cards, stage/forecast bars, date/pipeline/owner filters) and T319 the tasks-dashboard E2E. Unit
+tests are 121/121 backend and 55/55 frontend, the full integration suite is 110/110, E2E is 3/3, and the 5k-deal
+summary runs at p95 25.8ms. Features 005–008 remain specification-only, so do not invent files, code paths,
+endpoints, tables, events or dependencies that the SDD does not describe.
 
 Where to look:
 

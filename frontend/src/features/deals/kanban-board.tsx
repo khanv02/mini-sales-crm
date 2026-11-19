@@ -30,6 +30,7 @@ interface KanbanCardProps {
   onMove: (deal: Deal, stageId: string) => void;
   onAssign: (deal: Deal, ownerId: string) => void;
   onEdit: (deal: Deal) => void;
+  onTimeline: (deal: Deal) => void;
 }
 
 function KanbanCard({
@@ -42,6 +43,7 @@ function KanbanCard({
   onMove,
   onAssign,
   onEdit,
+  onTimeline,
 }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
   const style = { transform: CSS.Translate.toString(transform) };
@@ -58,6 +60,14 @@ function KanbanCard({
       <div className="flex items-start justify-between gap-2">
         <p className="font-medium leading-snug">{deal.title}</p>
         <div className="flex shrink-0 gap-1">
+          <button
+            type="button"
+            aria-label={`Lịch sử ${deal.title}`}
+            onClick={() => onTimeline(deal)}
+            className="rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Lịch sử
+          </button>
           <button
             type="button"
             aria-label={`Sửa ${deal.title}`}
@@ -141,6 +151,7 @@ interface KanbanColumnProps {
   onMove: (deal: Deal, stageId: string) => void;
   onAssign: (deal: Deal, ownerId: string) => void;
   onEdit: (deal: Deal) => void;
+  onTimeline: (deal: Deal) => void;
 }
 
 function KanbanColumn({
@@ -154,6 +165,7 @@ function KanbanColumn({
   onMove,
   onAssign,
   onEdit,
+  onTimeline,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   const ordered = [...deals].sort(
@@ -193,6 +205,7 @@ function KanbanColumn({
               onMove={onMove}
               onAssign={onAssign}
               onEdit={onEdit}
+              onTimeline={onTimeline}
             />
           ))
         )}
@@ -210,6 +223,7 @@ interface KanbanBoardProps {
   onMove: (deal: Deal, stageId: string) => void;
   onAssign: (deal: Deal, ownerId: string) => void;
   onEdit: (deal: Deal) => void;
+  onTimeline: (deal: Deal) => void;
 }
 
 /** Kanban columns per stage with dnd-kit (T223, AC-FR05-02). */
@@ -222,6 +236,7 @@ export function KanbanBoard({
   onMove,
   onAssign,
   onEdit,
+  onTimeline,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeDeal = deals.find((deal) => deal.id === activeId) ?? null;
@@ -271,6 +286,7 @@ export function KanbanBoard({
             onMove={onMove}
             onAssign={onAssign}
             onEdit={onEdit}
+            onTimeline={onTimeline}
           />
         ))}
       </div>

@@ -21,9 +21,27 @@ export interface DealAssignedPayload {
   actorId: string;
 }
 
+/** `task.due` payload (docs/events.md 1.3), emitted by the reminder scheduler. */
+export interface TaskDuePayload {
+  taskId: string;
+  dealId: string;
+  dueAt: string;
+  assigneeId: string;
+  isOverdue: boolean;
+}
+
+/** `notification.created` payload; the inner `payload` mirrors the notifications table (minimal, no PII). */
+export interface NotificationCreatedPayload {
+  notificationId: string;
+  notificationType: string;
+  payload: Record<string, unknown>;
+}
+
 export interface DomainEventPayloadMap {
   'deal.moved': DealMovedPayload;
   'deal.assigned': DealAssignedPayload;
+  'task.due': TaskDuePayload;
+  'notification.created': NotificationCreatedPayload;
 }
 
 export type DomainEventType = keyof DomainEventPayloadMap;

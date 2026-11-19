@@ -154,25 +154,27 @@ PostgreSQL/Redis.
 
 ## 9. CI
 
+`.github/workflows/ci.yml` runs on every pull request to `main`/`develop`, on pushes to those branches and
+manually (`workflow_dispatch`):
+
 ```yaml
 jobs:
-  quality:
-    - pnpm install --frozen-lockfile
-    - pnpm lint
-    - pnpm typecheck
-    - pnpm test:unit
-    - pnpm test:integration   # services: postgres:16, redis:7
-    - pnpm build
-    - coverage check (service layer ≥ 70%)
-  e2e:
-    needs: quality
-    - docker compose up -d postgres redis mailpit
-    - pnpm db:migrate && pnpm db:seed
-    - pnpm test:e2e
+  static:      # pnpm install, prisma generate, lint, typecheck, build
+  unit:        # needs static: API unit + coverage threshold, web unit
+  integration: # needs static: services postgres:16, redis:7
+  e2e:         # needs [unit, integration]: services, migrate, seed, Playwright
+  secret-scan: # gitleaks over the full history, read-only token
 ```
 
-- Cache the pnpm store; upload coverage + the Playwright report.
+- `pnpm install --frozen-lockfile` also generates the Prisma client; `static` repeats it to fail early.
+- The integration suite migrates through its Jest global setup; the E2E job migrates and seeds explicitly.
+- Cache the pnpm store; upload coverage and the Playwright report. Reports are kept even when the job fails.
+- One run per ref: a new PR push cancels the previous run; `main`/`develop` runs are never cancelled.
+- The secret scan runs in parallel with the other jobs, uses the default read-only token and fails the run when a
+  finding exists.
 - Perf/AI evals do not run by default; nightly/manual only.
+- There is no deploy stage: the SDD defines no hosted environment, so a release is a tag on `main` after the
+  gates are green (`AGENTS.md` 4.1). CI is the release gate, CD stays manual.
 - Flaky tests: at most 1 retry in E2E; if still flaky → open an issue, never raise retries indefinitely.
 
 ## 10. Coverage

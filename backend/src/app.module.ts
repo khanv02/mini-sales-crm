@@ -10,10 +10,14 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { QueueModule } from './common/queue/queue.module';
 import { RedisModule } from './common/redis/redis.module';
 import { SecurityModule } from './common/security/security.module';
+import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { DealsModule } from './modules/deals/deals.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({})
@@ -36,6 +40,10 @@ export class AppModule {
         ContactsModule,
         PipelineModule,
         DealsModule,
+        ActivitiesModule,
+        TasksModule,
+        NotificationsModule,
+        ReportsModule,
         HealthModule,
       ],
     };

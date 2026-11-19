@@ -63,6 +63,7 @@ export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 export type ContactAuditAction = 'CONTACT_CREATED' | 'CONTACT_UPDATED' | 'CONTACT_DELETED';
 export type PipelineAuditAction = 'PIPELINE_CREATED' | 'PIPELINE_UPDATED' | 'PIPELINE_DELETED';
 export type StageAuditAction = 'STAGE_CREATED' | 'STAGE_UPDATED' | 'STAGE_DELETED';
+export type ActivityAuditAction = 'ACTIVITY_CREATED' | 'ACTIVITY_UPDATED';
 export type DealAuditAction =
   | 'DEAL_CREATED'
   | 'DEAL_UPDATED'
@@ -79,7 +80,13 @@ export interface AuditEntry {
   actorId?: string | null;
   entity: string;
   entityId: string;
-  action: AuditAction | ContactAuditAction | PipelineAuditAction | StageAuditAction | DealAuditAction;
+  action:
+    | AuditAction
+    | ContactAuditAction
+    | PipelineAuditAction
+    | StageAuditAction
+    | DealAuditAction
+    | ActivityAuditAction;
   before?: unknown;
   after?: unknown;
   ip?: string | null;
@@ -135,5 +142,13 @@ export class AuditService {
   /** FR-05/FR-06: deal mutations, entity `Deal`. */
   async recordDeal(tx: Prisma.TransactionClient, entry: EntityAuditEntry<DealAuditAction>): Promise<void> {
     await this.record(tx, { ...entry, entity: 'Deal' });
+  }
+
+  /** FR-07: activity (including task) mutations, entity `Activity`. */
+  async recordActivity(
+    tx: Prisma.TransactionClient,
+    entry: EntityAuditEntry<ActivityAuditAction>,
+  ): Promise<void> {
+    await this.record(tx, { ...entry, entity: 'Activity' });
   }
 }

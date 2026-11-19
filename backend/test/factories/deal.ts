@@ -16,6 +16,7 @@ export async function createDeal(input: {
   position?: number;
   version?: number;
   closedAt?: Date | null;
+  createdAt?: Date;
 }): Promise<Deal> {
   return prisma.deal.create({
     data: {
@@ -33,6 +34,7 @@ export async function createDeal(input: {
       position: input.position ?? 1,
       version: input.version ?? 1,
       closedAt: input.closedAt ?? null,
+      createdAt: input.createdAt,
     },
   });
 }

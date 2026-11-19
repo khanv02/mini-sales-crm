@@ -23,6 +23,7 @@ import {
 import { DealFormDialog } from './deal-form-dialog';
 import { KanbanBoard } from './kanban-board';
 import { LostReasonDialog } from './lost-reason-dialog';
+import { DealTimelineDialog } from './Timeline';
 
 interface MoveInput {
   deal: Deal;
@@ -41,6 +42,7 @@ export function DealsPage() {
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [formState, setFormState] = useState<{ deal: Deal | null } | null>(null);
+  const [timelineDeal, setTimelineDeal] = useState<Deal | null>(null);
   const [pendingLostMove, setPendingLostMove] = useState<{
     deal: Deal;
     stageId: string;
@@ -264,6 +266,7 @@ export function DealsPage() {
               onMove={handleMove}
               onAssign={(deal, ownerId) => assignMutation.mutate({ deal, ownerId })}
               onEdit={(deal) => setFormState({ deal })}
+              onTimeline={(deal) => setTimelineDeal(deal)}
             />
           )}
 
@@ -287,6 +290,14 @@ export function DealsPage() {
           deal={formState.deal}
           pipeline={selected}
           onClose={() => setFormState(null)}
+        />
+      ) : null}
+
+      {timelineDeal ? (
+        <DealTimelineDialog
+          deal={timelineDeal}
+          assignees={assignees}
+          onClose={() => setTimelineDeal(null)}
         />
       ) : null}
 
