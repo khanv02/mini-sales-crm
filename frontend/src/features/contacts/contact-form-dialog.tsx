@@ -37,7 +37,7 @@ export function ContactFormDialog({
   const [phone, setPhone] = useState(contact?.phone ?? '');
   const [company, setCompany] = useState(contact?.company ?? '');
   const [source, setSource] = useState(contact?.source ?? '');
-  const [ownerId, setOwnerId] = useState('');
+  const [ownerId, setOwnerId] = useState(contact?.ownerId ?? '');
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const title = contact ? 'Sửa khách hàng' : 'Thêm khách hàng';
@@ -66,13 +66,17 @@ export function ContactFormDialog({
 
     setValidationError(null);
     if (contact) {
-      saveMutation.mutate({
+      const payload: ContactUpdateRequest = {
         name: trimmedName,
         email: optionalValue(email),
         phone: optionalValue(phone),
         company: optionalValue(company),
         source: optionalValue(source),
-      });
+      };
+      if (canAssignOwner && ownerId !== (contact.ownerId ?? '')) {
+        payload.ownerId = ownerId || null;
+      }
+      saveMutation.mutate(payload);
       return;
     }
 
@@ -153,7 +157,7 @@ export function ContactFormDialog({
               placeholder="manual, import, webhook…"
             />
           </label>
-          {!contact && canAssignOwner ? (
+          {canAssignOwner ? (
             <label className="block space-y-1 text-sm">
               <span className="font-medium">Người phụ trách</span>
               <select
@@ -162,7 +166,7 @@ export function ContactFormDialog({
                 value={ownerId}
                 onChange={(event) => setOwnerId(event.target.value)}
               >
-                <option value="">Tôi</option>
+                <option value="">{contact ? 'Chưa gán' : 'Tôi'}</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.name}

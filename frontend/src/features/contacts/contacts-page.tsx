@@ -125,6 +125,7 @@ export function ContactsPage() {
                   onChange={(event) => setOwnerId(event.target.value)}
                 >
                   <option value="">Tất cả</option>
+                  <option value="unassigned">Chưa gán</option>
                   {users.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name}
